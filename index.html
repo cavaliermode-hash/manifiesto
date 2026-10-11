@@ -436,7 +436,7 @@ body.vctl .controls, body.vctl main.wrap{display:none}
     <button class="cstat pe" data-f="pe" aria-pressed="false"><b id="cs-pe">0</b><span>Pendientes</span></button>
   </div>
   <div id="cout"></div>
-  <div class="important cimp" id="ct-imp" hidden>
+  <div class="important cimp" id="ct-imp">
     <h2>Punto importante</h2>
     <p>*Le recordamos que MetLife cubre únicamente las noches de hotel y traslados terrestres que estén dentro del evento o por ruta.</p>
   </div>
@@ -878,7 +878,6 @@ function ctlGroups(){
 function ctlRender(){
   const lle = CTL.tab === 'lle';
   $('#ct-t').textContent = lle ? 'Llegadas' : 'Salidas';
-  $('#ct-imp').hidden = lle;
   $('#ct-s').textContent = lle ? 'Vuelos de llegada a Tijuana en orden de fecha y hora de llegada.' : 'Vuelos de regreso desde Tijuana en orden de fecha y hora de salida.';
   const all = DATA.filter(r => ctlLeg(r)), c = {ok:0, ns:0, pe:0};
   all.forEach(r => c[ctlSt(r.n)]++);
@@ -934,7 +933,7 @@ $('#creset').addEventListener('click', async () => {
   if(pw === null) return;
   if(await sha256(pw.trim().toLowerCase()) !== RESET_H){ $('#cmsg').textContent = 'Contraseña incorrecta. No se borró nada.'; return; }
   CTL.marks[CTL.tab] = {}; ctlSave(); ctlRender(); $('#cmsg').textContent = 'Marcas borradas.'; });
-const APP_V = 68;
+const APP_V = 69;
 const PIN_KEY = 'manifiesto-pin';
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

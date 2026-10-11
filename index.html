@@ -927,8 +927,14 @@ $('#ccopy').addEventListener('click', async () => { const t = ctlResumen();
   catch(e){ const a = document.createElement('textarea'); a.value = t; document.body.appendChild(a); a.select(); document.execCommand('copy'); a.remove(); }
   $('#cmsg').textContent = 'Resumen copiado. Pégalo en WhatsApp.'; });
 $('#cprint').addEventListener('click', () => window.print());
-$('#creset').addEventListener('click', () => { if(confirm('¿Borrar las marcas de ' + (CTL.tab === 'lle' ? 'Llegadas' : 'Salidas') + ' en este dispositivo?')){ CTL.marks[CTL.tab] = {}; ctlSave(); ctlRender(); $('#cmsg').textContent = 'Marcas borradas.'; } });
-const APP_V = 67;
+const RESET_H = 'ddea6da3af0b7fce795deb5c42adf6c28d0381c2eb22cba0e0cea68ef59806e4';
+async function sha256(t){ const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(t)); return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2,'0')).join(''); }
+$('#creset').addEventListener('click', async () => {
+  const pw = prompt('Para borrar las marcas de ' + (CTL.tab === 'lle' ? 'Llegadas' : 'Salidas') + ' escribe la contraseña:');
+  if(pw === null) return;
+  if(await sha256(pw.trim().toLowerCase()) !== RESET_H){ $('#cmsg').textContent = 'Contraseña incorrecta. No se borró nada.'; return; }
+  CTL.marks[CTL.tab] = {}; ctlSave(); ctlRender(); $('#cmsg').textContent = 'Marcas borradas.'; });
+const APP_V = 68;
 const PIN_KEY = 'manifiesto-pin';
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

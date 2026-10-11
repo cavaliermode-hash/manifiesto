@@ -390,6 +390,8 @@ body.vctl .controls, body.vctl main.wrap{display:none}
 .ctools{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}
 .ctools button{font:600 14px/1 var(--body);border-radius:8px;padding:11px 14px;cursor:pointer;border:1px solid var(--green);background:var(--green);color:#fff}
 .ctools .sec{background:#fff;color:var(--green)}
+.cimp{margin-top:18px}
+.cimp p{margin:0}
 .cnote{color:var(--muted);font-size:13px;margin-top:10px}
 #cmsg{color:var(--green-dark);font-weight:600;min-height:1.2em;margin-top:8px}
 @media (max-width:480px){.cbtns button{min-width:0;padding:9px 8px}.cpx{gap:8px}}
@@ -434,6 +436,10 @@ body.vctl .controls, body.vctl main.wrap{display:none}
     <button class="cstat pe" data-f="pe" aria-pressed="false"><b id="cs-pe">0</b><span>Pendientes</span></button>
   </div>
   <div id="cout"></div>
+  <div class="important cimp" id="ct-imp" hidden>
+    <h2>Punto importante</h2>
+    <p>*Le recordamos que MetLife cubre únicamente las noches de hotel y traslados terrestres que estén dentro del evento o por ruta.</p>
+  </div>
   <div class="ctools">
     <button id="ccopy">Copiar resumen para WhatsApp</button>
     <button id="cprint" class="sec">Imprimir</button>
@@ -872,6 +878,7 @@ function ctlGroups(){
 function ctlRender(){
   const lle = CTL.tab === 'lle';
   $('#ct-t').textContent = lle ? 'Llegadas' : 'Salidas';
+  $('#ct-imp').hidden = lle;
   $('#ct-s').textContent = lle ? 'Vuelos de llegada a Tijuana en orden de fecha y hora de llegada.' : 'Vuelos de regreso desde Tijuana en orden de fecha y hora de salida.';
   const all = DATA.filter(r => ctlLeg(r)), c = {ok:0, ns:0, pe:0};
   all.forEach(r => c[ctlSt(r.n)]++);
@@ -921,7 +928,7 @@ $('#ccopy').addEventListener('click', async () => { const t = ctlResumen();
   $('#cmsg').textContent = 'Resumen copiado. Pégalo en WhatsApp.'; });
 $('#cprint').addEventListener('click', () => window.print());
 $('#creset').addEventListener('click', () => { if(confirm('¿Borrar las marcas de ' + (CTL.tab === 'lle' ? 'Llegadas' : 'Salidas') + ' en este dispositivo?')){ CTL.marks[CTL.tab] = {}; ctlSave(); ctlRender(); $('#cmsg').textContent = 'Marcas borradas.'; } });
-const APP_V = 65;
+const APP_V = 66;
 const PIN_KEY = 'manifiesto-pin';
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

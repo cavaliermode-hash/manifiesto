@@ -441,7 +441,7 @@ body.vctl .controls, body.vctl main.wrap{display:none}
     <p>*Le recordamos que MetLife cubre únicamente las noches de hotel y traslados terrestres que estén dentro del evento o por ruta.</p>
   </div>
   <div class="ctools">
-    <button id="ccopy">Copiar resumen para WhatsApp</button>
+    <button id="ccopy">Copiar resumen</button>
     <button id="cprint" class="sec">Imprimir</button>
     <button id="creset" class="sec">Borrar marcas</button>
   </div>
@@ -928,7 +928,7 @@ $('#ccopy').addEventListener('click', async () => { const t = ctlResumen();
   $('#cmsg').textContent = 'Resumen copiado. Pégalo en WhatsApp.'; });
 $('#cprint').addEventListener('click', () => window.print());
 $('#creset').addEventListener('click', () => { if(confirm('¿Borrar las marcas de ' + (CTL.tab === 'lle' ? 'Llegadas' : 'Salidas') + ' en este dispositivo?')){ CTL.marks[CTL.tab] = {}; ctlSave(); ctlRender(); $('#cmsg').textContent = 'Marcas borradas.'; } });
-const APP_V = 66;
+const APP_V = 67;
 const PIN_KEY = 'manifiesto-pin';
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

@@ -58,7 +58,7 @@
     };
     const leg = (r, m) => {
       if (!m || empty(r[m['VUELO']])) return null;
-      return { v: clean(r[m['VUELO']]).toUpperCase().replace(/VIVAAEROBUS/g, 'VIVA AEROBUS').replace(/\s+/g, ' '), f: toDate(r[m['FECHA']]), o: up(r[m['ORIGEN']] ?? ''), d: up(r[m['DESTINO']]),
+      return { v: clean(r[m['VUELO']]).toUpperCase().replace(/VIVAAEROBUS/g, 'VIVA AEROBUS').replace(/\s+/g, ' ').replace(/^AM (?=\d)/, 'AEROMEXICO ').replace(/^Y4 (?=\d)/, 'VOLARIS ').replace(/^VB (?=\d)/, 'VIVA AEROBUS '), f: toDate(r[m['FECHA']]), o: up(r[m['ORIGEN']] ?? ''), d: up(r[m['DESTINO']]),
                s: toTime(r[m['SALE']]), l: toTime(r[m['LLEGA']]) };
     };
     const rows = [];

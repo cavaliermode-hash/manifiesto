@@ -340,6 +340,7 @@ table.rep{font-size:13px}
 .mb-form input:focus{outline:none;border-color:var(--green)}
 .mb-msg{margin:8px 0 0!important;font-weight:600}
 .mb-msg:empty{display:none}
+.empty.start{padding:28px 16px;border:1px dashed var(--green-line);border-radius:10px;background:var(--green-soft);color:var(--green-dark)}
 .mb-msg.ok{color:var(--green)}.mb-msg.bad{color:#B3261E}
 .mb-copy{margin-top:8px;border:0;background:none;color:var(--green);font:600 13.5px var(--body);text-decoration:underline;cursor:pointer;padding:0}
 .mb-ta{display:block;width:100%;height:160px;margin-top:8px;font:13px/1.4 var(--mono);border:1px solid var(--line);border-radius:8px;padding:8px}
@@ -763,6 +764,8 @@ function render(){
     ctrl.hidden = true; $('#out').innerHTML = detailView(DATA[state.sel]); return;
   }
   ctrl.hidden = false;
+  if(!norm(state.q).trim()){ $('#clear').hidden = true;
+    $('#out').innerHTML = `<div class="empty start">🔎 <b>Escribe tu nombre y apellido</b> para ver tu itinerario y tu reserva.<br>Usa palabras completas, sin abreviar. Los acentos no importan.</div>`; return; }
   const rows = filtered();
   $('#count').innerHTML = `<b>${rows.length}</b> resultado${rows.length===1?'':'s'}`;
   $('#clear').hidden = !state.q;
@@ -933,7 +936,7 @@ $('#creset').addEventListener('click', async () => {
   if(pw === null) return;
   if(await sha256(pw.trim().toLowerCase()) !== RESET_H){ $('#cmsg').textContent = 'Contraseña incorrecta. No se borró nada.'; return; }
   CTL.marks[CTL.tab] = {}; ctlSave(); ctlRender(); $('#cmsg').textContent = 'Marcas borradas.'; });
-const APP_V = 69;
+const APP_V = 70;
 const PIN_KEY = 'manifiesto-pin';
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

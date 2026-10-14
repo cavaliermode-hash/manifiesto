@@ -1070,7 +1070,7 @@ $('#kcopy').addEventListener('click', async () => {
   const all = kRows(), c = {ok:0, ns:0, pe:0}; all.forEach(x => c[x.s]++);
   const rows = all.filter(x => KON.filter === 'all' || x.s === KON.filter);
   const L = ['*Concentrado de llegadas · CC26*', `Total ${all.length} · Check-in ${c.ok} · No show ${c.ns} · Pendientes ${c.pe}`, ''];
-  rows.forEach(x => { const l = x.r.ida; L.push(`${x.s==='ok'?'✅':x.s==='ns'?'❌':'⏳'} ${tcase(x.n)} · ${fmtDate(l.f)} ${l.l} · ${l.v}`); });
+  rows.forEach(x => L.push(`${x.s==='ok'?'✅':x.s==='ns'?'❌':'⏳'} ${tcase(x.n)}`));
   const t = L.join('\n');
   try{ await navigator.clipboard.writeText(t); }
   catch(e){ const a = document.createElement('textarea'); a.value = t; document.body.appendChild(a); a.select(); document.execCommand('copy'); a.remove(); }
@@ -1161,7 +1161,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 84;
+const APP_V = 85;
 const PIN_KEY = 'manifiesto-pin';
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

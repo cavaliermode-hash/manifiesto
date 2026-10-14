@@ -462,16 +462,9 @@ header.board #upd:not(:empty)::before{content:" · "}
       <button role="tab" data-tab="man" aria-selected="true">Manifiesto</button>
       <button role="tab" data-tab="lle" aria-selected="false">Llegadas</button>
       <button role="tab" data-tab="sal" aria-selected="false">Salidas</button>
-      <button role="tab" data-tab="est" aria-selected="false">Estatus<span class="tlg"> de vuelos</span></button>
     </nav>
   </div>
 </header>
-<section class="wrap ctl" id="est" hidden>
-  <h2 class="ct">Estatus de vuelos</h2>
-  <p class="cs">Todos los vuelos del evento en orden de fecha y hora. Toca "Ver estatus" para consultar en FlightAware si el vuelo va a tiempo, retrasado o ya aterrizó.</p>
-  <div id="eout"></div>
-  <p class="cnote">El estatus lo muestra FlightAware en una pestaña nueva y se actualiza en tiempo real. Los horarios de esta lista son los programados, en hora local de cada aeropuerto.</p>
-</section>
 <section class="wrap ctl" id="ctl" hidden>
   <h2 class="ct" id="ct-t"></h2>
   <p class="cs" id="ct-s"></p>
@@ -968,10 +961,10 @@ function ctlTab(t){
   CTL.tab = t; CTL.filter = 'all';
   document.querySelectorAll('.tabs button').forEach(b => b.setAttribute('aria-selected', b.dataset.tab === t));
   document.querySelectorAll('.cstat').forEach(b => b.setAttribute('aria-pressed', b.dataset.f === 'all'));
-  const on = t !== 'man', est = t === 'est'; document.body.classList.toggle('vctl', on);
-  $('#ctl').hidden = !on || est; $('#est').hidden = !est; $('#cmsg').textContent = '';
+  const on = t !== 'man', est = false; document.body.classList.toggle('vctl', on);
+  $('#ctl').hidden = !on || est;  $('#cmsg').textContent = '';
   $('#csum').hidden = true; $('#cday').textContent = 'Resumen por día';
-  if(est) estRender(); else if(on) ctlRender();
+  if(on) ctlRender();
 }
 document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => ctlTab(b.dataset.tab)));
 document.querySelectorAll('.cstat').forEach(b => b.addEventListener('click', () => {
@@ -1038,7 +1031,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 81;
+const APP_V = 82;
 const PIN_KEY = 'manifiesto-pin';
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

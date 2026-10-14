@@ -403,6 +403,17 @@ body.vctl .controls, body.vctl main.wrap{display:none}
 .fa-btn{flex-shrink:0;display:inline-block;font:600 13px/1 var(--body);padding:9px 12px;border-radius:8px;background:var(--green);color:#fff;text-decoration:none;white-space:nowrap}
 .fa-btn:hover{background:var(--green-dark)}
 .cfh .fa-link{font:600 12px/1 var(--body);color:var(--green);text-decoration:underline;white-space:nowrap}
+#csum{margin-top:16px}
+.sumday{border:1px solid var(--line);border-top:4px solid var(--green);border-radius:10px;margin-bottom:12px;overflow:hidden}
+.sumday h4{margin:0;padding:10px 12px;font:700 19px/1.1 var(--display);text-transform:uppercase;color:var(--green-dark);background:var(--green-soft);display:flex;flex-wrap:wrap;gap:6px 12px;align-items:baseline}
+.sumday h4 span{font:600 13px/1.2 var(--body);text-transform:none;color:var(--muted)}
+.sumday table{width:100%;border-collapse:collapse;font-size:14px}
+.sumday th,.sumday td{padding:7px 5px;border-top:1px solid var(--line);text-align:left}
+.sumday th{font:600 11px/1 var(--body);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.sumday td.n{text-align:center;font-family:var(--mono)}
+.sumday td.ok{color:var(--green)} .sumday td.ns{color:#B3261E} .sumday td.pe{color:#8A5A00}
+.sumday .fa-link{font:600 12px/1 var(--body);color:var(--green);white-space:nowrap}
+.sumday .sumcopy{margin:8px 12px 12px;font:600 13px/1 var(--body);border-radius:8px;padding:9px 12px;border:1px solid var(--green);background:#fff;color:var(--green);cursor:pointer}
 .cnote{color:var(--muted);font-size:13px;margin-top:10px}
 #cmsg{color:var(--green-dark);font-weight:600;min-height:1.2em;margin-top:8px}
 @media (max-width:480px){.cbtns button{min-width:0;padding:9px 8px}.cpx{gap:8px}}
@@ -460,10 +471,12 @@ body.vctl .controls, body.vctl main.wrap{display:none}
   </div>
   <div class="ctools">
     <button id="ccopy">Copiar resumen</button>
+    <button id="cday">Resumen por día</button>
     <button id="cprint" class="sec">Imprimir</button>
     <button id="creset" class="sec">Borrar marcas</button>
   </div>
   <p id="cmsg" role="status"></p>
+  <div id="csum" hidden></div>
   <p class="cnote">Las marcas de "Check-in" y "No show" se guardan solo en este dispositivo. Para compartirlas con el equipo usa "Copiar resumen".</p>
 </section>
 
@@ -943,13 +956,45 @@ function ctlTab(t){
   document.querySelectorAll('.cstat').forEach(b => b.setAttribute('aria-pressed', b.dataset.f === 'all'));
   const on = t !== 'man', est = t === 'est'; document.body.classList.toggle('vctl', on);
   $('#ctl').hidden = !on || est; $('#est').hidden = !est; $('#cmsg').textContent = '';
+  $('#csum').hidden = true; $('#cday').textContent = 'Resumen por día';
   if(est) estRender(); else if(on) ctlRender();
 }
 document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => ctlTab(b.dataset.tab)));
 document.querySelectorAll('.cstat').forEach(b => b.addEventListener('click', () => {
   CTL.filter = b.dataset.f; document.querySelectorAll('.cstat').forEach(x => x.setAttribute('aria-pressed', x === b)); ctlRender(); }));
 $('#cout').addEventListener('click', e => { const b = e.target.closest('button[data-n]'); if(!b) return;
-  const m = CTL.marks[CTL.tab], n = b.dataset.n; if(m[n] === b.dataset.s) delete m[n]; else m[n] = b.dataset.s; ctlSave(); ctlRender(); });
+  const m = CTL.marks[CTL.tab], n = b.dataset.n; if(m[n] === b.dataset.s) delete m[n]; else m[n] = b.dataset.s; ctlSave(); ctlRender(); if(!$('#csum').hidden) ctlSumRender(); });
+/* ---------- Resumen por día (con estatus de vuelo) ---------- */
+function ctlDays(){
+  const d = {}; ctlGroups().forEach(G => { (d[G.l.f] = d[G.l.f] || []).push(G); }); return d;
+}
+function ctlDayText(f, groups){
+  const lle = CTL.tab === 'lle', all = groups.flatMap(G => G.pax), c = {ok:0, ns:0, pe:0}; all.forEach(r => c[ctlSt(r.n)]++);
+  const L = [`*${lle ? 'Llegadas' : 'Salidas'} · ${fmtDate(f)} · CC26*`, `Pasajeros ${all.length} · Check-in ${c.ok} · No show ${c.ns} · Pendientes ${c.pe}`];
+  groups.forEach(G => { const l = G.l, k = {ok:0, ns:0, pe:0}; G.pax.forEach(r => k[ctlSt(r.n)]++);
+    L.push('', `${ctlHora(l)} ${l.v} (${l.o} → ${l.d}) · ${G.pax.length} pax · ✅${k.ok} ❌${k.ns} ⏳${k.pe}`);
+    const u = faUrl(l.v); if(u) L.push('Estatus: ' + u);
+    G.pax.forEach(r => { const s = ctlSt(r.n); L.push(`  ${s==='ok'?'✅':s==='ns'?'❌':'⏳'} ${tcase(r.n)}`); }); });
+  return L.join('\n');
+}
+function ctlSumRender(){
+  const days = ctlDays(), lle = CTL.tab === 'lle';
+  $('#csum').innerHTML = Object.keys(days).sort().map(f => { const gs = days[f], all = gs.flatMap(G => G.pax), c = {ok:0, ns:0, pe:0}; all.forEach(r => c[ctlSt(r.n)]++);
+    return `<section class="sumday"><h4>${esc(fmtDate(f))}<span>${gs.length} ${gs.length===1?'vuelo':'vuelos'} · ${all.length} pasajeros · ✅ ${c.ok} · ❌ ${c.ns} · ⏳ ${c.pe}</span></h4>
+      <table><thead><tr><th>${lle?'Llega':'Sale'}</th><th>Vuelo</th><th>Pax</th><th>✅</th><th>❌</th><th>⏳</th><th>Vuelo<br>estatus</th></tr></thead><tbody>` +
+      gs.map(G => { const l = G.l, k = {ok:0, ns:0, pe:0}; G.pax.forEach(r => k[ctlSt(r.n)]++); const u = faUrl(l.v);
+        return `<tr><td class="n">${esc(ctlHora(l))}</td><td>${esc(l.v)}<br><small>${esc(l.o)} → ${esc(l.d)}</small></td><td class="n">${G.pax.length}</td><td class="n ok">${k.ok}</td><td class="n ns">${k.ns}</td><td class="n pe">${k.pe}</td>
+          <td>${u ? `<a class="fa-link" href="${u}" target="_blank" rel="noopener">Ver ↗</a>` : '—'}</td></tr>`; }).join('') +
+      `</tbody></table><button class="sumcopy" data-day="${esc(f)}">Copiar resumen del ${esc(fmtDate(f))}</button></section>`; }).join('');
+}
+$('#cday').addEventListener('click', () => { const el = $('#csum');
+  if(el.hidden){ ctlSumRender(); el.hidden = false; $('#cday').textContent = 'Ocultar resumen por día'; el.scrollIntoView({behavior:'smooth', block:'start'}); }
+  else { el.hidden = true; $('#cday').textContent = 'Resumen por día'; } });
+$('#csum').addEventListener('click', async e => { const b = e.target.closest('.sumcopy'); if(!b) return;
+  const t = ctlDayText(b.dataset.day, ctlDays()[b.dataset.day] || []);
+  try{ await navigator.clipboard.writeText(t); }
+  catch(err){ const a = document.createElement('textarea'); a.value = t; document.body.appendChild(a); a.select(); document.execCommand('copy'); a.remove(); }
+  $('#cmsg').textContent = 'Resumen del ' + fmtDate(b.dataset.day) + ' copiado. Pégalo en WhatsApp.'; });
 function ctlResumen(){
   const lle = CTL.tab === 'lle', all = DATA.filter(r => ctlLeg(r)), c = {ok:0, ns:0, pe:0}; all.forEach(r => c[ctlSt(r.n)]++);
   const L = [`*${lle ? 'Llegadas' : 'Salidas'} · CC26*`, '', `Total ${all.length} · Check-in ${c.ok} · No show ${c.ns} · Pendientes ${c.pe}`];
@@ -972,7 +1017,7 @@ $('#creset').addEventListener('click', async () => {
   if(pw === null) return;
   if(await sha256(pw.trim().toLowerCase()) !== RESET_H){ $('#cmsg').textContent = 'Contraseña incorrecta. No se borró nada.'; return; }
   CTL.marks[CTL.tab] = {}; ctlSave(); ctlRender(); $('#cmsg').textContent = 'Marcas borradas.'; });
-const APP_V = 71;
+const APP_V = 72;
 const PIN_KEY = 'manifiesto-pin';
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

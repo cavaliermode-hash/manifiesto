@@ -414,6 +414,8 @@ body.vctl .controls, body.vctl main.wrap{display:none}
 .sumday td.ok{color:var(--green)} .sumday td.ns{color:#B3261E} .sumday td.pe{color:#8A5A00}
 .sumday .fa-link{font:600 12px/1 var(--body);color:var(--green);white-space:nowrap}
 .sumday .sumcopy{margin:8px 12px 12px;font:600 13px/1 var(--body);border-radius:8px;padding:9px 12px;border:1px solid var(--green);background:#fff;color:var(--green);cursor:pointer}
+.cnames{list-style:none;margin:0;padding:6px 12px 8px;columns:2 240px;column-gap:24px}
+.cnames li{padding:3px 0;font-size:14px;font-weight:600;break-inside:avoid;border-bottom:1px dashed var(--line)}
 .cnote{color:var(--muted);font-size:13px;margin-top:10px}
 #cmsg{color:var(--green-dark);font-weight:600;min-height:1.2em;margin-top:8px}
 @media (max-width:480px){.cbtns button{min-width:0;padding:9px 8px}.cpx{gap:8px}}
@@ -473,7 +475,7 @@ header.board #upd:not(:empty)::before{content:" · "}
 <section class="wrap ctl" id="ctl" hidden>
   <h2 class="ct" id="ct-t"></h2>
   <p class="cs" id="ct-s"></p>
-  <div class="cstats" role="group" aria-label="Filtrar">
+  <div class="cstats" role="group" aria-label="Filtrar" hidden>
     <button class="cstat" data-f="all" aria-pressed="true"><b id="cs-all">0</b><span>Total</span></button>
     <button class="cstat ok" data-f="ok" aria-pressed="false"><b id="cs-ok">0</b><span>Check-in</span></button>
     <button class="cstat ns" data-f="ns" aria-pressed="false"><b id="cs-ns">0</b><span>No show</span></button>
@@ -484,7 +486,7 @@ header.board #upd:not(:empty)::before{content:" · "}
     <h2>Punto importante</h2>
     <p>*Le recordamos que MetLife cubre únicamente las noches de hotel y traslados terrestres que estén dentro del evento o por ruta.</p>
   </div>
-  <div class="ctools">
+  <div class="ctools" hidden>
     <button id="ccopy">Copiar resumen</button>
     <button id="cday">Resumen por día</button>
     <button id="cprint" class="sec">Imprimir</button>
@@ -492,8 +494,7 @@ header.board #upd:not(:empty)::before{content:" · "}
   </div>
   <p id="cmsg" role="status"></p>
   <div id="csum" hidden></div>
-  <p class="cnote">Las marcas de "Check-in" y "No show" se guardan solo en este dispositivo. Para compartirlas con el equipo usa "Copiar resumen".</p>
-</section>
+  </section>
 
 <div class="controls">
   <div class="wrap">
@@ -936,14 +937,12 @@ function ctlRender(){
     const l = G.l, ok = G.pax.filter(r => ctlSt(r.n) === 'ok').length;
     if(l.f !== day){ html += `<h3 class="cday">${esc(fmtDate(l.f))}</h3>`; day = l.f; }
     html += `<section class="cfl"><div class="cfh"><span class="t">${esc(ctlHora(l))}</span><span class="v">${esc(l.v)}</span>
-      <span class="r">${esc(l.o)} ${esc(l.s)} → ${esc(l.d)} ${esc(l.l)}</span><span class="c">${ok}/${G.pax.length} check-in</span>${faUrl(l.v) ? `<a class="fa-link" href="${faUrl(l.v)}" target="_blank" rel="noopener">Estatus ↗</a>` : ''}</div>` +
+      <span class="r">${esc(l.o)} ${esc(l.s)} → ${esc(l.d)} ${esc(l.l)}</span><span class="c">${G.pax.length} ${G.pax.length===1?"pasajero":"pasajeros"}</span>${faUrl(l.v) ? `<a class="fa-link" href="${faUrl(l.v)}" target="_blank" rel="noopener">Estatus ↗</a>` : ''}</div><ul class="cnames">` +
       pax.map(r => { const s = ctlSt(r.n), cx = lle ? r.c1 : r.c2;
         const con = cx ? ` · conexión ${esc(cx.v)} ${lle ? 'desde ' + esc(cx.o) : 'a ' + esc(cx.d)}` : '';
         const clave = lle ? (r.ci || r.cr) : (r.cr || r.ci);
         const pern = lle && (r.notas||[]).some(n => n.k === 'pe') ? '<span class="ctag">Pernocta TIJ</span>' : '';
-        return `<div class="cpx st-${s}"><div class="who"><b>${esc(r.n)}</b></div>
-          <div class="cbtns"><button class="bok" data-n="${esc(r.n)}" data-s="ok" aria-pressed="${s==='ok'}">✓ Check-in</button>
-          <button class="bns" data-n="${esc(r.n)}" data-s="ns" aria-pressed="${s==='ns'}">✗ No show</button></div></div>`; }).join('') + '</section>';
+        return `<li>${esc(r.n)}</li>`; }).join('') + '</ul></section>';
   });
   $('#cout').innerHTML = html || '<p class="cnote">No hay invitados en este filtro.</p>';
 }
@@ -1039,7 +1038,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 80;
+const APP_V = 81;
 const PIN_KEY = 'manifiesto-pin';
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

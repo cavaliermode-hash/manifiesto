@@ -926,7 +926,7 @@ function ctlRender(){
         const con = cx ? ` · conexión ${esc(cx.v)} ${lle ? 'desde ' + esc(cx.o) : 'a ' + esc(cx.d)}` : '';
         const clave = lle ? (r.ci || r.cr) : (r.cr || r.ci);
         const pern = lle && (r.notas||[]).some(n => n.k === 'pe') ? '<span class="ctag">Pernocta TIJ</span>' : '';
-        return `<div class="cpx st-${s}"><div class="who"><b>${esc(r.n)}${pern}</b></div>
+        return `<div class="cpx st-${s}"><div class="who"><b>${esc(r.n)}</b></div>
           <div class="cbtns"><button class="bok" data-n="${esc(r.n)}" data-s="ok" aria-pressed="${s==='ok'}">✓ Check-in</button>
           <button class="bns" data-n="${esc(r.n)}" data-s="ns" aria-pressed="${s==='ns'}">✗ No show</button></div></div>`; }).join('') + '</section>';
   });
@@ -1017,7 +1017,7 @@ $('#creset').addEventListener('click', async () => {
   if(pw === null) return;
   if(await sha256(pw.trim().toLowerCase()) !== RESET_H){ $('#cmsg').textContent = 'Contraseña incorrecta. No se borró nada.'; return; }
   CTL.marks[CTL.tab] = {}; ctlSave(); ctlRender(); $('#cmsg').textContent = 'Marcas borradas.'; });
-const APP_V = 73;
+const APP_V = 74;
 const PIN_KEY = 'manifiesto-pin';
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

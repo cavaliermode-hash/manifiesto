@@ -419,6 +419,13 @@ body.vctl .controls, body.vctl main.wrap{display:none}
 @media (max-width:480px){.cbtns button{min-width:0;padding:9px 8px}.cpx{gap:8px}}
 @media print{.tabs,.cstats,.ctools,.cnote,.cbtns{display:none!important}.cpx.st-ok .who b::after{content:" ✓ check-in"}.cpx.st-ns .who b::after{content:" ✗ no show"}}
 header.board{position:sticky;top:0;z-index:20}
+@media (max-width:700px){
+body.compact header.board .logos, body.compact header.board .eyebrow, body.compact header.board .sub{display:none}
+body.compact header.board{padding-block:8px 8px}
+body.compact header.board h1{font-size:22px;margin:0 0 2px}
+body.compact .tabs{padding-top:6px}
+body.compact .tabs button{padding:7px 12px;font-size:14px}
+}
 .controls{top:var(--hh,0px)!important}
 .cstats{top:var(--hh,0px)}
 </style>
@@ -1024,10 +1031,12 @@ $('#creset').addEventListener('click', async () => {
 (function(){
   const h = document.querySelector('header.board');
   const setH = () => document.documentElement.style.setProperty('--hh', h.offsetHeight + 'px');
-  window.addEventListener('resize', setH);
-  if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
+  let compact = false;
+  const onScroll = () => { const c = window.scrollY > 60; if(c !== compact){ compact = c; document.body.classList.toggle('compact', c); setH(); requestAnimationFrame(setH); } };
+  window.addEventListener('scroll', onScroll, {passive:true}); window.addEventListener('resize', setH);
+  if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH); onScroll();
 })();
-const APP_V = 78;
+const APP_V = 79;
 const PIN_KEY = 'manifiesto-pin';
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

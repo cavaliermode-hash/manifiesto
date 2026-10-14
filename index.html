@@ -434,6 +434,7 @@ body.vctl .controls, body.vctl main.wrap{display:none}
 .kb button{font:600 12px/1 var(--body);border-radius:7px;padding:7px 8px;cursor:pointer;border:1px solid var(--line);background:#fff;color:var(--ink);white-space:nowrap}
 .kb .bok[aria-pressed="true"]{background:var(--green);border-color:var(--green);color:#fff}
 .kb .bns[aria-pressed="true"]{background:#B3261E;border-color:#B3261E;color:#fff}
+.ksync{font-size:13px;color:var(--muted);margin:4px 0 0}
 .kmsg{color:var(--green-dark);font-weight:600;min-height:1.2em;margin-top:8px}
 @media (max-width:560px){.ktable th:nth-child(3),.ktable td.kv{display:none}.kb{flex-direction:column}.kb button{padding:6px 6px}}
 .cnote{color:var(--muted);font-size:13px;margin-top:10px}
@@ -509,7 +510,8 @@ header.board #upd:not(:empty)::before{content:" · "}
     <button id="kreset" class="sec">Borrar marcas</button>
   </div>
   <p id="kmsg" class="kmsg" role="status"></p>
-  <p class="cnote">Las marcas son las mismas de Check-in y No show de llegadas y se guardan solo en este dispositivo. Para compartirlas usa "Copiar resumen".</p>
+  <p id="ksync" class="ksync"></p>
+  <p class="cnote" id="knote">Las marcas son las mismas de Check-in y No show de llegadas y se guardan solo en este dispositivo. Para compartirlas usa "Copiar resumen".</p>
 </section>
 <section class="wrap ctl" id="ctl" hidden>
   <h2 class="ct" id="ct-t"></h2>
@@ -1003,6 +1005,39 @@ function estRender(){
   if(day) html += '</section>';
   $('#eout').innerHTML = html || '<p class="cnote">No hay vuelos cargados.</p>';
 }
+/* ---------- Marcas compartidas en tiempo real (Google Apps Script) ---------- */
+const SYNC_URL = ''; // URL de la aplicación web de Apps Script; vacío = marcas solo en este dispositivo
+const SYNC = {key:null, timer:null, ok:false};
+function syncShow(){
+  const el = document.getElementById('ksync'); if(!el || !SYNC_URL) return;
+  const t = new Date(), hh = String(t.getHours()).padStart(2,'0') + ':' + String(t.getMinutes()).padStart(2,'0') + ':' + String(t.getSeconds()).padStart(2,'0');
+  el.textContent = SYNC.ok ? '🟢 Marcas compartidas en tiempo real · actualizado ' + hh : '⚠️ Sin conexión con las marcas compartidas; se muestran las de este dispositivo.';
+  const n = document.getElementById('knote'); if(n) n.textContent = 'Las marcas se comparten entre todos los que tienen el link y se actualizan cada 10 segundos.';
+}
+function syncApply(m){
+  if(!m || !m.lle) return; CTL.marks.lle = m.lle || {}; CTL.marks.sal = m.sal || {}; ctlSave();
+  if(CTL.tab === 'con') konRender(); else if(CTL.tab !== 'man' && !$('#ctl').hidden) ctlRender();
+}
+async function syncPull(){
+  if(!SYNC_URL || !SYNC.key) return;
+  try{ const r = await fetch(SYNC_URL + '?k=' + SYNC.key + '&_=' + Date.now()); const j = await r.json();
+    if(j.marks){ SYNC.ok = true; syncApply(j.marks); } else SYNC.ok = false; }
+  catch(e){ SYNC.ok = false; }
+  syncShow();
+}
+async function syncPush(body){
+  if(!SYNC_URL || !SYNC.key) return;
+  try{ const r = await fetch(SYNC_URL, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify(Object.assign({k:SYNC.key}, body))});
+    const j = await r.json(); if(j.marks){ SYNC.ok = true; syncApply(j.marks); } else SYNC.ok = false; }
+  catch(e){ SYNC.ok = false; }
+  syncShow();
+}
+async function syncStart(pin){
+  if(!SYNC_URL) return;
+  SYNC.key = await sha256(String(pin).trim().toLowerCase() + '|cc26');
+  syncPull(); clearInterval(SYNC.timer); SYNC.timer = setInterval(() => { if(!document.hidden) syncPull(); }, 10000);
+  document.addEventListener('visibilitychange', () => { if(!document.hidden) syncPull(); });
+}
 /* ---------- Concentrado de llegadas ---------- */
 const KON = {sort:'f', dir:1, filter:'all'};
 const kSt = n => CTL.marks.lle[n] || 'pe';
@@ -1030,7 +1065,7 @@ document.querySelectorAll('.ktable th button').forEach(b => b.addEventListener('
 document.querySelectorAll('.kstat').forEach(b => b.addEventListener('click', () => {
   KON.filter = b.dataset.f; document.querySelectorAll('.kstat').forEach(x => x.setAttribute('aria-pressed', x === b)); konRender(); }));
 $('#kbody').addEventListener('click', e => { const b = e.target.closest('button[data-n]'); if(!b) return;
-  const m = CTL.marks.lle, n = b.dataset.n; if(m[n] === b.dataset.s) delete m[n]; else m[n] = b.dataset.s; ctlSave(); konRender(); });
+  const m = CTL.marks.lle, n = b.dataset.n; if(m[n] === b.dataset.s) delete m[n]; else m[n] = b.dataset.s; ctlSave(); konRender(); syncPush({op:'set', t:'lle', n, s:m[n]||''}); });
 $('#kcopy').addEventListener('click', async () => {
   const all = kRows(), c = {ok:0, ns:0, pe:0}; all.forEach(x => c[x.s]++);
   const rows = all.filter(x => KON.filter === 'all' || x.s === KON.filter);
@@ -1043,7 +1078,7 @@ $('#kcopy').addEventListener('click', async () => {
 $('#kreset').addEventListener('click', async () => {
   const pw = prompt('Para borrar las marcas de llegadas escribe la contraseña:'); if(pw === null) return;
   if(await sha256(pw.trim().toLowerCase()) !== RESET_H){ $('#kmsg').textContent = 'Contraseña incorrecta. No se borró nada.'; return; }
-  CTL.marks.lle = {}; ctlSave(); konRender(); $('#kmsg').textContent = 'Marcas borradas.'; });
+  CTL.marks.lle = {}; ctlSave(); konRender(); syncPush({op:'clear', t:'lle'}); $('#kmsg').textContent = 'Marcas borradas.'; });
 function ctlTab(t){
   CTL.tab = t; CTL.filter = 'all';
   document.querySelectorAll('.tabs button').forEach(b => b.setAttribute('aria-selected', b.dataset.tab === t));
@@ -1057,7 +1092,7 @@ document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click
 document.querySelectorAll('.cstat').forEach(b => b.addEventListener('click', () => {
   CTL.filter = b.dataset.f; document.querySelectorAll('.cstat').forEach(x => x.setAttribute('aria-pressed', x === b)); ctlRender(); }));
 $('#cout').addEventListener('click', e => { const b = e.target.closest('button[data-n]'); if(!b) return;
-  const m = CTL.marks[CTL.tab], n = b.dataset.n; if(m[n] === b.dataset.s) delete m[n]; else m[n] = b.dataset.s; ctlSave(); ctlRender(); if(!$('#csum').hidden) ctlSumRender(); });
+  const m = CTL.marks[CTL.tab], n = b.dataset.n; if(m[n] === b.dataset.s) delete m[n]; else m[n] = b.dataset.s; ctlSave(); ctlRender(); if(!$('#csum').hidden) ctlSumRender(); syncPush({op:'set', t:CTL.tab, n, s:m[n]||''}); });
 /* ---------- Resumen por día (con estatus de vuelo) ---------- */
 function ctlDays(){
   const d = {}; ctlGroups().forEach(G => { (d[G.l.f] = d[G.l.f] || []).push(G); }); return d;
@@ -1110,7 +1145,7 @@ $('#creset').addEventListener('click', async () => {
   const pw = prompt('Para borrar las marcas de ' + (CTL.tab === 'lle' ? 'Llegadas' : 'Salidas') + ' escribe la contraseña:');
   if(pw === null) return;
   if(await sha256(pw.trim().toLowerCase()) !== RESET_H){ $('#cmsg').textContent = 'Contraseña incorrecta. No se borró nada.'; return; }
-  CTL.marks[CTL.tab] = {}; ctlSave(); ctlRender(); $('#cmsg').textContent = 'Marcas borradas.'; });
+  CTL.marks[CTL.tab] = {}; ctlSave(); ctlRender(); syncPush({op:'clear', t:CTL.tab}); $('#cmsg').textContent = 'Marcas borradas.'; });
 /* ---------- Encabezado fijo al bajar ---------- */
 (function(){
   const h = document.querySelector('header.board');
@@ -1126,7 +1161,7 @@ function showGate(msg){ gate.hidden = false; gmsg.textContent = msg || ''; gin.v
 let PACK = null;
 async function unlock(pin, fromSaved){
   try{ const d = await Cifra.descifrar(PACK.enc, pin);
-    DATA = d.filas; gate.hidden = true; $('#upd').textContent = 'Actualizado: ' + PACK.actualizado; init(); }
+    DATA = d.filas; gate.hidden = true; $('#upd').textContent = 'Actualizado: ' + PACK.actualizado; init(); syncStart(pin); }
   catch(e){ showGate('PIN incorrecto. Revísalo e intenta de nuevo.'); }
 }
 $('#gate-form').addEventListener('submit', e => { e.preventDefault(); const v = gin.value.trim();

@@ -419,15 +419,20 @@ body.vctl .controls, body.vctl main.wrap{display:none}
 @media (max-width:480px){.cbtns button{min-width:0;padding:9px 8px}.cpx{gap:8px}}
 @media print{.tabs,.cstats,.ctools,.cnote,.cbtns{display:none!important}.cpx.st-ok .who b::after{content:" ✓ check-in"}.cpx.st-ns .who b::after{content:" ✗ no show"}}
 header.board{position:sticky;top:0;z-index:20}
-@media (max-width:700px){
-body.compact header.board .logos, body.compact header.board .eyebrow, body.compact header.board .sub{display:none}
-body.compact header.board{padding-block:8px 8px}
-body.compact header.board h1{font-size:22px;margin:0 0 2px}
-body.compact .tabs{padding-top:6px}
-body.compact .tabs button{padding:7px 12px;font-size:14px}
-}
 .controls{top:var(--hh,0px)!important}
 .cstats{top:var(--hh,0px)}
+/* Encabezado compacto y completo */
+header.board{padding-block:8px 8px!important}
+header.board .logos{margin-bottom:4px!important}
+header.board .logo{width:min(180px,42vw)!important}
+header.board .eyebrow{font-size:10px}
+header.board h1{font-size:clamp(20px,4vw,28px)!important;margin:3px 0 2px!important}
+header.board .sub{font-size:12px!important;display:inline}
+header.board #upd:not(:empty)::before{content:" · "}
+.tabs{padding-top:6px!important;gap:5px!important;flex-wrap:nowrap!important;overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{padding:6px 12px!important;font-size:13px!important;white-space:nowrap;flex-shrink:0}
+@media (max-width:440px){.tabs .tlg{display:none}.tabs{gap:4px!important}.tabs button{padding:6px 8px!important;font-size:12px!important}}
 </style>
 </head>
 <body>
@@ -455,7 +460,7 @@ body.compact .tabs button{padding:7px 12px;font-size:14px}
       <button role="tab" data-tab="man" aria-selected="true">Manifiesto</button>
       <button role="tab" data-tab="lle" aria-selected="false">Llegadas</button>
       <button role="tab" data-tab="sal" aria-selected="false">Salidas</button>
-      <button role="tab" data-tab="est" aria-selected="false">Estatus de vuelos</button>
+      <button role="tab" data-tab="est" aria-selected="false">Estatus<span class="tlg"> de vuelos</span></button>
     </nav>
   </div>
 </header>
@@ -1031,12 +1036,10 @@ $('#creset').addEventListener('click', async () => {
 (function(){
   const h = document.querySelector('header.board');
   const setH = () => document.documentElement.style.setProperty('--hh', h.offsetHeight + 'px');
-  let compact = false;
-  const onScroll = () => { const c = window.scrollY > 60; if(c !== compact){ compact = c; document.body.classList.toggle('compact', c); setH(); requestAnimationFrame(setH); } };
-  window.addEventListener('scroll', onScroll, {passive:true}); window.addEventListener('resize', setH);
-  if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH); onScroll();
+  window.addEventListener('resize', setH);
+  if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 79;
+const APP_V = 80;
 const PIN_KEY = 'manifiesto-pin';
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

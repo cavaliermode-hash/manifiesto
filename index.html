@@ -416,6 +416,26 @@ body.vctl .controls, body.vctl main.wrap{display:none}
 .sumday .sumcopy{margin:8px 12px 12px;font:600 13px/1 var(--body);border-radius:8px;padding:9px 12px;border:1px solid var(--green);background:#fff;color:var(--green);cursor:pointer}
 .cnames{list-style:none;margin:0;padding:6px 12px 8px;columns:2 240px;column-gap:24px}
 .cnames li{padding:3px 0;font-size:14px;font-weight:600;break-inside:avoid;border-bottom:1px dashed var(--line)}
+.kstat{border:1px solid var(--line);border-radius:8px;padding:6px 8px;text-align:center;cursor:pointer;background:#fff;font:inherit;color:inherit}
+.kstat b{display:block;font:700 22px/1.1 var(--mono)} .kstat span{font-size:12px;color:var(--muted)}
+.kstat[aria-pressed="true"]{border-color:var(--green);box-shadow:inset 0 0 0 2px var(--green)}
+.kstat.ok b{color:var(--green)} .kstat.ns b{color:#B3261E} .kstat.pe b{color:#8A5A00}
+.ktable-wrap{border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-top:6px}
+.ktable{width:100%;border-collapse:collapse;font-size:14px}
+.ktable th{background:var(--green-soft);text-align:left;padding:0}
+.ktable th button{all:unset;cursor:pointer;display:block;width:100%;box-sizing:border-box;padding:9px 8px;font:600 11px/1.2 var(--body);letter-spacing:.06em;text-transform:uppercase;color:var(--green-dark)}
+.ktable th button[aria-sort] span::after{content:attr(data-a)}
+.ktable td{padding:7px 8px;border-top:1px solid var(--line);vertical-align:middle}
+.ktable td.kn{font-weight:600}
+.ktable td.kf{white-space:nowrap;font-size:13px} .ktable td.kf small,.ktable td.kv small{display:block;color:var(--muted)}
+.ktable td.kv{font-size:13px}
+.ktable tr.st-ok{background:#F2F9F4} .ktable tr.st-ns{background:#FBE9E7}
+.kb{display:flex;gap:4px}
+.kb button{font:600 12px/1 var(--body);border-radius:7px;padding:7px 8px;cursor:pointer;border:1px solid var(--line);background:#fff;color:var(--ink);white-space:nowrap}
+.kb .bok[aria-pressed="true"]{background:var(--green);border-color:var(--green);color:#fff}
+.kb .bns[aria-pressed="true"]{background:#B3261E;border-color:#B3261E;color:#fff}
+.kmsg{color:var(--green-dark);font-weight:600;min-height:1.2em;margin-top:8px}
+@media (max-width:560px){.ktable th:nth-child(3),.ktable td.kv{display:none}.kb{flex-direction:column}.kb button{padding:6px 6px}}
 .cnote{color:var(--muted);font-size:13px;margin-top:10px}
 #cmsg{color:var(--green-dark);font-weight:600;min-height:1.2em;margin-top:8px}
 @media (max-width:480px){.cbtns button{min-width:0;padding:9px 8px}.cpx{gap:8px}}
@@ -462,9 +482,35 @@ header.board #upd:not(:empty)::before{content:" · "}
       <button role="tab" data-tab="man" aria-selected="true">Manifiesto</button>
       <button role="tab" data-tab="lle" aria-selected="false">Llegadas</button>
       <button role="tab" data-tab="sal" aria-selected="false">Salidas</button>
+      <button role="tab" data-tab="con" aria-selected="false">Concentrado</button>
     </nav>
   </div>
 </header>
+<section class="wrap ctl" id="con" hidden>
+  <h2 class="ct">Concentrado de llegadas</h2>
+  <p class="cs">Todos los invitados en una sola lista, sin importar la fecha. Marca Check-in o No show y ordena tocando el encabezado de cada columna.</p>
+  <div class="cstats" role="group" aria-label="Filtrar">
+    <button class="kstat" data-f="all" aria-pressed="true"><b id="ks-all">0</b><span>Total</span></button>
+    <button class="kstat ok" data-f="ok" aria-pressed="false"><b id="ks-ok">0</b><span>Check-in</span></button>
+    <button class="kstat ns" data-f="ns" aria-pressed="false"><b id="ks-ns">0</b><span>No show</span></button>
+    <button class="kstat pe" data-f="pe" aria-pressed="false"><b id="ks-pe">0</b><span>Pendientes</span></button>
+  </div>
+  <div class="ktable-wrap"><table class="ktable">
+    <thead><tr>
+      <th><button data-sort="n">Nombre <span></span></button></th>
+      <th><button data-sort="f">Llegada <span></span></button></th>
+      <th><button data-sort="v">Vuelo <span></span></button></th>
+      <th><button data-sort="s">Estatus <span></span></button></th>
+    </tr></thead>
+    <tbody id="kbody"></tbody>
+  </table></div>
+  <div class="ctools">
+    <button id="kcopy">Copiar resumen</button>
+    <button id="kreset" class="sec">Borrar marcas</button>
+  </div>
+  <p id="kmsg" class="kmsg" role="status"></p>
+  <p class="cnote">Las marcas son las mismas de Check-in y No show de llegadas y se guardan solo en este dispositivo. Para compartirlas usa "Copiar resumen".</p>
+</section>
 <section class="wrap ctl" id="ctl" hidden>
   <h2 class="ct" id="ct-t"></h2>
   <p class="cs" id="ct-s"></p>
@@ -957,14 +1003,55 @@ function estRender(){
   if(day) html += '</section>';
   $('#eout').innerHTML = html || '<p class="cnote">No hay vuelos cargados.</p>';
 }
+/* ---------- Concentrado de llegadas ---------- */
+const KON = {sort:'f', dir:1, filter:'all'};
+const kSt = n => CTL.marks.lle[n] || 'pe';
+const kRank = {ok:0, ns:1, pe:2};
+function kRows(){
+  const rows = DATA.filter(r => r.ida).map(r => ({r, n:r.n, f:r.ida.f + ' ' + String(r.ida.l||'').padStart(5,'0'), v:r.ida.v, s:kSt(r.n)}));
+  const k = KON.sort;
+  rows.sort((a,b) => { let c = k==='s' ? kRank[a.s]-kRank[b.s] : String(a[k]).localeCompare(String(b[k]),'es');
+    if(!c) c = a.f.localeCompare(b.f) || a.n.localeCompare(b.n,'es'); return c * KON.dir; });
+  return rows;
+}
+function konRender(){
+  const all = kRows(), c = {ok:0, ns:0, pe:0}; all.forEach(x => c[x.s]++);
+  $('#ks-all').textContent = all.length; $('#ks-ok').textContent = c.ok; $('#ks-ns').textContent = c.ns; $('#ks-pe').textContent = c.pe;
+  document.querySelectorAll('.ktable th button').forEach(b => { if(b.dataset.sort === KON.sort){ b.setAttribute('aria-sort', KON.dir>0?'ascending':'descending'); b.querySelector('span').dataset.a = KON.dir>0?'▲':'▼'; } else b.removeAttribute('aria-sort'); });
+  const rows = all.filter(x => KON.filter === 'all' || x.s === KON.filter);
+  $('#kbody').innerHTML = rows.map(x => { const l = x.r.ida;
+    return `<tr class="st-${x.s}"><td class="kn">${esc(x.n)}</td><td class="kf">${esc(fmtDate(l.f))}<small>${esc(l.l)} · ${esc(l.o)}→${esc(l.d)}</small></td>
+      <td class="kv">${esc(l.v)}</td><td><div class="kb"><button class="bok" data-n="${esc(x.n)}" data-s="ok" aria-pressed="${x.s==='ok'}">✓ Check-in</button>
+      <button class="bns" data-n="${esc(x.n)}" data-s="ns" aria-pressed="${x.s==='ns'}">✗ No show</button></div></td></tr>`; }).join('')
+    || '<tr><td colspan="4" class="cnote">No hay invitados en este filtro.</td></tr>';
+}
+document.querySelectorAll('.ktable th button').forEach(b => b.addEventListener('click', () => {
+  if(KON.sort === b.dataset.sort) KON.dir *= -1; else { KON.sort = b.dataset.sort; KON.dir = 1; } konRender(); }));
+document.querySelectorAll('.kstat').forEach(b => b.addEventListener('click', () => {
+  KON.filter = b.dataset.f; document.querySelectorAll('.kstat').forEach(x => x.setAttribute('aria-pressed', x === b)); konRender(); }));
+$('#kbody').addEventListener('click', e => { const b = e.target.closest('button[data-n]'); if(!b) return;
+  const m = CTL.marks.lle, n = b.dataset.n; if(m[n] === b.dataset.s) delete m[n]; else m[n] = b.dataset.s; ctlSave(); konRender(); });
+$('#kcopy').addEventListener('click', async () => {
+  const all = kRows(), c = {ok:0, ns:0, pe:0}; all.forEach(x => c[x.s]++);
+  const rows = all.filter(x => KON.filter === 'all' || x.s === KON.filter);
+  const L = ['*Concentrado de llegadas · CC26*', `Total ${all.length} · Check-in ${c.ok} · No show ${c.ns} · Pendientes ${c.pe}`, ''];
+  rows.forEach(x => { const l = x.r.ida; L.push(`${x.s==='ok'?'✅':x.s==='ns'?'❌':'⏳'} ${tcase(x.n)} · ${fmtDate(l.f)} ${l.l} · ${l.v}`); });
+  const t = L.join('\n');
+  try{ await navigator.clipboard.writeText(t); }
+  catch(e){ const a = document.createElement('textarea'); a.value = t; document.body.appendChild(a); a.select(); document.execCommand('copy'); a.remove(); }
+  $('#kmsg').textContent = 'Resumen copiado. Pégalo en WhatsApp.'; });
+$('#kreset').addEventListener('click', async () => {
+  const pw = prompt('Para borrar las marcas de llegadas escribe la contraseña:'); if(pw === null) return;
+  if(await sha256(pw.trim().toLowerCase()) !== RESET_H){ $('#kmsg').textContent = 'Contraseña incorrecta. No se borró nada.'; return; }
+  CTL.marks.lle = {}; ctlSave(); konRender(); $('#kmsg').textContent = 'Marcas borradas.'; });
 function ctlTab(t){
   CTL.tab = t; CTL.filter = 'all';
   document.querySelectorAll('.tabs button').forEach(b => b.setAttribute('aria-selected', b.dataset.tab === t));
   document.querySelectorAll('.cstat').forEach(b => b.setAttribute('aria-pressed', b.dataset.f === 'all'));
-  const on = t !== 'man', est = false; document.body.classList.toggle('vctl', on);
-  $('#ctl').hidden = !on || est;  $('#cmsg').textContent = '';
+  const on = t !== 'man', con = t === 'con'; document.body.classList.toggle('vctl', on);
+  $('#ctl').hidden = !on || con; $('#con').hidden = !con; $('#cmsg').textContent = ''; $('#kmsg').textContent = '';
   $('#csum').hidden = true; $('#cday').textContent = 'Resumen por día';
-  if(on) ctlRender();
+  if(con) konRender(); else if(on) ctlRender();
 }
 document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => ctlTab(b.dataset.tab)));
 document.querySelectorAll('.cstat').forEach(b => b.addEventListener('click', () => {
@@ -1031,7 +1118,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 82;
+const APP_V = 83;
 const PIN_KEY = 'manifiesto-pin';
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

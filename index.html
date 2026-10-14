@@ -414,8 +414,6 @@ body.vctl .controls, body.vctl main.wrap{display:none}
 .sumday td.ok{color:var(--green)} .sumday td.ns{color:#B3261E} .sumday td.pe{color:#8A5A00}
 .sumday .fa-link{font:600 12px/1 var(--body);color:var(--green);white-space:nowrap}
 .sumday .sumcopy{margin:8px 12px 12px;font:600 13px/1 var(--body);border-radius:8px;padding:9px 12px;border:1px solid var(--green);background:#fff;color:var(--green);cursor:pointer}
-.est-st{display:inline-block;margin-top:4px;font:600 12px/1 var(--body);padding:4px 8px;border-radius:999px}
-.est-st.st-pro{background:#EEF2F7;color:#3A4A5E} .est-st.st-air{background:#FFF4D6;color:#8A5A00} .est-st.st-arr{background:var(--green-soft);color:var(--green-dark)}
 .cnote{color:var(--muted);font-size:13px;margin-top:10px}
 #cmsg{color:var(--green-dark);font-weight:600;min-height:1.2em;margin-top:8px}
 @media (max-width:480px){.cbtns button{min-width:0;padding:9px 8px}.cpx{gap:8px}}
@@ -455,7 +453,7 @@ body.vctl .controls, body.vctl main.wrap{display:none}
   <h2 class="ct">Estatus de vuelos</h2>
   <p class="cs">Todos los vuelos del evento en orden de fecha y hora. Toca "Ver estatus" para consultar en FlightAware si el vuelo va a tiempo, retrasado o ya aterrizó.</p>
   <div id="eout"></div>
-  <p class="cnote">El estado de cada vuelo en esta lista (Programado, En vuelo, Arribado) se calcula con el horario programado y se actualiza cada minuto; no incluye retrasos ni adelantos. Para el estatus real toca "Ver estatus", que abre FlightAware.</p>
+  <p class="cnote">El estatus lo muestra FlightAware en una pestaña nueva y se actualiza en tiempo real. Los horarios de esta lista son los programados, en hora local de cada aeropuerto.</p>
 </section>
 <section class="wrap ctl" id="ctl" hidden>
   <h2 class="ct" id="ct-t"></h2>
@@ -938,16 +936,6 @@ function ctlRender(){
 const ICAO = {'VOLARIS':'VOI','AEROMEXICO':'AMX','VIVA AEROBUS':'VIV'};
 function faUrl(v){ const m = /^(.*\D)\s*(\d+)$/.exec(String(v||'').trim()); if(!m) return null;
   const c = ICAO[m[1].trim().toUpperCase()]; return c ? 'https://es.flightaware.com/live/flight/' + c + m[2] : null; }
-function estDur(ms){ const m = Math.round(Math.abs(ms)/60000), d = Math.floor(m/1440), h = Math.floor((m%1440)/60), mi = m%60;
-  if(d >= 1) return d + (d===1?' día':' días') + (h ? ' ' + h + ' h' : '');
-  if(h >= 1) return h + ' h' + (mi ? ' ' + mi + ' min' : ''); return Math.max(mi,1) + ' min'; }
-function estStatus(l){
-  const dep = when(l,'s'); let arr = when(l,'l'); if(arr < dep) arr = new Date(arr.getTime() + 864e5);
-  const now = Date.now();
-  if(now < dep) return {c:'pro', t:'Programado · sale en ' + estDur(dep - now)};
-  if(now < arr) return {c:'air', t:'En vuelo · llega en ' + estDur(arr - now)};
-  return {c:'arr', t:'Arribado hace ' + estDur(now - arr)};
-}
 function estRender(){
   const m = new Map();
   DATA.forEach(r => [['lle',r.c1],['lle',r.ida],['sal',r.reg],['sal',r.c2]].forEach(([k,l]) => { if(!l || !l.f) return;
@@ -957,13 +945,11 @@ function estRender(){
   list.forEach(e => { const l = e.l, u = faUrl(l.v);
     if(l.f !== day){ if(day) html += '</section>'; html += `<h3 class="cday">${esc(fmtDate(l.f))}</h3><section class="cfl">`; day = l.f; }
     html += `<div class="est-row"><div class="info"><b><span class="est-kind ${e.k}">${e.k==='lle'?'Llegada':'Salida'}</span>${esc(l.v)}</b>
-      <small>${esc(l.o)} ${esc(l.s)} → ${esc(l.d)} ${esc(l.l)} · ${e.n} ${e.n===1?'pasajero':'pasajeros'}</small>
-      ${(st => `<span class="est-st st-${st.c}">${esc(st.t)}</span>`)(estStatus(l))}</div>
+      <small>${esc(l.o)} ${esc(l.s)} → ${esc(l.d)} ${esc(l.l)} · ${e.n} ${e.n===1?'pasajero':'pasajeros'}</small></div>
       ${u ? `<a class="fa-btn" href="${u}" target="_blank" rel="noopener">Ver estatus ↗</a>` : ''}</div>`; });
   if(day) html += '</section>';
   $('#eout').innerHTML = html || '<p class="cnote">No hay vuelos cargados.</p>';
 }
-setInterval(() => { if(CTL.tab === 'est' && !$('#est').hidden) estRender(); }, 60000);
 function ctlTab(t){
   CTL.tab = t; CTL.filter = 'all';
   document.querySelectorAll('.tabs button').forEach(b => b.setAttribute('aria-selected', b.dataset.tab === t));
@@ -1031,7 +1017,7 @@ $('#creset').addEventListener('click', async () => {
   if(pw === null) return;
   if(await sha256(pw.trim().toLowerCase()) !== RESET_H){ $('#cmsg').textContent = 'Contraseña incorrecta. No se borró nada.'; return; }
   CTL.marks[CTL.tab] = {}; ctlSave(); ctlRender(); $('#cmsg').textContent = 'Marcas borradas.'; });
-const APP_V = 75;
+const APP_V = 76;
 const PIN_KEY = 'manifiesto-pin';
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

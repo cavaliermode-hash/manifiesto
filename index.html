@@ -1089,12 +1089,11 @@ function ctlTab(t){
   $('#csum').hidden = true; $('#cday').textContent = 'Resumen por día';
   if(con) konRender(); else if(on) ctlRender();
 }
-let CON_OK = false; // contraseña del Concentrado: se pide una vez por visita, no se guarda
+// contraseña del Concentrado: se pide cada vez que se entra a la sección (no se guarda)
 async function conGate(){
-  if(CON_OK) return true;
   const pw = prompt('Para abrir el Concentrado escribe la contraseña:'); if(pw === null) return false;
   if(await sha256(pw.trim().toLowerCase()) !== RESET_H){ alert('Contraseña incorrecta.'); return false; }
-  return CON_OK = true;
+  return true;
 }
 document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', async () => {
   if(b.dataset.tab === 'con' && !(await conGate())) return; ctlTab(b.dataset.tab); }));
@@ -1162,7 +1161,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 85;
+const APP_V = 86;
 const PIN_KEY = 'manifiesto-pin';
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

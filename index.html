@@ -430,6 +430,7 @@ body.vctl .controls, body.vctl main.wrap{display:none}
 .ktable td.kn{font-weight:600}
 .ktable td.kf{white-space:nowrap;font-size:13px} .ktable td.kf small,.ktable td.kv small{display:block;color:var(--muted)}
 .ktable td.kv{font-size:13px}
+.ctab td.cc{font:600 13px/1.2 var(--mono);white-space:nowrap}.ctab td.cc button{all:unset;cursor:pointer;padding:3px 6px;border:1px solid var(--line);border-radius:6px;background:#fff}.ctab td.cc button:active{background:var(--green-soft)}.ctab td{padding:5px 8px}
 .ktable tr.st-ok{background:#F2F9F4} .ktable tr.st-ns{background:#FBE9E7}
 .kb{display:flex;gap:4px}
 .kb button{font:600 12px/1 var(--body);border-radius:7px;padding:7px 8px;cursor:pointer;border:1px solid var(--line);background:#fff;color:var(--ink);white-space:nowrap}
@@ -437,7 +438,7 @@ body.vctl .controls, body.vctl main.wrap{display:none}
 .kb .bns[aria-pressed="true"]{background:#B3261E;border-color:#B3261E;color:#fff}
 .ksync{font-size:13px;color:var(--muted);margin:4px 0 0}
 .kmsg{color:var(--green-dark);font-weight:600;min-height:1.2em;margin-top:8px}
-@media (max-width:560px){.ktable th:nth-child(3),.ktable td.kv{display:none}.kb{flex-direction:column}.kb button{padding:6px 6px}}
+@media (max-width:560px){#con .ktable th:nth-child(3),.ktable td.kv{display:none}.kb{flex-direction:column}.kb button{padding:6px 6px}}
 .cnote{color:var(--muted);font-size:13px;margin-top:10px}
 #cmsg{color:var(--green-dark);font-weight:600;min-height:1.2em;margin-top:8px}
 @media (max-width:480px){.cbtns button{min-width:0;padding:9px 8px}.cpx{gap:8px}}
@@ -456,7 +457,7 @@ header.board #upd:not(:empty)::before{content:" · "}
 .tabs{padding-top:6px!important;gap:5px!important;flex-wrap:nowrap!important;overflow-x:auto;scrollbar-width:none}
 .tabs::-webkit-scrollbar{display:none}
 .tabs button{padding:6px 12px!important;font-size:13px!important;white-space:nowrap;flex-shrink:0}
-@media (max-width:440px){.tabs .tlg{display:none}.tabs{gap:4px!important}.tabs button{padding:6px 8px!important;font-size:12px!important}}
+@media (max-width:440px){.tabs .tlg{display:none}.tabs{gap:3px!important}.tabs button{padding:6px 4px!important;font-size:11.5px!important;letter-spacing:-.01em}}
 </style>
 </head>
 <body>
@@ -485,6 +486,7 @@ header.board #upd:not(:empty)::before{content:" · "}
       <button role="tab" data-tab="lle" aria-selected="false">Llegadas</button>
       <button role="tab" data-tab="sal" aria-selected="false">Salidas</button>
       <button role="tab" data-tab="con" aria-selected="false">Concentrado</button>
+      <button role="tab" data-tab="cla" aria-selected="false">Claves</button>
     </nav>
   </div>
 </header>
@@ -513,6 +515,20 @@ header.board #upd:not(:empty)::before{content:" · "}
   <p id="kmsg" class="kmsg" role="status"></p>
   <p id="ksync" class="ksync"></p>
   <p class="cnote" id="knote">Las marcas son las mismas de Check-in y No show de llegadas y se guardan solo en este dispositivo. Para compartirlas usa "Copiar resumen".</p>
+</section>
+<section class="wrap ctl" id="cla" hidden>
+  <h2 class="ct">Claves de reserva</h2>
+  <p class="cs">Todas las claves en una sola lista. Ordena tocando el encabezado de cada columna; toca una clave para copiarla.</p>
+  <div class="ktable-wrap"><table class="ktable ctab">
+    <thead><tr>
+      <th><button data-sort="n">Nombre <span></span></button></th>
+      <th><button data-sort="ci">Ida <span></span></button></th>
+      <th><button data-sort="cr">Regreso <span></span></button></th>
+    </tr></thead>
+    <tbody id="cbody"></tbody>
+  </table></div>
+  <div class="ctools"><button id="clcopy">Copiar resumen</button></div>
+  <p id="cmsg2" class="kmsg" role="status"></p>
 </section>
 <section class="wrap ctl" id="ctl" hidden>
   <h2 class="ct" id="ct-t"></h2>
@@ -959,7 +975,7 @@ try{ CTL.marks = Object.assign(CTL.marks, JSON.parse(localStorage.getItem('ctl-c
 const ctlSave = () => { try{ localStorage.setItem('ctl-cc26', JSON.stringify(CTL.marks)); }catch(e){} };
 const ctlLeg = r => CTL.tab === 'lle' ? r.ida : r.reg;
 const ctlHora = l => String((CTL.tab === 'lle' ? l.l : l.s) || '').padStart(5,'0');
-const ctlSt = n => CTL.marks[CTL.tab][n] || 'pe';
+const ctlSt = n => (CTL.marks[CTL.tab] || {})[n] || 'pe';
 function ctlGroups(){
   const g = {};
   DATA.forEach(r => { const l = ctlLeg(r); if(!l || !l.f) return;
@@ -1039,6 +1055,30 @@ async function syncStart(pin){
   syncPull(); clearInterval(SYNC.timer); SYNC.timer = setInterval(() => { if(!document.hidden) syncPull(); }, 10000);
   document.addEventListener('visibilitychange', () => { if(!document.hidden) syncPull(); });
 }
+/* ---------- Claves de reserva ---------- */
+const CLA = {sort:'n', dir:1};
+function claRows(){
+  const rows = DATA.map(r => ({n:r.n, ci:r.ci || r.cl || '', cr:r.cr || ''}));
+  const k = CLA.sort;
+  rows.sort((a,b) => { let c = (k==='n' ? 0 : (!a[k]) - (!b[k])) || String(a[k]).localeCompare(String(b[k]),'es'); if(!c) c = a.n.localeCompare(b.n,'es'); return c * CLA.dir; });
+  return rows;
+}
+function claRender(){
+  document.querySelectorAll('#cla .ktable th button').forEach(b => { if(b.dataset.sort === CLA.sort){ b.setAttribute('aria-sort', CLA.dir>0?'ascending':'descending'); b.querySelector('span').dataset.a = CLA.dir>0?'▲':'▼'; } else b.removeAttribute('aria-sort'); });
+  const cell = c => `<td class="cc">${c ? `<button data-c="${esc(c)}" title="Copiar">${esc(c)}</button>` : '—'}</td>`;
+  $('#cbody').innerHTML = claRows().map(x => `<tr><td class="kn">${esc(tcase(x.n))}</td>${cell(x.ci)}${cell(x.cr)}</tr>`).join('');
+}
+async function claCopy(t){
+  try{ await navigator.clipboard.writeText(t); }
+  catch(e){ const a = document.createElement('textarea'); a.value = t; document.body.appendChild(a); a.select(); document.execCommand('copy'); a.remove(); }
+}
+document.querySelectorAll('#cla .ktable th button').forEach(b => b.addEventListener('click', () => {
+  if(CLA.sort === b.dataset.sort) CLA.dir *= -1; else { CLA.sort = b.dataset.sort; CLA.dir = 1; } claRender(); }));
+$('#cbody').addEventListener('click', async e => { const b = e.target.closest('button[data-c]'); if(!b) return; await claCopy(b.dataset.c); $('#cmsg2').textContent = `Clave ${b.dataset.c} copiada.`; });
+$('#clcopy').addEventListener('click', async () => {
+  const L = ['*Claves de reserva · CC26*', ''];
+  claRows().forEach(x => L.push(!x.cr || x.cr === x.ci ? `${tcase(x.n)} · ${x.ci || '—'}` : !x.ci ? `${tcase(x.n)} · ${x.cr}` : `${tcase(x.n)} · Ida ${x.ci} · Regreso ${x.cr}`));
+  await claCopy(L.join('\n')); $('#cmsg2').textContent = 'Resumen copiado. Pégalo en WhatsApp.'; });
 /* ---------- Concentrado de llegadas ---------- */
 const KON = {sort:'f', dir:1, filter:'all'};
 const kSt = n => CTL.marks.lle[n] || 'pe';
@@ -1053,7 +1093,7 @@ function kRows(){
 function konRender(){
   const all = kRows(), c = {ok:0, ns:0, pe:0}; all.forEach(x => c[x.s]++);
   $('#ks-all').textContent = all.length; $('#ks-ok').textContent = c.ok; $('#ks-ns').textContent = c.ns; $('#ks-pe').textContent = c.pe;
-  document.querySelectorAll('.ktable th button').forEach(b => { if(b.dataset.sort === KON.sort){ b.setAttribute('aria-sort', KON.dir>0?'ascending':'descending'); b.querySelector('span').dataset.a = KON.dir>0?'▲':'▼'; } else b.removeAttribute('aria-sort'); });
+  document.querySelectorAll('#con .ktable th button').forEach(b => { if(b.dataset.sort === KON.sort){ b.setAttribute('aria-sort', KON.dir>0?'ascending':'descending'); b.querySelector('span').dataset.a = KON.dir>0?'▲':'▼'; } else b.removeAttribute('aria-sort'); });
   const rows = all.filter(x => KON.filter === 'all' || x.s === KON.filter);
   $('#kbody').innerHTML = rows.map(x => { const l = x.r.ida;
     return `<tr class="st-${x.s}"><td class="kn">${esc(x.n)}</td><td class="kf">${esc(fmtDate(l.f))}<small>${esc(l.l)} · ${esc(l.o)}→${esc(l.d)}</small></td>
@@ -1061,7 +1101,7 @@ function konRender(){
       <button class="bns" data-n="${esc(x.n)}" data-s="ns" aria-pressed="${x.s==='ns'}">✗ No show</button></div></td></tr>`; }).join('')
     || '<tr><td colspan="4" class="cnote">No hay invitados en este filtro.</td></tr>';
 }
-document.querySelectorAll('.ktable th button').forEach(b => b.addEventListener('click', () => {
+document.querySelectorAll('#con .ktable th button').forEach(b => b.addEventListener('click', () => {
   if(KON.sort === b.dataset.sort) KON.dir *= -1; else { KON.sort = b.dataset.sort; KON.dir = 1; } konRender(); }));
 document.querySelectorAll('.kstat').forEach(b => b.addEventListener('click', () => {
   KON.filter = b.dataset.f; document.querySelectorAll('.kstat').forEach(x => x.setAttribute('aria-pressed', x === b)); konRender(); }));
@@ -1084,19 +1124,19 @@ function ctlTab(t){
   CTL.tab = t; CTL.filter = 'all';
   document.querySelectorAll('.tabs button').forEach(b => b.setAttribute('aria-selected', b.dataset.tab === t));
   document.querySelectorAll('.cstat').forEach(b => b.setAttribute('aria-pressed', b.dataset.f === 'all'));
-  const on = t !== 'man', con = t === 'con'; document.body.classList.toggle('vctl', on);
-  $('#ctl').hidden = !on || con; $('#con').hidden = !con; $('#cmsg').textContent = ''; $('#kmsg').textContent = '';
+  const on = t !== 'man', con = t === 'con', cla = t === 'cla'; document.body.classList.toggle('vctl', on);
+  $('#ctl').hidden = !on || con || cla; $('#con').hidden = !con; $('#cla').hidden = !cla; $('#cmsg2').textContent = ''; $('#cmsg').textContent = ''; $('#kmsg').textContent = '';
   $('#csum').hidden = true; $('#cday').textContent = 'Resumen por día';
-  if(con) konRender(); else if(on) ctlRender();
+  if(con) konRender(); else if(cla) claRender(); else if(on) ctlRender();
 }
 // contraseña del Concentrado: se pide cada vez que se entra a la sección (no se guarda)
 async function conGate(){
-  const pw = prompt('Para abrir el Concentrado escribe la contraseña:'); if(pw === null) return false;
+  const pw = prompt('Para abrir esta sección escribe la contraseña:'); if(pw === null) return false;
   if(await sha256(pw.trim().toLowerCase()) !== RESET_H){ alert('Contraseña incorrecta.'); return false; }
   return true;
 }
 document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', async () => {
-  if(b.dataset.tab === 'con' && !(await conGate())) return; ctlTab(b.dataset.tab); }));
+  if((b.dataset.tab === 'con' || b.dataset.tab === 'cla') && !(await conGate())) return; ctlTab(b.dataset.tab); }));
 document.querySelectorAll('.cstat').forEach(b => b.addEventListener('click', () => {
   CTL.filter = b.dataset.f; document.querySelectorAll('.cstat').forEach(x => x.setAttribute('aria-pressed', x === b)); ctlRender(); }));
 $('#cout').addEventListener('click', e => { const b = e.target.closest('button[data-n]'); if(!b) return;
@@ -1161,7 +1201,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 86;
+const APP_V = 87;
 const PIN_KEY = 'manifiesto-pin';
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

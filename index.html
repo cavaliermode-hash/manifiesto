@@ -499,6 +499,7 @@ header.board #upd:not(:empty)::before{content:" · "}
 #ctl .cfh .r{font-size:13px}
 #ctl .cfh .c{font-size:12px}
 #ctl .cfh .fa-link{font-size:11.5px}
+#ctl .cnames{columns:1}
 #ctl .cnames li{font-size:13px}
 #ctl .cimp p{font-size:13px}
 </style>
@@ -1254,7 +1255,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 91;
+const APP_V = 92;
 const PIN_KEY = 'manifiesto-pin';
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

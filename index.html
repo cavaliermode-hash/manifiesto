@@ -432,6 +432,7 @@ body.vctl .controls, body.vctl main.wrap{display:none}
 .ktable td.kv{font-size:13px}
 .ctab td.cc{font:600 13px/1.2 var(--mono);white-space:nowrap}.ctab td.cc button{all:unset;cursor:pointer;padding:3px 6px;border:1px solid var(--line);border-radius:6px;background:#fff}.ctab td.cc button:active{background:var(--green-soft)}.ctab td{padding:5px 8px}
 .ktable tr.st-ok{background:#F2F9F4} .ktable tr.st-ns{background:#FBE9E7}
+.kmode{display:flex;gap:6px;margin:4px 0 8px}.kmode button{flex:1;font:600 14px/1 var(--body);padding:10px 8px;border-radius:999px;border:1px solid var(--green-line);background:#fff;color:var(--green-dark);cursor:pointer}.kmode button[aria-pressed="true"]{background:var(--green);border-color:var(--green);color:#fff}
 .kb{display:flex;gap:4px}
 .kb button{font:600 12px/1 var(--body);border-radius:7px;padding:7px 8px;cursor:pointer;border:1px solid var(--line);background:#fff;color:var(--ink);white-space:nowrap}
 .kb .bok[aria-pressed="true"]{background:var(--green);border-color:var(--green);color:#fff}
@@ -491,7 +492,11 @@ header.board #upd:not(:empty)::before{content:" · "}
   </div>
 </header>
 <section class="wrap ctl" id="con" hidden>
-  <h2 class="ct">Concentrado de llegadas</h2>
+  <h2 class="ct" id="k-t">Concentrado de llegadas</h2>
+  <div class="kmode" role="group" aria-label="Ver">
+    <button data-m="lle" aria-pressed="true">Llegadas</button>
+    <button data-m="sal" aria-pressed="false">Regresos (Salidas)</button>
+  </div>
   <p class="cs">Todos los invitados en una sola lista, sin importar la fecha. Marca Check-in o No show y ordena tocando el encabezado de cada columna.</p>
   <div class="cstats" role="group" aria-label="Filtrar">
     <button class="kstat" data-f="all" aria-pressed="true"><b id="ks-all">0</b><span>Total</span></button>
@@ -502,7 +507,7 @@ header.board #upd:not(:empty)::before{content:" · "}
   <div class="ktable-wrap"><table class="ktable">
     <thead><tr>
       <th><button data-sort="n">Nombre <span></span></button></th>
-      <th><button data-sort="f">Llegada <span></span></button></th>
+      <th><button data-sort="f"><i id="k-fh" style="font-style:normal">Llegada</i> <span></span></button></th>
       <th><button data-sort="v">Vuelo <span></span></button></th>
       <th><button data-sort="s">Estatus <span></span></button></th>
     </tr></thead>
@@ -514,7 +519,7 @@ header.board #upd:not(:empty)::before{content:" · "}
   </div>
   <p id="kmsg" class="kmsg" role="status"></p>
   <p id="ksync" class="ksync"></p>
-  <p class="cnote" id="knote">Las marcas son las mismas de Check-in y No show de llegadas y se guardan solo en este dispositivo. Para compartirlas usa "Copiar resumen".</p>
+  <p class="cnote" id="knote">Las marcas de llegadas y de regresos se guardan por separado y solo en este dispositivo. Para compartirlas usa "Copiar resumen".</p>
 </section>
 <section class="wrap ctl" id="cla" hidden>
   <h2 class="ct">Claves de reserva</h2>
@@ -1080,46 +1085,52 @@ $('#clcopy').addEventListener('click', async () => {
   claRows().forEach(x => L.push(!x.cr || x.cr === x.ci ? `${tcase(x.n)} · ${x.ci || '—'}` : !x.ci ? `${tcase(x.n)} · ${x.cr}` : `${tcase(x.n)} · Ida ${x.ci} · Regreso ${x.cr}`));
   await claCopy(L.join('\n')); $('#cmsg2').textContent = 'Resumen copiado. Pégalo en WhatsApp.'; });
 /* ---------- Concentrado de llegadas ---------- */
-const KON = {sort:'f', dir:1, filter:'all'};
-const kSt = n => CTL.marks.lle[n] || 'pe';
+const KON = {sort:'f', dir:1, filter:'all', m:'lle'};
+const kSt = n => (CTL.marks[KON.m] || {})[n] || 'pe';
+const kLeg = r => KON.m === 'lle' ? r.ida : r.reg;
+const kHora = l => String((KON.m === 'lle' ? l.l : l.s) || '').padStart(5,'0');
 const kRank = {ok:0, ns:1, pe:2};
 function kRows(){
-  const rows = DATA.filter(r => r.ida).map(r => ({r, n:r.n, f:r.ida.f + ' ' + String(r.ida.l||'').padStart(5,'0'), v:r.ida.v, s:kSt(r.n)}));
+  const rows = DATA.filter(r => kLeg(r)).map(r => { const l = kLeg(r); return {r, l, n:r.n, f:l.f + ' ' + kHora(l), v:l.v, s:kSt(r.n)}; });
   const k = KON.sort;
   rows.sort((a,b) => { let c = k==='s' ? kRank[a.s]-kRank[b.s] : String(a[k]).localeCompare(String(b[k]),'es');
     if(!c) c = a.f.localeCompare(b.f) || a.n.localeCompare(b.n,'es'); return c * KON.dir; });
   return rows;
 }
 function konRender(){
+  const lle = KON.m === 'lle'; $('#k-t').textContent = lle ? 'Concentrado de llegadas' : 'Concentrado de regresos (salidas)'; $('#k-fh').textContent = lle ? 'Llegada' : 'Salida';
+  document.querySelectorAll('.kmode button').forEach(b => b.setAttribute('aria-pressed', b.dataset.m === KON.m));
   const all = kRows(), c = {ok:0, ns:0, pe:0}; all.forEach(x => c[x.s]++);
   $('#ks-all').textContent = all.length; $('#ks-ok').textContent = c.ok; $('#ks-ns').textContent = c.ns; $('#ks-pe').textContent = c.pe;
   document.querySelectorAll('#con .ktable th button').forEach(b => { if(b.dataset.sort === KON.sort){ b.setAttribute('aria-sort', KON.dir>0?'ascending':'descending'); b.querySelector('span').dataset.a = KON.dir>0?'▲':'▼'; } else b.removeAttribute('aria-sort'); });
   const rows = all.filter(x => KON.filter === 'all' || x.s === KON.filter);
-  $('#kbody').innerHTML = rows.map(x => { const l = x.r.ida;
-    return `<tr class="st-${x.s}"><td class="kn">${esc(x.n)}</td><td class="kf">${esc(fmtDate(l.f))}<small>${esc(l.l)} · ${esc(l.o)}→${esc(l.d)}</small></td>
+  $('#kbody').innerHTML = rows.map(x => { const l = x.l;
+    return `<tr class="st-${x.s}"><td class="kn">${esc(x.n)}</td><td class="kf">${esc(fmtDate(l.f))}<small>${esc(lle ? l.l : l.s)} · ${esc(l.o)}→${esc(l.d)}</small></td>
       <td class="kv">${esc(l.v)}</td><td><div class="kb"><button class="bok" data-n="${esc(x.n)}" data-s="ok" aria-pressed="${x.s==='ok'}">✓ Check-in</button>
       <button class="bns" data-n="${esc(x.n)}" data-s="ns" aria-pressed="${x.s==='ns'}">✗ No show</button></div></td></tr>`; }).join('')
     || '<tr><td colspan="4" class="cnote">No hay invitados en este filtro.</td></tr>';
 }
 document.querySelectorAll('#con .ktable th button').forEach(b => b.addEventListener('click', () => {
   if(KON.sort === b.dataset.sort) KON.dir *= -1; else { KON.sort = b.dataset.sort; KON.dir = 1; } konRender(); }));
+document.querySelectorAll('.kmode button').forEach(b => b.addEventListener('click', () => {
+  KON.m = b.dataset.m; KON.filter = 'all'; document.querySelectorAll('.kstat').forEach(x => x.setAttribute('aria-pressed', x.dataset.f === 'all')); $('#kmsg').textContent = ''; konRender(); }));
 document.querySelectorAll('.kstat').forEach(b => b.addEventListener('click', () => {
   KON.filter = b.dataset.f; document.querySelectorAll('.kstat').forEach(x => x.setAttribute('aria-pressed', x === b)); konRender(); }));
 $('#kbody').addEventListener('click', e => { const b = e.target.closest('button[data-n]'); if(!b) return;
-  const m = CTL.marks.lle, n = b.dataset.n; if(m[n] === b.dataset.s) delete m[n]; else m[n] = b.dataset.s; ctlSave(); konRender(); syncPush({op:'set', t:'lle', n, s:m[n]||''}); });
+  const t = KON.m, m = CTL.marks[t], n = b.dataset.n; if(m[n] === b.dataset.s) delete m[n]; else m[n] = b.dataset.s; ctlSave(); konRender(); syncPush({op:'set', t, n, s:m[n]||''}); });
 $('#kcopy').addEventListener('click', async () => {
   const all = kRows(), c = {ok:0, ns:0, pe:0}; all.forEach(x => c[x.s]++);
   const rows = all.filter(x => KON.filter === 'all' || x.s === KON.filter);
-  const L = ['*Concentrado de llegadas · CC26*', `Total ${all.length} · Check-in ${c.ok} · No show ${c.ns} · Pendientes ${c.pe}`, ''];
+  const L = [KON.m === 'lle' ? '*Concentrado de llegadas · CC26*' : '*Concentrado de regresos (salidas) · CC26*', `Total ${all.length} · Check-in ${c.ok} · No show ${c.ns} · Pendientes ${c.pe}`, ''];
   rows.forEach(x => L.push(`${x.s==='ok'?'✅':x.s==='ns'?'❌':'⏳'} ${tcase(x.n)}`));
   const t = L.join('\n');
   try{ await navigator.clipboard.writeText(t); }
   catch(e){ const a = document.createElement('textarea'); a.value = t; document.body.appendChild(a); a.select(); document.execCommand('copy'); a.remove(); }
   $('#kmsg').textContent = 'Resumen copiado. Pégalo en WhatsApp.'; });
 $('#kreset').addEventListener('click', async () => {
-  const pw = prompt('Para borrar las marcas de llegadas escribe la contraseña:'); if(pw === null) return;
+  const pw = prompt('Para borrar las marcas de ' + (KON.m === 'lle' ? 'llegadas' : 'regresos (salidas)') + ' escribe la contraseña:'); if(pw === null) return;
   if(await sha256(pw.trim().toLowerCase()) !== RESET_H){ $('#kmsg').textContent = 'Contraseña incorrecta. No se borró nada.'; return; }
-  CTL.marks.lle = {}; ctlSave(); konRender(); syncPush({op:'clear', t:'lle'}); $('#kmsg').textContent = 'Marcas borradas.'; });
+  CTL.marks[KON.m] = {}; ctlSave(); konRender(); syncPush({op:'clear', t:KON.m}); $('#kmsg').textContent = 'Marcas borradas.'; });
 function ctlTab(t){
   CTL.tab = t; CTL.filter = 'all';
   document.querySelectorAll('.tabs button').forEach(b => b.setAttribute('aria-selected', b.dataset.tab === t));
@@ -1201,7 +1212,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 87;
+const APP_V = 88;
 const PIN_KEY = 'manifiesto-pin';
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

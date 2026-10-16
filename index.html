@@ -502,6 +502,23 @@ header.board #upd:not(:empty)::before{content:" · "}
 #ctl .cnames{columns:1}
 #ctl .cnames li{font-size:13px}
 #ctl .cimp p{font-size:13px}
+/* ---------- Concentrado compacto ---------- */
+#con{padding-block:8px 28px}
+#con h2.ct{font-size:20px;margin:2px 0}
+#con .cs{font-size:12px;margin-bottom:6px}
+#con .kmode{margin:2px 0 6px;gap:4px}#con .kmode button{font-size:12.5px;padding:6px 8px}
+#con .cstats{gap:4px}
+#con .kstat{padding:3px 6px;border-radius:7px}#con .kstat b{font-size:16px}#con .kstat span{font-size:10.5px}
+#con .ktable{font-size:12.5px}
+#con .ktable th button{padding:6px 6px;font-size:10px}
+#con .ktable td{padding:4px 6px}
+#con .ktable td.kn{font-size:12.5px;line-height:1.25}
+#con .ktable td.kf{font-size:11.5px;line-height:1.25}#con .ktable td.kf small{font-size:10.5px}
+#con .ktable td.kv{font-size:11.5px}
+#con .kb{gap:3px}#con .kb button{font-size:11px;padding:4px 6px;border-radius:6px}
+#con .ctools button{font-size:13px;padding:7px 12px}
+#con .kmsg,#con .ksync,#con .cnote{font-size:12px;margin-top:4px}
+@media (max-width:560px){#con .kb button{padding:3px 5px;font-size:10.5px}}
 </style>
 </head>
 <body>
@@ -1255,7 +1272,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 92;
+const APP_V = 93;
 const PIN_KEY = 'manifiesto-pin';
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

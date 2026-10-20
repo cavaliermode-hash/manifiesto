@@ -528,7 +528,7 @@ header.board #upd:not(:empty)::before{content:" · "}
     <p class="eyebrow">Manifiesto de itinerario</p>
     <h2>Evento CC IP Foráneo</h2>
     <label for="gate-pin">Escribe el PIN de acceso que recibiste</label>
-    <input id="gate-pin" type="password" inputmode="text" autocapitalize="off" autocorrect="off" spellcheck="false" aria-describedby="gate-msg">
+    <input id="gate-pin" type="text" inputmode="text" autocapitalize="off" autocorrect="off" spellcheck="false" aria-describedby="gate-msg">
     <button type="submit">Entrar</button>
     <p id="gate-msg" role="alert"></p>
   </form>
@@ -1272,8 +1272,9 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 93;
+const APP_V = 94;
 const PIN_KEY = 'manifiesto-pin';
+const OPEN_PIN = 'ensenada'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}
 function showGate(msg){ gate.hidden = false; gmsg.textContent = msg || ''; gin.value = ''; setTimeout(()=>gin.focus(), 50); }
@@ -1290,7 +1291,7 @@ $('#gate-form').addEventListener('submit', e => { e.preventDefault(); const v = 
 fetch('data.json?v='+Date.now()).then(r=>r.json()).then(j=>{
   if(j.app && j.app > APP_V){ let tried=false; try{ tried=sessionStorage.getItem('reload'+j.app)==='1'; sessionStorage.setItem('reload'+j.app,'1'); }catch(e){}
     if(!tried){ location.replace(location.pathname+'?v='+j.app+Date.now()); return; } }
-  PACK = j; showGate(''); })
+  PACK = j; if(OPEN_PIN) unlock(OPEN_PIN); else showGate(''); })
   .catch(()=>{ gate.hidden = true; $('#out').innerHTML='<div class="empty">No se pudo cargar la información. Recarga la página.</div>'; });
 </script>
 </body>

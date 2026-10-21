@@ -519,6 +519,8 @@ header.board #upd:not(:empty)::before{content:" · "}
 #con .ctools button{font-size:13px;padding:7px 12px}
 #con .kmsg,#con .ksync,#con .cnote{font-size:12px;margin-top:4px}
 @media (max-width:560px){#con .kb button{padding:3px 5px;font-size:10.5px}}
+.qhint-w{padding-top:12px}.qhint{padding:14px 16px!important;margin:0}.qhint-w:has(#qhint[hidden]){display:none}
+body.vctl .qhint-w{display:none}
 </style>
 </head>
 <body>
@@ -619,6 +621,7 @@ header.board #upd:not(:empty)::before{content:" · "}
   <div id="csum" hidden></div>
   </section>
 
+<div class="wrap qhint-w"><div id="qhint" class="empty start qhint" hidden>🔎 <b>Escribe tu nombre y apellido</b> para ver tu itinerario y tu reserva.<br>Usa palabras completas, sin abreviar. Los acentos no importan.</div></div>
 <div class="controls">
   <div class="wrap">
     <div class="search">
@@ -930,11 +933,12 @@ function filtered(){
 function render(){
   const ctrl = document.querySelector('.controls');
   if(state.sel != null && DATA[state.sel]){
-    ctrl.hidden = true; $('#out').innerHTML = detailView(DATA[state.sel]); return;
+    ctrl.hidden = true; $('#qhint').hidden = true; $('#out').innerHTML = detailView(DATA[state.sel]); return;
   }
   ctrl.hidden = false;
   if(!norm(state.q).trim()){ $('#clear').hidden = true;
-    $('#out').innerHTML = `<div class="empty start">🔎 <b>Escribe tu nombre y apellido</b> para ver tu itinerario y tu reserva.<br>Usa palabras completas, sin abreviar. Los acentos no importan.</div>`; return; }
+    $('#qhint').hidden = false; $('#out').innerHTML = ''; return; }
+  $('#qhint').hidden = false;
   const rows = filtered();
   $('#count').innerHTML = `<b>${rows.length}</b> resultado${rows.length===1?'':'s'}`;
   $('#clear').hidden = !state.q;
@@ -1285,7 +1289,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 95;
+const APP_V = 96;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'ensenada'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

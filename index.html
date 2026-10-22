@@ -521,6 +521,7 @@ header.board #upd:not(:empty)::before{content:" · "}
 @media (max-width:560px){#con .kb button{padding:3px 5px;font-size:10.5px}}
 .qhint-w{padding-top:12px}.qhint{padding:14px 16px!important;margin:0}.qhint-w:has(#qhint[hidden]){display:none}
 body.vctl .qhint-w{display:none}
+.ctab td.cc .cl{display:inline-block;min-width:62px;font:600 10.5px var(--body);text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}.ctab td.cc br+.cl{margin-top:5px}
 </style>
 </head>
 <body>
@@ -589,8 +590,7 @@ body.vctl .qhint-w{display:none}
   <div class="ktable-wrap"><table class="ktable ctab">
     <thead><tr>
       <th><button data-sort="n">Nombre <span></span></button></th>
-      <th><button data-sort="ci">Ida <span></span></button></th>
-      <th><button data-sort="cr">Regreso <span></span></button></th>
+      <th><button data-sort="ci">Clave de reserva <span></span></button></th>
     </tr></thead>
     <tbody id="cbody"></tbody>
   </table></div>
@@ -1141,15 +1141,17 @@ async function syncStart(pin){
 /* ---------- Claves de reserva ---------- */
 const CLA = {sort:'n', dir:1};
 function claRows(){
-  const rows = DATA.map(r => ({n:r.n, ci:r.ci || r.cl || '', cr:r.cr || ''}));
+  const rows = DATA.map(r => ({n:r.n, ci:r.ci || (!r.cr ? r.cl || '' : ''), cr:r.cr || ''}));
   const k = CLA.sort;
-  rows.sort((a,b) => { let c = (k==='n' ? 0 : (!a[k]) - (!b[k])) || String(a[k]).localeCompare(String(b[k]),'es'); if(!c) c = a.n.localeCompare(b.n,'es'); return c * CLA.dir; });
+  rows.sort((a,b) => { const v = x => k==='ci' ? (x.ci || x.cr) : x[k]; let c = (k==='n' ? 0 : (!v(a)) - (!v(b))) || String(v(a)).localeCompare(String(v(b)),'es'); if(!c) c = a.n.localeCompare(b.n,'es'); return c * CLA.dir; });
   return rows;
 }
 function claRender(){
   document.querySelectorAll('#cla .ktable th button').forEach(b => { if(b.dataset.sort === CLA.sort){ b.setAttribute('aria-sort', CLA.dir>0?'ascending':'descending'); b.querySelector('span').dataset.a = CLA.dir>0?'▲':'▼'; } else b.removeAttribute('aria-sort'); });
-  const cell = c => `<td class="cc">${c ? `<button data-c="${esc(c)}" title="Copiar">${esc(c)}</button>` : '—'}</td>`;
-  $('#cbody').innerHTML = claRows().map(x => `<tr><td class="kn">${esc(tcase(x.n))}</td>${cell(x.ci)}${cell(x.cr)}</tr>`).join('');
+  const btn = c => `<button data-c="${esc(c)}" title="Copiar">${esc(c)}</button>`;
+  const cell = x => !x.ci && !x.cr ? '—' : (!x.cr || x.cr === x.ci) ? btn(x.ci) : !x.ci ? `<span class="cl">Regreso</span>${btn(x.cr)}`
+    : `<span class="cl">Ida</span>${btn(x.ci)}<br><span class="cl">Regreso</span>${btn(x.cr)}`;
+  $('#cbody').innerHTML = claRows().map(x => `<tr><td class="kn">${esc(tcase(x.n))}</td><td class="cc">${cell(x)}</td></tr>`).join('');
 }
 async function claCopy(t){
   try{ await navigator.clipboard.writeText(t); }
@@ -1160,7 +1162,7 @@ document.querySelectorAll('#cla .ktable th button').forEach(b => b.addEventListe
 $('#cbody').addEventListener('click', async e => { const b = e.target.closest('button[data-c]'); if(!b) return; await claCopy(b.dataset.c); $('#cmsg2').textContent = `Clave ${b.dataset.c} copiada.`; });
 $('#clcopy').addEventListener('click', async () => {
   const L = ['*Claves de reserva · Cumbre Universales*', ''];
-  claRows().forEach(x => L.push(!x.cr || x.cr === x.ci ? `${tcase(x.n)} · ${x.ci || '—'}` : !x.ci ? `${tcase(x.n)} · ${x.cr}` : `${tcase(x.n)} · Ida ${x.ci} · Regreso ${x.cr}`));
+  claRows().forEach(x => L.push(!x.cr || x.cr === x.ci ? `${tcase(x.n)} · ${x.ci || '—'}` : !x.ci ? `${tcase(x.n)} · Regreso ${x.cr}` : `${tcase(x.n)} · Ida ${x.ci} · Regreso ${x.cr}`));
   await claCopy(L.join('\n')); $('#cmsg2').textContent = 'Resumen copiado. Pégalo en WhatsApp.'; });
 /* ---------- Concentrado de llegadas ---------- */
 const KON = {sort:'f', dir:1, filter:'all', m:'lle'};
@@ -1290,7 +1292,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 97;
+const APP_V = 98;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'ensenada'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

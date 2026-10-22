@@ -1332,15 +1332,16 @@ const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}
 function showGate(msg){ gate.hidden = false; gmsg.textContent = msg || ''; gin.value = ''; setTimeout(()=>gin.focus(), 50); }
 let PACK = null, UNLOCKED = false;
-/* Cada vez que se sale de la app o de la página (cambiar de app, bloquear el celular, otra pestaña), se vuelve a pedir el PIN. */
+/* El PIN se pide solo al abrir la página. Mientras siga abierta (aunque cambie de app, bloquee el celular o cambie de pestaña) se queda adentro.
+   Al cerrar la página o la app, o al recargar, se pierde el acceso y se vuelve a pedir el PIN. */
 function lockNow(){
   if(!UNLOCKED || OPEN_PIN) return;
   if(!$('#agv').hidden) agvClose();
   if(CTL.tab !== 'man') ctlTab('man');
   document.body.classList.add('locked'); showGate('');
 }
-document.addEventListener('visibilitychange', () => { if(document.hidden) lockNow(); });
-window.addEventListener('pagehide', lockNow);
+/* Si el navegador guarda la página al salir de ella (para regresar con "Atrás"), se bloquea para que al volver pida el PIN. */
+window.addEventListener('pagehide', e => { if(e.persisted) lockNow(); });
 async function unlock(pin, fromSaved){
   try{ const d = await Cifra.descifrar(PACK.enc, pin);
     if(UNLOCKED){ gate.hidden = true; document.body.classList.remove('locked'); return; } // re-entrada tras salir de la app

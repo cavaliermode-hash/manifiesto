@@ -780,10 +780,11 @@ function detailView(r){
   </div>`;
 }
 /* ---------- Guía del viaje ---------- */
-// Diferencia con UTC en octubre de 2026 (Tijuana en horario de verano; CDMX sin horario de verano).
-const TZ = {TIJ:{off:-7,iana:'America/Tijuana',c:'Tijuana'},HMO:{off:-7,iana:'America/Hermosillo',c:'Hermosillo'},LMM:{off:-7,iana:'America/Mazatlan',c:'Los Mochis'},
+// Diferencia con UTC en noviembre de 2026 (Tijuana ya sin horario de verano; CDMX y Sonora sin horario de verano).
+const TZ = {TIJ:{off:-8,iana:'America/Tijuana',c:'Tijuana'},HMO:{off:-7,iana:'America/Hermosillo',c:'Hermosillo'},LMM:{off:-7,iana:'America/Mazatlan',c:'Los Mochis'},
   MEX:{off:-6,iana:'America/Mexico_City',c:'Ciudad de México'},NLU:{off:-6,iana:'America/Mexico_City',c:'AIFA'},PBC:{off:-6,iana:'America/Mexico_City',c:'Puebla'},
-  TLC:{off:-6,iana:'America/Mexico_City',c:'Toluca'},GDL:{off:-6,iana:'America/Mexico_City',c:'Guadalajara'},MTY:{off:-6,iana:'America/Monterrey',c:'Monterrey'}};
+  TLC:{off:-6,iana:'America/Mexico_City',c:'Toluca'},GDL:{off:-6,iana:'America/Mexico_City',c:'Guadalajara'},MTY:{off:-6,iana:'America/Monterrey',c:'Monterrey'},
+  CUL:{off:-7,iana:'America/Mazatlan',c:'Culiacán'},MID:{off:-6,iana:'America/Merida',c:'Mérida'},QRO:{off:-6,iana:'America/Mexico_City',c:'Querétaro'}};
 const tzOf = c => TZ[c] || {off:-6,iana:'America/Mexico_City',c:c};
 function when(l, which){ // Date absoluto de salida ('s') o llegada ('l')
   const code = which==='s' ? l.o : l.d, hm = (which==='s'?l.s:l.l)||'00:00';
@@ -1289,7 +1290,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 96;
+const APP_V = 97;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'ensenada'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

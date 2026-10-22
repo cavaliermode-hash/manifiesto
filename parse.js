@@ -57,9 +57,13 @@
            .replace(/Hotel (Torre Lucerna) Hotel (Ensenada)/, 'Hotel $1 $2').replace(/\b(\d{1,2})(ene|feb|mar|abr|may|jun|jul|ago|sep|oct|nov|dic)\b/gi, '$1 $2').replace(/ Al /g, ' al ').replace(/\s+/g, ' ').trim();
       return t.charAt(0).toUpperCase() + t.slice(1) + (/[.)]$/.test(t) ? '' : '.');
     };
+    // Ciudades escritas con nombre → código de aeropuerto.
+    const CITY = {MEXICO:'MEX', 'CIUDAD DE MEXICO':'MEX', CDMX:'MEX', HERMOSILLO:'HMO', GUADALAJARA:'GDL', MERIDA:'MID', MONTERREY:'MTY', QUERETARO:'QRO', QUETERARO:'QRO',
+      CULIACAN:'CUL', TIJUANA:'TIJ', 'LOS MOCHIS':'LMM', TOLUCA:'TLC', PUEBLA:'PBC', CANCUN:'CUN', 'LOS CABOS':'SJD', AIFA:'NLU', MAZATLAN:'MZT', CHIHUAHUA:'CUU', LEON:'BJX', OAXACA:'OAX', VERACRUZ:'VER', VILLAHERMOSA:'VSA', 'SAN LUIS POTOSI':'SLP', AGUASCALIENTES:'AGU', MORELIA:'MLM', TORREON:'TRC', 'CIUDAD JUAREZ':'CJS', TAMPICO:'TAM', 'PUERTO VALLARTA':'PVR', 'LA PAZ':'LAP', 'CIUDAD OBREGON':'CEN', GUAYMAS:'GYM'};
+    const ap = v => { const u = up(v ?? ''); return CITY[u] || u; };
     const leg = (r, m) => {
       if (!m || empty(r[m['VUELO']])) return null;
-      return { v: clean(r[m['VUELO']]).toUpperCase().replace(/VIVAAEROBUS/g, 'VIVA AEROBUS').replace(/\s+/g, ' ').replace(/^AM (?=\d)/, 'AEROMEXICO ').replace(/^Y4 (?=\d)/, 'VOLARIS ').replace(/^VB (?=\d)/, 'VIVA AEROBUS '), f: toDate(r[m['FECHA']]), o: up(r[m['ORIGEN']] ?? ''), d: up(r[m['DESTINO']]),
+      return { v: clean(r[m['VUELO']]).toUpperCase().replace(/VIVAAEROBUS/g, 'VIVA AEROBUS').replace(/\s+/g, ' ').replace(/^AM (?=\d)/, 'AEROMEXICO ').replace(/^Y4 (?=\d)/, 'VOLARIS ').replace(/^VB (?=\d)/, 'VIVA AEROBUS '), f: toDate(r[m['FECHA']]), o: ap(r[m['ORIGEN']]), d: ap(r[m['DESTINO']]),
                s: toTime(r[m['SALE']]), l: toTime(r[m['LLEGA']]) };
     };
     const rows = [];
@@ -69,10 +73,10 @@
       // Reserva de ida (RESERVA LLEGADA / RESERVA IDA) y de regreso (RESERVA REGRESO).
       // Reportes anteriores traen una sola columna RESERVA AEROLINEA: se usa para ambos tramos.
       const rk = Object.keys(res);
-      const idaKey = rk.find(k => /^RESERVA (LLEGADA|IDA)/.test(k));
-      const regKey = rk.find(k => /^RESERVA (REGRESO|VUELTA|SALIDA)/.test(k));
+      const idaKey = rk.find(k => /^(RESERVA|CLAVE DE AEROLINEA) (LLEGADA|IDA)/.test(k));
+      const regKey = rk.find(k => /^(RESERVA|CLAVE DE AEROLINEA) (REGRESO|VUELTA|SALIDA)/.test(k));
       const unaKey = rk.find(k => /^RESERVA AEROLINEA/.test(k));
-      const code = k => k && !empty(r[res[k]]) ? clean(r[res[k]]).toUpperCase() : '';
+      const code = k => k && !empty(r[res[k]]) && !/^X+$/i.test(clean(r[res[k]])) ? clean(r[res[k]]).toUpperCase() : ''; // XXXXXX = clave aún no asignada
       const x = { n: up(r[iName]).replace(/AEROMEXICO/g, 'AM'), // corrige reemplazo accidental de AM -> AEROMEXICO en nombres
                  st: clean(r[iSt]).toUpperCase(), rol: iRol >= 0 ? clean(r[iRol]) : '', rg: iRegion >= 0 && !empty(r[iRegion]) ? up(r[iRegion]) : '',
         c1: leg(r, C.c1), ida: leg(r, C.ida), reg: leg(r, C.reg), c2: leg(r, C.c2),

@@ -1327,7 +1327,7 @@ $('#creset').addEventListener('click', async () => {
 })();
 const APP_V = 103;
 const PIN_KEY = 'manifiesto-pin';
-const OPEN_PIN = ''; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
+const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}
 function showGate(msg){ gate.hidden = false; gmsg.textContent = msg || ''; gin.value = ''; setTimeout(()=>gin.focus(), 50); }

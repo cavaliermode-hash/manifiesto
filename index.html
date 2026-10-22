@@ -530,6 +530,15 @@ header.board #upd:not(:empty)::before{content:" · "}
 .qhint-w{padding-top:12px}.qhint{padding:14px 16px!important;margin:0}.qhint-w:has(#qhint[hidden]){display:none}
 body.vctl .qhint-w{display:none}
 .ctab td.cc .cl{display:inline-block;min-width:62px;font:600 10.5px var(--body);text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}.ctab td.cc br+.cl{margin-top:5px}
+.agv{position:fixed;inset:0;z-index:1000;background:#fff;display:flex;flex-direction:column}
+.agv[hidden]{display:none}
+.agv-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:calc(env(safe-area-inset-top,0px) + 10px) 14px 10px;background:var(--green);color:#fff;box-shadow:0 2px 6px rgba(0,0,0,.15)}
+.agv-bar button{font:700 16px/1 var(--body);background:#fff;color:var(--green);border:0;border-radius:8px;padding:10px 14px;cursor:pointer}
+.agv-bar a{font:600 14px/1 var(--body);color:#fff;text-decoration:none;border:1.5px solid rgba(255,255,255,.8);border-radius:8px;padding:9px 12px;white-space:nowrap}
+.agv-body{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;background:#eef1ef;padding:10px 10px calc(env(safe-area-inset-bottom,0px) + 16px)}
+.agv-body img{display:block;width:100%;max-width:1100px;height:auto;margin:0 auto;border-radius:6px;box-shadow:0 1px 6px rgba(0,0,0,.12);cursor:zoom-in}
+.agv-body.zoom img{width:250%;max-width:none;cursor:zoom-out}
+.agv-tip{margin:0;padding:6px 14px;font-size:12.5px;color:var(--muted);background:#eef1ef;text-align:center}
 </style>
 </head>
 <body>
@@ -662,7 +671,7 @@ body.vctl .qhint-w{display:none}
     </div>
   </section>
   <section class="agenda" id="agenda" aria-labelledby="ag-t">
-    <div class="ag-head"><div><h2 id="ag-t">Agenda del evento</h2><p>Segunda Cumbre Universales · San Carlos, Sonora · Horarios en hora local de Sonora</p></div><a class="ag-pdf" href="agenda-cumbre.pdf" target="_blank" rel="noopener">📄 Ver agenda en PDF ↗</a></div>
+    <div class="ag-head"><div><h2 id="ag-t">Agenda del evento</h2><p>Segunda Cumbre Universales · San Carlos, Sonora · Horarios en hora local de Sonora</p></div><a class="ag-pdf" href="agenda-cumbre.pdf" id="ag-open">📄 Ver agenda completa</a></div>
     <div class="ag-tabs" role="tablist" aria-label="Días del evento">
       <button role="tab" id="tab-3" aria-controls="day-3" data-day="3"><b>3</b><span>Martes</span></button>
       <button role="tab" id="tab-4" aria-controls="day-4" data-day="4"><b>4</b><span>Miércoles</span></button>
@@ -700,6 +709,11 @@ body.vctl .qhint-w{display:none}
   <p class="foot">Horarios en hora local de cada aeropuerto.</p>
 </main>
 
+<div id="agv" class="agv" role="dialog" aria-modal="true" aria-label="Agenda del evento" hidden>
+  <div class="agv-bar"><button id="agv-back" type="button">‹ Regresar</button><a href="agenda-cumbre.pdf" download="Agenda Segunda Cumbre Universales.pdf" target="_blank" rel="noopener">⬇ Descargar PDF</a></div>
+  <p class="agv-tip">Toca la imagen para acercar o alejar.</p>
+  <div class="agv-body"><img id="agv-img" alt="Agenda de la Segunda Cumbre Universales: actividades del 3 al 5 de noviembre, dress code y recomendaciones"></div>
+</div>
 <script src="parse.js"></script>
 <script src="cifra.js"></script>
 <script>
@@ -1006,7 +1020,17 @@ $('#out').addEventListener('click', e=>{
 });
 function openPax(i){ state.sel = i; try{ history.pushState({sel:i}, ''); }catch(e){} window.scrollTo({top:0}); render(); const b=document.getElementById('back'); if(b) b.focus({preventScroll:true}); }
 function closePax(){ state.sel = null; render(); const q=document.getElementById('q'); if(q) q.focus({preventScroll:true}); }
-window.addEventListener('popstate', e => { state.sel = e.state && e.state.sel!=null ? e.state.sel : null; render(); });
+window.addEventListener('popstate', e => { if(!$('#agv').hidden){ agvClose(); return; } state.sel = e.state && e.state.sel!=null ? e.state.sel : null; render(); });
+/* ---------- Visor de agenda con botón Regresar ---------- */
+function agvClose(){ $('#agv').hidden = true; document.body.style.overflow = ''; const o = $('#ag-open'); if(o) o.focus({preventScroll:true}); }
+document.addEventListener('click', e => { const a = e.target.closest('#ag-open'); if(!a) return; e.preventDefault();
+  const img = $('#agv-img'); if(!img.src) img.src = 'agenda-cumbre.jpg';
+  $('.agv-body').classList.remove('zoom'); $('#agv').hidden = false; document.body.style.overflow = 'hidden'; $('.agv-body').scrollTop = 0;
+  history.pushState(Object.assign({}, history.state, {agv:1}), ''); $('#agv-back').focus(); });
+$('#agv-img').addEventListener('click', e => { const bd = $('.agv-body'), r = e.target.getBoundingClientRect(), fx = (e.clientX - r.left) / r.width, fy = (e.clientY - r.top) / r.height;
+  bd.classList.toggle('zoom'); if(bd.classList.contains('zoom')){ const im = e.target; bd.scrollLeft = fx * im.offsetWidth - bd.clientWidth / 2; bd.scrollTop = fy * im.offsetHeight - bd.clientHeight / 2; } });
+$('#agv-back').addEventListener('click', () => { if(history.state && history.state.agv) history.back(); else agvClose(); });
+document.addEventListener('keydown', e => { if(e.key === 'Escape' && !$('#agv').hidden) $('#agv-back').click(); });
 /* ---------- Agenda ---------- */
 const AGENDA = {
   3:{d:'Martes 3 de noviembre', f:'2026-11-03', it:[
@@ -1300,7 +1324,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 100;
+const APP_V = 101;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = ''; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

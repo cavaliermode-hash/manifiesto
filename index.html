@@ -539,6 +539,7 @@ body.vctl .qhint-w{display:none}
 .agv-body img{display:block;width:100%;max-width:1100px;height:auto;margin:0 auto;border-radius:6px;box-shadow:0 1px 6px rgba(0,0,0,.12);cursor:zoom-in}
 .agv-body.zoom img{width:250%;max-width:none;cursor:zoom-out}
 .agv-tip{margin:0;padding:6px 14px;font-size:12.5px;color:var(--muted);background:#eef1ef;text-align:center}
+body.locked>*:not(#gate){visibility:hidden}
 </style>
 </head>
 <body>
@@ -1324,16 +1325,26 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 101;
+const APP_V = 102;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = ''; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}
 function showGate(msg){ gate.hidden = false; gmsg.textContent = msg || ''; gin.value = ''; setTimeout(()=>gin.focus(), 50); }
-let PACK = null;
+let PACK = null, UNLOCKED = false;
+/* Cada vez que se sale de la app o de la página (cambiar de app, bloquear el celular, otra pestaña), se vuelve a pedir el PIN. */
+function lockNow(){
+  if(!UNLOCKED || OPEN_PIN) return;
+  if(!$('#agv').hidden) agvClose();
+  if(CTL.tab !== 'man') ctlTab('man');
+  document.body.classList.add('locked'); showGate('');
+}
+document.addEventListener('visibilitychange', () => { if(document.hidden) lockNow(); });
+window.addEventListener('pagehide', lockNow);
 async function unlock(pin, fromSaved){
   try{ const d = await Cifra.descifrar(PACK.enc, pin);
-    DATA = d.filas; gate.hidden = true; $('#upd').textContent = 'Actualizado: ' + PACK.actualizado; init(); syncStart(pin); }
+    if(UNLOCKED){ gate.hidden = true; document.body.classList.remove('locked'); return; } // re-entrada tras salir de la app
+    UNLOCKED = true; DATA = d.filas; gate.hidden = true; $('#upd').textContent = 'Actualizado: ' + PACK.actualizado; init(); syncStart(pin); }
   catch(e){ showGate('PIN incorrecto. Revísalo e intenta de nuevo.'); }
 }
 $('#gate-form').addEventListener('submit', e => { e.preventDefault(); const v = gin.value.trim();

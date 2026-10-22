@@ -549,7 +549,7 @@ body.locked>*:not(#gate){visibility:hidden}
     <p class="eyebrow">Manifiesto de itinerario</p>
     <h2>SEGUNDA CUMBRE UNIVERSALES</h2>
     <label for="gate-pin">Escribe el PIN de acceso que recibiste</label>
-    <input id="gate-pin" type="text" inputmode="text" autocapitalize="off" autocorrect="off" spellcheck="false" aria-describedby="gate-msg">
+    <input id="gate-pin" type="password" inputmode="text" autocapitalize="off" autocorrect="off" spellcheck="false" aria-describedby="gate-msg">
     <button type="submit">Entrar</button>
     <p id="gate-msg" role="alert"></p>
   </form>
@@ -1325,7 +1325,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 102;
+const APP_V = 103;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = ''; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

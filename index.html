@@ -237,12 +237,12 @@ table.rep{font-size:13px}
 .cc-big b{font-size:30px}
 .cc-small{font-size:14px;opacity:.9;margin-top:4px}
 .guide{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
-.steps{border:1px solid var(--line);border-radius:10px;padding:9px 12px;background:var(--surface)}
-.steps h3{margin:0 0 6px;font:700 14px/1.2 var(--display);letter-spacing:.05em;text-transform:uppercase;color:var(--green)}
+.steps{border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:var(--surface)}
+.steps h3{margin:0 0 8px;font:700 16px/1.2 var(--display);letter-spacing:.05em;text-transform:uppercase;color:var(--green)}
 .steps ol{list-style:none;margin:0;padding:0;display:grid;gap:0}
-.steps li{display:grid;grid-template-columns:14px 1fr;gap:8px;position:relative;padding-bottom:6px;font-size:13px;line-height:1.3}
-.steps li:not(:last-child)::before{content:"";position:absolute;left:5px;top:13px;bottom:0;width:2px;background:var(--line)}
-.steps .dot{width:12px;height:12px;border-radius:50%;border:2px solid var(--green);background:#fff;margin-top:2px;position:relative;z-index:1;box-sizing:border-box}
+.steps li{display:grid;grid-template-columns:18px 1fr;gap:10px;position:relative;padding-bottom:12px;font-size:14px}
+.steps li:not(:last-child)::before{content:"";position:absolute;left:6px;top:16px;bottom:0;width:2px;background:var(--line)}
+.steps .dot{width:14px;height:14px;border-radius:50%;border:2px solid var(--green);background:#fff;margin-top:2px;position:relative;z-index:1}
 .steps .st-done .dot{background:var(--green)}
 .steps .st-now .dot{background:#F2B233;border-color:#C98A00;box-shadow:0 0 0 4px rgba(242,178,51,.25)}
 .steps .st-done b{color:var(--muted)}
@@ -250,7 +250,6 @@ table.rep{font-size:13px}
 .pill-now{display:inline-block;font:700 11px var(--body);background:var(--green-soft);color:var(--green);border-radius:99px;padding:2px 8px;margin-left:4px;vertical-align:1px}
 .st-now .pill-now{background:#FCEBCB;color:#7A4B00}
 .abtn{display:inline-flex;align-items:center;gap:6px;margin-top:4px;font:700 13.5px var(--body);color:var(--green);border:1.5px solid var(--green);border-radius:8px;padding:8px 12px;text-decoration:none}
-.steps .abtn{margin-top:2px;font-size:12.5px;padding:5px 10px;border-radius:7px}
 .abtn:hover{background:var(--green);color:#fff}
 .dactions{margin-top:12px}
 .abtn2{font:700 14px var(--body);background:var(--green);color:#fff;border:0;border-radius:8px;padding:10px 14px;cursor:pointer}
@@ -873,9 +872,10 @@ function stepBlock(title, legs){
   const st = (t0,t1) => now>=t1 ? 'done' : now>=t0 ? 'now' : 'next';
   const ciState = st(ci, dep);
   const steps = [
-    // Compacto: check-in y hora límite en el aeropuerto en un solo paso; la llegada va en la línea del vuelo.
-    {k:ciState, t:'Check-in en línea', d:`Abre ${fmtAt(ci,l0.o)} · aeropuerto a más tardar ${fmtAt(apt,l0.o).replace(/^.*, /,'')}`, x: ciState==='now' ? 'Disponible ahora' : ciState==='next' ? 'Abre '+relTxt(ci-now) : ''},
-    ...legs.map(l=>({k:st(when(l,'s'),when(l,'l')), t:`${esc(l.v)} · ${fmtDate(l.f)}`, d:`${esc(l.o)} ${l.s} → ${esc(l.d)} ${l.l} (hora local)`, x:''}))
+    {k:ciState, t:'Check-in en línea', d:`Abre ${fmtAt(ci,l0.o)} (24 h antes)`, x: ciState==='now' ? 'Disponible ahora' : ciState==='next' ? 'Abre '+relTxt(ci-now) : ''},
+    {k:st(apt,dep), t:'Llega al aeropuerto', d:`A más tardar ${fmtAt(apt,l0.o)} · ${tzOf(l0.o).c}`, x:''},
+    ...legs.map(l=>({k:st(when(l,'s'),when(l,'l')), t:`Vuelo ${esc(l.v)}`, d:`${esc(l.o)} ${l.s} → ${esc(l.d)} ${l.l} · ${fmtDate(l.f)}`, x:''})),
+    {k: now>=when(lz,'l') ? 'done':'next', t:`Llegada a ${tzOf(lz.d).c}`, d:`${fmtAt(when(lz,'l'),lz.d)} (hora local)`, x:''}
   ];
   return `<section class="steps">
     <h3>${title}</h3>
@@ -1430,7 +1430,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 145;
+const APP_V = 146;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

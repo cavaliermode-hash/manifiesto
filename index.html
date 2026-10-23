@@ -3,6 +3,9 @@
 <head>
 <meta name="msvalidate.01" content="E384FB16496525020663B3D89EB4B8A3" />
 <meta charset="utf-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex">
 <link rel="manifest" href="manifest.webmanifest">
@@ -1381,7 +1384,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 104;
+const APP_V = 105;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');
@@ -1408,7 +1411,20 @@ $('#gate-form').addEventListener('submit', e => { e.preventDefault(); const v = 
   if(!v){ gmsg.textContent = 'Escribe el PIN.'; return; }
   if(!PACK){ gmsg.textContent = 'Cargando… intenta de nuevo en un momento.'; return; }
   gmsg.textContent = 'Verificando…'; unlock(v, false); });
-fetch('data.json?v='+Date.now()).then(r=>r.json()).then(j=>{
+/* Siempre al día: al abrir, al volver a la app/pestaña o al regresar con "Atrás", revisa si hay versión nueva
+   de la página o datos nuevos y, si los hay, recarga la página con lo más reciente (sin usar la copia guardada). */
+let lastCheck = 0;
+function freshReload(tag){ let tried = false; try{ tried = sessionStorage.getItem('reload' + tag) === '1'; sessionStorage.setItem('reload' + tag, '1'); }catch(e){}
+  if(!tried) location.replace(location.pathname + '?v=' + Date.now()); }
+async function checkUpdate(){
+  if(!PACK || Date.now() - lastCheck < 15000) return; lastCheck = Date.now();
+  try{ const j = await (await fetch('data.json?v=' + Date.now(), {cache:'no-store'})).json();
+    if((j.app && j.app > APP_V) || (j.actualizado && j.actualizado !== PACK.actualizado)) freshReload((j.app || '') + '|' + j.actualizado); }catch(e){}
+}
+document.addEventListener('visibilitychange', () => { if(!document.hidden) checkUpdate(); });
+window.addEventListener('pageshow', e => { if(e.persisted) checkUpdate(); });
+window.addEventListener('focus', checkUpdate);
+fetch('data.json?v='+Date.now(), {cache:'no-store'}).then(r=>r.json()).then(j=>{
   if(j.app && j.app > APP_V){ let tried=false; try{ tried=sessionStorage.getItem('reload'+j.app)==='1'; sessionStorage.setItem('reload'+j.app,'1'); }catch(e){}
     if(!tried){ location.replace(location.pathname+'?v='+j.app+Date.now()); return; } }
   PACK = j; if(OPEN_PIN) unlock(OPEN_PIN); else showGate(''); })

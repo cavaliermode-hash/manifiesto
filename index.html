@@ -375,6 +375,8 @@ body.tierra .solo-vuelo,body.tierra [data-solo-vuelo]{display:none!important}
 .tabs{display:flex;gap:6px;padding-block:10px 0;flex-wrap:wrap}
 .tabs button{font:600 15px/1 var(--body);padding:10px 16px;border-radius:999px;border:1px solid var(--green-line);background:#fff;color:var(--green-dark);cursor:pointer}
 .tabs button[aria-selected="true"]{background:var(--green);border-color:var(--green);color:#fff}
+.tabs.vsub{padding-top:8px;border-top:1px dashed var(--green-line);margin-top:8px}
+.tabs.vsub button[aria-selected="true"]{background:var(--green-dark,#0c4f23);border-color:var(--green-dark,#0c4f23)}
 body.vctl .controls, body.vctl main.wrap{display:none}
 .ctl{padding-block:12px 40px}
 .ctl h2.ct{margin:4px 0 2px;font:700 26px/1 var(--display);text-transform:uppercase;color:var(--green)}
@@ -571,6 +573,9 @@ body.locked>*:not(#gate){visibility:hidden}
     <div class="sub" id="upd"></div>
     <nav class="tabs" role="tablist" aria-label="Apartados">
       <button role="tab" data-tab="man" aria-selected="true">Manifiesto</button>
+      <button role="tab" data-veci="1" aria-selected="false">VECI</button>
+    </nav>
+    <nav class="tabs vsub" aria-label="Secciones VECI" hidden>
       <button role="tab" data-tab="lle" aria-selected="false">Llegadas</button>
       <button role="tab" data-tab="sal" aria-selected="false">Salidas</button>
       <button role="tab" data-tab="pyt" aria-selected="false">Traslados y pernoctas</button>
@@ -1346,6 +1351,8 @@ $('#kreset').addEventListener('click', async () => {
 function ctlTab(t){
   CTL.tab = t; CTL.filter = 'all';
   document.querySelectorAll('.tabs button[data-tab]').forEach(b => b.setAttribute('aria-selected', b.dataset.tab === t));
+  const vb = document.querySelector('.tabs [data-veci]'); if(vb) vb.setAttribute('aria-selected', t !== 'man');
+  const vs = document.querySelector('.tabs.vsub'); if(vs) vs.hidden = t === 'man';
   document.querySelectorAll('.cstat').forEach(b => b.setAttribute('aria-pressed', b.dataset.f === 'all'));
   const on = t !== 'man', con = t === 'con', cla = t === 'cla', pyt = t === 'pyt'; document.body.classList.toggle('vctl', on);
   $('#ctl').hidden = !on || con || cla || pyt; $('#con').hidden = !con; $('#cla').hidden = !cla; $('#pyt').hidden = !pyt; $('#pmsg').textContent = ''; $('#cmsg2').textContent = ''; $('#cmsg').textContent = ''; $('#kmsg').textContent = '';
@@ -1359,8 +1366,11 @@ async function conGate(){
   return true;
 }
 document.querySelectorAll('.tabs button[data-tab]').forEach(b => b.addEventListener('click', async () => {
-  // todas las pestañas del equipo piden contraseña
-  if(b.dataset.tab !== 'man' && !(await conGate())) return; ctlTab(b.dataset.tab); }));
+  // dentro de VECI se cambia de sección sin volver a pedir contraseña
+  if(b.dataset.tab !== 'man' && CTL.tab === 'man' && !(await conGate())) return; ctlTab(b.dataset.tab); }));
+/* VECI: una sola pestaña con contraseña que agrupa Llegadas, Salidas, Traslados y pernoctas, Concentrado y Claves. */
+document.querySelector('.tabs [data-veci]').addEventListener('click', async () => {
+  if(CTL.tab !== 'man') return; if(!(await conGate())) return; ctlTab('lle'); });
 document.querySelectorAll('.cstat').forEach(b => b.addEventListener('click', () => {
   CTL.filter = b.dataset.f; document.querySelectorAll('.cstat').forEach(x => x.setAttribute('aria-pressed', x === b)); ctlRender(); }));
 $('#cout').addEventListener('click', e => { const b = e.target.closest('button[data-n]'); if(!b) return;
@@ -1425,7 +1435,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 138;
+const APP_V = 139;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

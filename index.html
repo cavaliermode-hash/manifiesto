@@ -460,6 +460,9 @@ body.vctl .controls, body.vctl main.wrap{display:none}
 @media (max-width:480px){.cbtns button{min-width:0;padding:9px 8px}.cpx{gap:8px}}
 @media print{.tabs,.cstats,.ctools,.cnote,.cbtns{display:none!important}.cpx.st-ok .who b::after{content:" ✓ check-in"}.cpx.st-ns .who b::after{content:" ✗ no show"}}
 header.board{position:sticky;top:0;z-index:20}
+/* En Llegadas, Salidas, Concentrado, Claves y Hotel y traslados el encabezado no se queda fijo: así la lista usa toda la pantalla y no se tapan nombres al deslizar. */
+body.vctl header.board{position:static}
+body.vctl .cstats{top:0!important}
 .controls{top:var(--hh,0px)!important}
 .cstats{top:var(--hh,0px)}
 /* Encabezado compacto y completo */
@@ -1420,7 +1423,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 130;
+const APP_V = 131;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

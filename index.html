@@ -1065,7 +1065,7 @@ const AGENDA = {
   3:{d:'Martes 3 de noviembre', f:'2026-11-03', it:[
     ['','','Llegadas','Aeropuerto de Hermosillo','', 'Durante la mañana'],
     ['11:30','13:30','Traslado aeropuerto de Hermosillo a Hotel Marinaterra','',1],
-    ['13:30','14:30','Llegada al hotel','Resguardo de equipaje'],
+    ['','','Llegada al hotel','Resguardo de equipaje'], // sin hora: las llegadas son variadas
     ['14:30','14:45','Traslado a tour','',1],
     ['15:00','17:00','Tour catamarán','Ropa cómoda de playa y bolsa pequeña impermeable'],
     ['17:00','17:15','Traslado al hotel','',1],
@@ -1406,7 +1406,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 119;
+const APP_V = 120;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

@@ -430,6 +430,8 @@ body.vctl .controls, body.vctl main.wrap{display:none}
 .kstat[aria-pressed="true"]{border-color:var(--green);box-shadow:inset 0 0 0 2px var(--green)}
 .kstat.ok b{color:var(--green)} .kstat.ns b{color:#B3261E} .kstat.pe b{color:#8A5A00}
 .ktable-wrap{border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-top:6px}
+.pgrp{margin:18px 0 0}.pgrp h3{margin:0 0 2px;font:700 17px/1.25 var(--display);color:var(--green-dark)}.pgrp .pw{margin:0 0 8px;color:var(--muted);font-size:14px}.pgrp .pc{font-weight:700;color:var(--green)}
+.ptag{display:inline-block;font:600 11px/1 var(--body);padding:4px 7px;border-radius:999px;background:var(--green-soft);color:var(--green-dark);margin-left:6px;white-space:nowrap}
 .ktable{width:100%;border-collapse:collapse;font-size:14px}
 .ktable th{background:var(--green-soft);text-align:left;padding:0}
 .ktable th button{all:unset;cursor:pointer;display:block;width:100%;box-sizing:border-box;padding:9px 8px;font:600 11px/1.2 var(--body);letter-spacing:.06em;text-transform:uppercase;color:var(--green-dark)}
@@ -569,6 +571,7 @@ body.locked>*:not(#gate){visibility:hidden}
       <button role="tab" data-tab="sal" aria-selected="false">Salidas</button>
       <button role="tab" data-tab="con" aria-selected="false">Concentrado</button>
       <button role="tab" data-tab="cla" aria-selected="false">Claves</button>
+      <button role="tab" data-tab="pyt" aria-selected="false">Hotel y traslados</button>
     </nav>
   </div>
 </header>
@@ -614,6 +617,13 @@ body.locked>*:not(#gate){visibility:hidden}
   </table></div>
   <div class="ctools"><button id="clcopy">Copiar resumen</button></div>
   <p id="cmsg2" class="kmsg" role="status"></p>
+</section>
+<section class="wrap ctl" id="pyt" hidden>
+  <h2 class="ct">Hotel y traslados</h2>
+  <p class="cs">Quiénes pernoctan en el Hotel NH y quiénes tienen traslado terrestre, agrupados por punto de encuentro.</p>
+  <div id="pout"></div>
+  <div class="ctools"><button id="pcopy">Copiar resumen</button></div>
+  <p id="pmsg" class="kmsg" role="status"></p>
 </section>
 <section class="wrap ctl" id="ctl" hidden>
   <h2 class="ct" id="ct-t"></h2>
@@ -1192,6 +1202,44 @@ function claRender(){
     : `<span class="cl">Ida</span>${btn(x.ci)}<br><span class="cl">Regreso</span>${btn(x.cr)}`;
   $('#cbody').innerHTML = claRows().map(x => `<tr><td class="kn">${esc(tcase(x.n))}</td><td class="cc">${cell(x)}</td></tr>`).join('');
 }
+/* ---------- Hotel y traslados ---------- */
+const notaDe = (r, k) => ((r.notas || []).find(n => n.k === k) || {}).t || '';
+function pytData(){
+  const by = (a, b) => a.n.localeCompare(b.n, 'es');
+  const pern = DATA.filter(r => notaDe(r, 'pe')).sort(by), grupos = new Map();
+  DATA.filter(r => notaDe(r, 'tr')).sort(by).forEach(r => {
+    const t = notaDe(r, 'tr'), m = t.match(/punto de encuentro (.+?)(?:, para llevarte|\. A tu regreso)/i);
+    const cuando = (t.match(/el (\S+ \d+ de \S+) a las ([\d:]+ h)/) || []).slice(1).join(' · ') || (t.match(/a las ([\d:]+ h)/) || [])[1] || '';
+    const dest = (t.match(/para llevarte (?:al|a la|a) (.+?)(?:,|\.)/) || [])[1] || '';
+    let key, sub, det = '';
+    if(m){ key = 'Punto de encuentro: ' + m[1].split(',')[0]; sub = [cuando, m[1].split(',').slice(1).join(',').trim()].filter(Boolean).join(' · '); }
+    else if(/domicilio/i.test(t)){ key = 'Desde su domicilio'; sub = 'Se recoge en el domicilio registrado y regresa a la misma dirección.'; det = [cuando, dest && '→ ' + dest].filter(Boolean).join(' '); }
+    else if(/por tu cuenta/i.test(t)){ key = 'Llegan por su cuenta'; sub = /estacionamiento/i.test(t) ? 'Considerar estacionamiento.' : ''; }
+    else { key = 'Otros traslados'; sub = ''; det = t; }
+    if(!grupos.has(key)) grupos.set(key, {sub, pax: []});
+    grupos.get(key).pax.push({r, det});
+  });
+  return {pern, grupos};
+}
+function pytRender(){
+  const {pern, grupos} = pytData(), tras = [...grupos.values()].reduce((a, g) => a + g.pax.length, 0);
+  const tabla = (filas, conDet) => `<div class="ktable-wrap"><table class="ktable"><tbody>${filas.join('')}</tbody></table></div>`;
+  let h = `<div class="pgrp"><h3>🏨 Pernoctan en el Hotel NH Collection Mexico City Airport T2</h3><p class="pw"><span class="pc">${pern.length} ${pern.length===1?'persona':'personas'}</span> · check-in lunes 2 nov · check-out martes 3 nov</p>`
+    + tabla(pern.map(r => `<tr><td class="kn">${esc(tcase(r.n))}${notaDe(r,'tr')?'<span class="ptag">🚗 Traslado</span>':''}</td><td>${esc(r.rg||'')}</td></tr>`)) + '</div>';
+  h += `<div class="pgrp"><h3>🚗 Traslados terrestres</h3><p class="pw"><span class="pc">${tras} ${tras===1?'persona':'personas'}</span></p></div>`;
+  grupos.forEach((g, key) => {
+    h += `<div class="pgrp"><h3>${esc(key)}</h3><p class="pw"><span class="pc">${g.pax.length}</span>${g.sub ? ' · ' + esc(g.sub) : ''}</p>`
+      + tabla(g.pax.map(({r, det}) => `<tr><td class="kn">${esc(tcase(r.n))}${notaDe(r,'pe')?'<span class="ptag">🏨 Hotel NH</span>':''}${det?`<br><small style="font-weight:400;color:var(--muted)">${esc(det)}</small>`:''}</td><td>${esc(r.rg||'')}</td></tr>`)) + '</div>';
+  });
+  $('#pout').innerHTML = h;
+}
+function pytTxt(){
+  const {pern, grupos} = pytData(), L = ['*Hotel y traslados · Cumbre Universales*', '', `🏨 *Pernoctan en Hotel NH CDMX T2* (${pern.length}) · check-in 2 nov, check-out 3 nov`];
+  pern.forEach(r => L.push('• ' + tcase(r.n) + (notaDe(r,'tr') ? ' (con traslado)' : '')));
+  grupos.forEach((g, key) => { L.push('', `🚗 *${key}* (${g.pax.length})` + (g.sub ? '\n' + g.sub : '')); g.pax.forEach(({r, det}) => L.push('• ' + tcase(r.n) + (det ? ' — ' + det : ''))); });
+  return L.join('\n');
+}
+$('#pcopy').addEventListener('click', async () => { await claCopy(pytTxt()); $('#pmsg').textContent = 'Resumen copiado. Pégalo en WhatsApp.'; });
 async function claCopy(t){
   try{ await navigator.clipboard.writeText(t); }
   catch(e){ const a = document.createElement('textarea'); a.value = t; document.body.appendChild(a); a.select(); document.execCommand('copy'); a.remove(); }
@@ -1254,10 +1302,10 @@ function ctlTab(t){
   CTL.tab = t; CTL.filter = 'all';
   document.querySelectorAll('.tabs button').forEach(b => b.setAttribute('aria-selected', b.dataset.tab === t));
   document.querySelectorAll('.cstat').forEach(b => b.setAttribute('aria-pressed', b.dataset.f === 'all'));
-  const on = t !== 'man', con = t === 'con', cla = t === 'cla'; document.body.classList.toggle('vctl', on);
-  $('#ctl').hidden = !on || con || cla; $('#con').hidden = !con; $('#cla').hidden = !cla; $('#cmsg2').textContent = ''; $('#cmsg').textContent = ''; $('#kmsg').textContent = '';
+  const on = t !== 'man', con = t === 'con', cla = t === 'cla', pyt = t === 'pyt'; document.body.classList.toggle('vctl', on);
+  $('#ctl').hidden = !on || con || cla || pyt; $('#con').hidden = !con; $('#cla').hidden = !cla; $('#pyt').hidden = !pyt; $('#pmsg').textContent = ''; $('#cmsg2').textContent = ''; $('#cmsg').textContent = ''; $('#kmsg').textContent = '';
   $('#csum').hidden = true; $('#cday').textContent = 'Resumen por día';
-  if(con) konRender(); else if(cla) claRender(); else if(on) ctlRender();
+  if(con) konRender(); else if(cla) claRender(); else if(pyt) pytRender(); else if(on) ctlRender();
 }
 // contraseña del Concentrado: se pide cada vez que se entra a la sección (no se guarda)
 async function conGate(){
@@ -1266,7 +1314,7 @@ async function conGate(){
   return true;
 }
 document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', async () => {
-  if((b.dataset.tab === 'con' || b.dataset.tab === 'cla') && !(await conGate())) return; ctlTab(b.dataset.tab); }));
+  if((b.dataset.tab === 'con' || b.dataset.tab === 'cla' || b.dataset.tab === 'pyt') && !(await conGate())) return; ctlTab(b.dataset.tab); }));
 document.querySelectorAll('.cstat').forEach(b => b.addEventListener('click', () => {
   CTL.filter = b.dataset.f; document.querySelectorAll('.cstat').forEach(x => x.setAttribute('aria-pressed', x === b)); ctlRender(); }));
 $('#cout').addEventListener('click', e => { const b = e.target.closest('button[data-n]'); if(!b) return;

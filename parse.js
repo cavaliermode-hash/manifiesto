@@ -40,7 +40,39 @@
     const col = n => H.indexOf(n);
     const iName = col('NOMBRE'), iSt = col('ESTATUS'), iRegion = col('REGION');
     const iRol = H.findIndex(h => h.startsWith('ROL'));
-    const iTr = col('TRASLADO'), iPe = H.findIndex(h => h.startsWith('PERNOCTA')), iSeg = H.findIndex(h => h.startsWith('SEGUIMIENTO'));
+    // Indicaciones especiales: solo columna R (TRASLADO DE SU CIUDAD) y columna S (PERNOCTA ...).
+    const iTr = H.findIndex(h => h.startsWith('TRASLADO DE SU CIUDAD')), iPe = H.findIndex(h => h.startsWith('PERNOCTA'));
+    const MESES = {ENE:0, FEB:1, MAR:2, ABR:3, MAY:4, JUN:5, JUL:6, AGO:7, SEP:8, OCT:9, NOV:10, DIC:11};
+    const MES_TXT = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+    const DIAS = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+    const fecha = t => { const m = up(t).match(/\b(\d{1,2})\s*(ENE|FEB|MAR|ABR|MAY|JUN|JUL|AGO|SEP|OCT|NOV|DIC)[A-Z]*\b/); if (!m) return '';
+      const d = new Date(Date.UTC(2026, MESES[m[2]], +m[1])); return `${DIAS[d.getUTCDay()]} ${+m[1]} de ${MES_TXT[MESES[m[2]]]}`; };
+    const fechas = t => { const r = [], re = /\b(\d{1,2})\s*(ENE|FEB|MAR|ABR|MAY|JUN|JUL|AGO|SEP|OCT|NOV|DIC)[A-Z]*\b/g; let m; while ((m = re.exec(up(t)))) r.push(fecha(m[0])); return r; };
+    const hora = t => { const m = up(t).match(/\b(\d{1,2})(?::(\d{2}))?\s*(AM|PM)\b/); if (!m) return '';
+      let h = +m[1] % 12; if (m[3] === 'PM') h += 12; return `${pad(h)}:${m[2] || '00'} h`; };
+    // Puntos de encuentro conocidos, escritos de forma clara.
+    const PUNTOS = [[/METEPEC/i, 'Plaza Metepec (Towns Square), Av. Ignacio Comonfort 1100, Residencial la Providencia, Metepec, Estado de México'],
+                    [/TRIANGULO/i, 'Centro Comercial El Triángulo (en la bahía), Circuito Juan Pablo II #3515, Local L1-A, Puebla, Pue.']];
+    const lugar = (t, conPernocta) => { const u = up(t); if (/SAN CARLOS/.test(u)) return 'la sede del evento en San Carlos, Sonora';
+      if (/HOTEL NH/.test(u)) return 'el Hotel NH Collection Mexico City Airport T2' + (conPernocta ? ', donde tienes tu hospedaje' : '');
+      const h = clean(t).match(/Hotel [^,.]*/i); return h ? 'el ' + h[0].replace(/^hotel/i, 'Hotel').replace(/\s+donde.*$/i, '') : ''; };
+    function nota(k, raw, conPernocta) {
+      const t = clean(raw), u = up(raw);
+      if (!t || /^(-+|0+|N\/?A|NA|NO APLICA|NINGUNO|X+)$/i.test(t.replace(/[.\s]/g, ''))) return '';
+      if (k === 'pe') {
+        if (/HOTEL NH/.test(u)) { const [ci, co] = fechas(t);
+          return `Hospedaje a tu llegada en el Hotel NH Collection Mexico City Airport T2, conectado a la Terminal 2 del aeropuerto de la Ciudad de México${ci ? `: check-in el ${ci}` : ''}${co ? ` y check-out el ${co}` : ''}.`; }
+        return friendly(raw, true);
+      }
+      // k === 'tr'
+      if (/LLEGA POR SU CUENTA/.test(u)) return `Llegas por tu cuenta a la sede del evento${/ESTACIONAMIENTO/.test(u) ? '; tienes estacionamiento considerado' : ''}.`;
+      const f = fecha(t), h = hora(t), dest = lugar(t, conPernocta) || (conPernocta ? 'el Hotel NH Collection Mexico City Airport T2, donde tienes tu hospedaje' : '');
+      const cuando = [f && `el ${f}`, h && `a las ${h}`].filter(Boolean).join(' ');
+      if (/PUNTO DE ENCUENTRO/.test(u)) { const p = PUNTOS.find(([re]) => re.test(u)); const punto = p ? p[1] : friendly(t.split(/punto de encuentro,?/i)[1].split(/,?\s*su regreso/i)[0], true).replace(/\.$/, '');
+        return `Traslado terrestre: ${cuando ? cuando + ' ' : ''}te recogemos en el punto de encuentro ${punto}${dest ? ','+'' : ''}${dest ? ` para llevarte ${dest.replace(/^el /, 'al ').replace(/^la /, 'a la ')}` : ''}. A tu regreso, el traslado te deja en el mismo punto de encuentro.`; }
+      if (/DOMICILIO/.test(u)) return `Traslado terrestre: ${cuando ? cuando + ' ' : ''}te recogemos en tu domicilio registrado${dest ? ` para llevarte ${dest.replace(/^el /, 'al ').replace(/^la /, 'a la ')}` : ''}. ${/FINALIZAR/.test(u) ? 'Al terminar el evento' : 'A tu regreso'}, el traslado te lleva de vuelta a la misma dirección.`;
+      return friendly(raw, true);
+    }
     // Texto aprobado para el traslado Tijuana → Ensenada (columna L).
     const SEG_BASE = 'A su llegada a Tijuana se le va a desplazar al Hotel Lucerna Tijuana para que desayunen y a las 12:00 hrs será el traslado al Hotel Torre Lucerna Ensenada';
     const segTxt = s => SEG_BASE + (/DESPLAZO DE \d/i.test(s) ? ' (trayecto de 1 h 30 min).' : '.'); // el trayecto solo si el Excel lo indica
@@ -81,8 +113,8 @@
                  st: clean(r[iSt]).toUpperCase(), rol: iRol >= 0 ? clean(r[iRol]) : '', rg: iRegion >= 0 && !empty(r[iRegion]) ? up(r[iRegion]) : '',
         c1: leg(r, C.c1), ida: leg(r, C.ida), reg: leg(r, C.reg), c2: leg(r, C.c2),
         ci: idaKey ? code(idaKey) : code(unaKey), cr: regKey ? code(regKey) : code(unaKey) };
-      x.notas = [['pe', iPe], ['seg', iSeg], ['tr', iTr]].map(([k, i]) => i >= 0 ? { k, t: k === 'seg' && /DESAYUN/i.test(clean(r[i])) && /ENSENADA/i.test(clean(r[i])) ? segTxt(clean(r[i])) : friendly(r[i], k === 'tr') } : null).filter(n => n && n.t)
-        .map(n => n.k === 'tr' && n.t.split(' ').length <= 3 && !/traslado/i.test(n.t) ? { k: n.k, t: 'Traslado: ' + n.t } : n); // solo un lugar (p. ej. "Metepec.") → "Traslado: Metepec."
+      const pe = iPe >= 0 ? nota('pe', r[iPe]) : '';
+      x.notas = [iTr >= 0 && (t => t && { k: 'tr', t })(nota('tr', r[iTr], !!pe)), pe && { k: 'pe', t: pe }].filter(Boolean);
       if (!x.notas.length) delete x.notas;
       if (!x.cr && x.ci && x.reg) x.cr = x.ci; // sin reserva de regreso: es la misma clave de la ida
       x.cl = x.ci || x.cr; // compatibilidad con páginas guardadas en el navegador

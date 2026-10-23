@@ -751,18 +751,24 @@ function legBlock(cls, title, main, conn, connFirst){
   const parts = conn ? (connFirst ? [segHTML(conn,'Conexión'), segHTML(main,'')] : [segHTML(main,''), segHTML(conn,'Conexión')]) : [segHTML(main,'')];
   return `<div class="leg ${cls}"><h4>${title}</h4>${parts.join('')}</div>`;
 }
+/* Invitados que viajan solo por tierra (sin vuelos): se muestran como traslado, sin "Sin vuelo asignado". */
+const soloTierra = r => !r.ida && !r.reg && !r.c1 && !r.c2 && (/TERRESTRE/.test(r.st || '') || (r.notas || []).some(n => n.k === 'tr'));
+function tierraBlock(r){
+  const det = (r.notas || []).some(n => n.k === 'tr') ? 'Revisa los detalles en tus indicaciones especiales.' : 'Tu viaje al evento es por traslado terrestre.';
+  return `<div class="leg ida"><h4>Traslado terrestre</h4><div class="none">${det}</div></div>`;
+}
 function paxCard(r){
   const keys = [];
   const kf = (label, v) => v
     ? `<span class="key"><small>${label}</small><b>${hl(v)}</b><button class="copy" data-copy="${esc(v)}">Copiar</button></span>`
     : `<span class="key na"><small>${label}</small><b>—</b></span>`;
   if(r.ci && r.cr && r.ci !== r.cr) keys.push(kf('Clave de reserva de ida', r.ci), kf('Clave de reserva de regreso', r.cr));
-  else if(r.ci || r.cr || confirmed(r)) keys.push(kf('Clave de reserva', r.ci || r.cr));
+  else if(r.ci || r.cr || (confirmed(r) && !soloTierra(r))) keys.push(kf('Clave de reserva', r.ci || r.cr));
   return `<article class="pax">
     <div class="phead"><p class="name">${hl(r.n)}</p>
       <div class="who">${[r.rol, r.rg].filter(Boolean).map(hl).join(' · ')}</div></div>
     ${keys.length?`<div class="clave"><h4>Datos de la reserva</h4><div class="keys">${keys.join('')}</div></div>`:''}
-    <div class="legs">${legBlock('ida','Ida', r.ida, r.c1, true)}${legBlock('reg','Regreso', r.reg, r.c2, false)}</div>
+    <div class="legs">${soloTierra(r) ? tierraBlock(r) : legBlock('ida','Ida', r.ida, r.c1, true) + legBlock('reg','Regreso', r.reg, r.c2, false)}</div>
   </article>`;
 }
 const tcase = s => String(s||'').toLowerCase().replace(/(^|\s)\S/g, c => c.toUpperCase());
@@ -783,7 +789,7 @@ function paxRow(r){
   const i = DATA.indexOf(r);
   return `<button class="prow" data-open="${i}" aria-label="Ver la reserva de ${esc(r.n)}">
     <span class="prow-t"><span class="prow-n">${hl(r.n)}</span>${r.rg?`<span class="prow-c">${esc(r.rg)}</span>`:''}
-      <span class="itin">${itinLine('Ida', r.c1 ? [r.c1, r.ida] : [r.ida])}${itinLine('Regreso', r.c2 ? [r.reg, r.c2] : [r.reg])}</span>
+      <span class="itin">${soloTierra(r) ? '<span class="il"><b class="ilab">Traslado</b><span class="iseg">Traslado terrestre</span></span>' : itinLine('Ida', r.c1 ? [r.c1, r.ida] : [r.ida]) + itinLine('Regreso', r.c2 ? [r.reg, r.c2] : [r.reg])}</span>
       ${(r.notas||[]).length?`<span class="nchips"><span class="nchip">📌 Indicaciones especiales para ti</span></span>`:''}</span>
     <span class="prow-b">Ver mi reserva <span aria-hidden="true">›</span></span>
   </button>`;
@@ -869,7 +875,7 @@ function resumenTxt(r){
   L.push(`Hola, ${tcase(r.n)}:`, '', 'Estos son los datos de tu viaje a la Segunda Cumbre Universales.', '');
   if(r.ci && r.cr && r.ci !== r.cr) L.push(`Clave de reserva de ida: ${r.ci}`, `Clave de reserva de regreso: ${r.cr}`);
   else if(r.ci || r.cr) L.push(`Clave de reserva: ${r.ci || r.cr}`);
-  L.push('', 'VUELOS'); seg('Ida (conexión)', r.c1); seg('Ida', r.ida); seg('Regreso', r.reg); seg('Regreso (conexión)', r.c2);
+  if(soloTierra(r)) L.push('', 'TRASLADO TERRESTRE'); else L.push('', 'VUELOS'); seg('Ida (conexión)', r.c1); seg('Ida', r.ida); seg('Regreso', r.reg); seg('Regreso (conexión)', r.c2);
   const first = r.c1 || r.ida;
   if(first){ const d = when(first,'s'); L.push('', `Check-in en línea: abre ${fmtAt(new Date(d-24*36e5), first.o)} (24 h antes).`, `Llega al aeropuerto a más tardar: ${fmtAt(new Date(d-2*36e5), first.o)}.`); }
   if((r.notas||[]).length){ L.push('', 'INDICACIONES ESPECIALES PARA TI'); r.notas.forEach(n => L.push('- ' + n.t)); }
@@ -885,7 +891,7 @@ function waTxt(r){
   L.push(`👋 Hola, *${tcase(r.n)}*`, '', '✈️ *Tu viaje a la Segunda Cumbre Universales*', '');
   if(r.ci && r.cr && r.ci !== r.cr) L.push(`🔑 *Clave de reserva de ida:* ${r.ci}`, `🔑 *Clave de reserva de regreso:* ${r.cr}`);
   else if(r.ci || r.cr) L.push(`🔑 *Clave de reserva:* ${r.ci || r.cr}`);
-  L.push(''); seg('🛫', 'Ida (conexión)', r.c1); seg('🛫', 'Ida', r.ida); seg('🛬', 'Regreso', r.reg); seg('🛬', 'Regreso (conexión)', r.c2);
+  L.push(''); if(soloTierra(r)) L.push('🚐 *Traslado terrestre*'); seg('🛫', 'Ida (conexión)', r.c1); seg('🛫', 'Ida', r.ida); seg('🛬', 'Regreso', r.reg); seg('🛬', 'Regreso (conexión)', r.c2);
   if((r.notas||[]).length){ L.push('', '📌 *Indicaciones especiales para ti*'); r.notas.forEach(n => L.push('• ' + n.t.replace(/Hotel Marinaterra/g, '*Hotel Marinaterra*'))); }
   L.push('', '🏨 *Sede del evento:* Hotel Marinaterra, San Carlos, Sonora', '',
     '🗓️ *Agenda del evento (PDF):*', base + 'agenda-cumbre.pdf', '',
@@ -1115,7 +1121,7 @@ function ctlRender(){
       pax.map(r => { const s = ctlSt(r.n), cx = lle ? r.c1 : r.c2;
         const con = cx ? ` · conexión ${esc(cx.v)} ${lle ? 'desde ' + esc(cx.o) : 'a ' + esc(cx.d)}` : '';
         const clave = lle ? (r.ci || r.cr) : (r.cr || r.ci);
-        const pern = lle && (r.notas||[]).some(n => n.k === 'pe') ? '<span class="ctag">Pernocta TIJ</span>' : '';
+        const pern = lle && (r.notas||[]).some(n => n.k === 'pe') ? '<span class="ctag">Hotel NH</span>' : '';
         return `<li>${esc(r.n)}</li>`; }).join('') + '</ul></section>';
   });
   $('#cout').innerHTML = html || '<p class="cnote">No hay invitados en este filtro.</p>';

@@ -729,8 +729,8 @@ body.locked>*:not(#gate){visibility:hidden}
 </main>
 
 <div id="agv" class="agv" role="dialog" aria-modal="true" aria-label="Agenda del evento" hidden>
-  <div class="agv-bar"><button id="agv-back" type="button">‹ Regresar</button><a href="https://cdn.jsdelivr.net/gh/cavaliermode-hash/manifiesto@main/agenda-cumbre.jpg" id="agv-pdf" target="_blank" rel="noopener">⬇ Guardar</a></div>
-  <p class="agv-tip">Toca la imagen para acercar o alejar. Usa ⬇ Guardar para descargarla en tu dispositivo. <b id="agv-msg" role="status"></b></p>
+  <div class="agv-bar"><button id="agv-back" type="button">‹ Regresar</button></div>
+  <p class="agv-tip">Toca la imagen para acercar o alejar.</p>
   <div class="agv-body"><img id="agv-img" alt="Agenda de la Segunda Cumbre Universales: actividades del 3 al 5 de noviembre, dress code y recomendaciones"></div>
 </div>
 <script src="parse.js"></script>
@@ -1057,20 +1057,6 @@ document.addEventListener('click', e => { const a = e.target.closest('#ag-open, 
   history.pushState(Object.assign({}, history.state, {agv:1}), ''); $('#agv-back').focus(); });
 $('#agv-img').addEventListener('click', e => { const bd = $('.agv-body'), r = e.target.getBoundingClientRect(), fx = (e.clientX - r.left) / r.width, fy = (e.clientY - r.top) / r.height;
   bd.classList.toggle('zoom'); if(bd.classList.contains('zoom')){ const im = e.target; bd.scrollLeft = fx * im.offsetWidth - bd.clientWidth / 2; bd.scrollTop = fy * im.offsetHeight - bd.clientHeight / 2; } });
-/* "Guardar": abre la imagen de la agenda en el navegador web (fuera de la app), donde se guarda en Fotos o se comparte. Se usa la copia en jsDelivr.
-   para que la app no lo abra dentro de sí misma, sin botones. */
-$('#agv-pdf').addEventListener('click', async e => {
-  // Descarga directa de la imagen de la agenda al dispositivo (celular o computadora).
-  e.preventDefault(); DLG = true; setTimeout(() => { DLG = false; awaySince = 0; }, 3000);
-  const name = 'Agenda Segunda Cumbre Universales.jpg';
-  try{
-    const blob = await (await fetch('agenda-cumbre.jpg', {cache:'no-store'})).blob();
-    const url = URL.createObjectURL(blob), a = document.createElement('a');
-    a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 30000);
-    const m = $('#agv-msg'); if(m){ m.textContent = 'Agenda descargada en tu dispositivo.'; setTimeout(() => m.textContent = '', 4000); }
-  }catch(err){ window.open($('#agv-pdf').href, '_blank'); }
-});
 $('#agv-back').addEventListener('click', () => { if(history.state && history.state.agv) history.back(); else agvClose(); });
 document.addEventListener('keydown', e => { if(e.key === 'Escape' && !$('#agv').hidden) $('#agv-back').click(); });
 /* ---------- Agenda ---------- */
@@ -1437,7 +1423,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 134;
+const APP_V = 135;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

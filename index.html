@@ -1213,7 +1213,7 @@ function pytData(){
     const dest = (t.match(/para llevarte (?:al|a la|a) (.+?)(?:,|\.)/) || [])[1] || '';
     let key, sub, det = '';
     if(m){ key = 'Punto de encuentro: ' + m[1].split(',')[0]; sub = [cuando, m[1].split(',').slice(1).join(',').trim()].filter(Boolean).join(' · '); }
-    else if(/te recogemos en el aeropuerto/i.test(t)){ key = 'Desde el aeropuerto'; sub = 'Se recoge en el aeropuerto y regresa al mismo aeropuerto.'; det = [cuando, dest && '→ ' + dest].filter(Boolean).join(' '); }
+    else if(/te recogemos en el aeropuerto/i.test(t)){ key = 'Desde el aeropuerto' + ((t.match(/aeropuerto de ([A-ZÁÉÍÓÚa-záéíóúñ ]+?) para/) || [])[1] ? ' de ' + t.match(/aeropuerto de ([A-ZÁÉÍÓÚa-záéíóúñ ]+?) para/)[1] : ''); sub = 'Se recoge en el aeropuerto y regresa al mismo aeropuerto.'; det = [cuando, dest && '→ ' + dest].filter(Boolean).join(' '); }
     else if(/domicilio/i.test(t)){ key = 'Desde su domicilio'; sub = 'Se recoge en el domicilio registrado y regresa a la misma dirección.'; det = [cuando, dest && '→ ' + dest].filter(Boolean).join(' '); }
     else if(/solo a tu regreso/i.test(t)){ key = 'Solo traslado de regreso'; sub = 'Se le recibe al aterrizar de regreso.'; det = ((t.match(/el (\S+ \d+ de \S+), al aterrizar en (.+?) en el vuelo (.+?) \(llegada ([\d:]+) h\)/) || []).slice(1).join(' · ')) || t; }
     else if(/por tu cuenta/i.test(t)){ key = 'Llegan por su cuenta'; sub = /estacionamiento/i.test(t) ? 'Considerar estacionamiento.' : ''; }

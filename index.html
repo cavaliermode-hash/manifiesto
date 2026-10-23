@@ -730,7 +730,7 @@ body.locked>*:not(#gate){visibility:hidden}
 </main>
 
 <div id="agv" class="agv" role="dialog" aria-modal="true" aria-label="Agenda del evento" hidden>
-  <div class="agv-bar"><button id="agv-back" type="button">‹ Regresar</button><a href="https://raw.githubusercontent.com/cavaliermode-hash/manifiesto/main/agenda-cumbre.pdf" id="agv-pdf" target="_blank" rel="noopener">⬇ Guardar</a></div>
+  <div class="agv-bar"><button id="agv-back" type="button">‹ Regresar</button><a href="https://cdn.jsdelivr.net/gh/cavaliermode-hash/manifiesto@main/agenda-cumbre.pdf" id="agv-pdf" target="_blank" rel="noopener">⬇ Guardar</a></div>
   <p class="agv-tip">Toca la imagen para acercar o alejar.</p>
   <div class="agv-body"><img id="agv-img" alt="Agenda de la Segunda Cumbre Universales: actividades del 3 al 5 de noviembre, dress code y recomendaciones"></div>
 </div>
@@ -1058,7 +1058,7 @@ document.addEventListener('click', e => { const a = e.target.closest('#ag-open, 
   history.pushState(Object.assign({}, history.state, {agv:1}), ''); $('#agv-back').focus(); });
 $('#agv-img').addEventListener('click', e => { const bd = $('.agv-body'), r = e.target.getBoundingClientRect(), fx = (e.clientX - r.left) / r.width, fy = (e.clientY - r.top) / r.height;
   bd.classList.toggle('zoom'); if(bd.classList.contains('zoom')){ const im = e.target; bd.scrollLeft = fx * im.offsetWidth - bd.clientWidth / 2; bd.scrollTop = fy * im.offsetHeight - bd.clientHeight / 2; } });
-/* "Guardar": abre el PDF en el navegador web (fuera de la app), donde se descarga o guarda. Se usa la dirección de GitHub
+/* "Guardar": abre el PDF en el navegador web (fuera de la app), donde se descarga o guarda. Se usa la copia en jsDelivr (sirve el PDF para verlo y guardarlo)
    para que la app no lo abra dentro de sí misma, sin botones. */
 $('#agv-pdf').addEventListener('click', () => { DLG = true; setTimeout(() => { DLG = false; awaySince = 0; }, 3000); });
 $('#agv-back').addEventListener('click', () => { if(history.state && history.state.agv) history.back(); else agvClose(); });
@@ -1416,7 +1416,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 126;
+const APP_V = 127;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

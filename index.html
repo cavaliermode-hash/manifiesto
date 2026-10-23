@@ -1395,7 +1395,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 106;
+const APP_V = 107;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');
@@ -1415,7 +1415,7 @@ window.addEventListener('pagehide', e => { if(e.persisted) lockNow(); });
 async function unlock(pin, fromSaved){
   try{ const d = await Cifra.descifrar(PACK.enc, pin);
     if(UNLOCKED){ gate.hidden = true; document.body.classList.remove('locked'); return; } // re-entrada tras salir de la app
-    UNLOCKED = true; DATA = d.filas; gate.hidden = true; $('#upd').textContent = 'Actualizado: ' + PACK.actualizado; init(); syncStart(pin); }
+    UNLOCKED = true; DATA = d.filas; gate.hidden = true; $('#upd').textContent = 'Actualizado: ' + PACK.actualizado; init(); syncStart(pin); restoreView(); }
   catch(e){ showGate('PIN incorrecto. Revísalo e intenta de nuevo.'); }
 }
 $('#gate-form').addEventListener('submit', e => { e.preventDefault(); const v = gin.value.trim();
@@ -1424,17 +1424,31 @@ $('#gate-form').addEventListener('submit', e => { e.preventDefault(); const v = 
   gmsg.textContent = 'Verificando…'; unlock(v, false); });
 /* Siempre al día: al abrir, al volver a la app/pestaña o al regresar con "Atrás", revisa si hay versión nueva
    de la página o datos nuevos y, si los hay, recarga la página con lo más reciente (sin usar la copia guardada). */
-let lastCheck = 0;
-function freshReload(tag){ let tried = false; try{ tried = sessionStorage.getItem('reload' + tag) === '1'; sessionStorage.setItem('reload' + tag, '1'); }catch(e){}
-  if(!tried) location.replace(location.pathname + '?v=' + Date.now()); }
-async function checkUpdate(){
-  if(!PACK || Date.now() - lastCheck < 15000) return; lastCheck = Date.now();
-  try{ const j = await (await fetch('data.json?v=' + Date.now(), {cache:'no-store'})).json();
-    if((j.app && j.app > APP_V) || (j.actualizado && j.actualizado !== PACK.actualizado)) freshReload((j.app || '') + '|' + j.actualizado); }catch(e){}
+/* Siempre al día: cada vez que se sale de la página o de la app (otra app, otra ventana u otra pestaña, bloquear el celular)
+   y se regresa, la página se recarga con la versión y los datos más recientes, sin usar la copia guardada.
+   Antes de recargar guarda dónde estaba (reserva abierta, pestaña, búsqueda y posición) para dejarlo igual. */
+let DLG = false, awaySince = 0;
+['prompt','alert','confirm'].forEach(k => { const f = window[k].bind(window); window[k] = (...a) => { DLG = true; try{ return f(...a); } finally { setTimeout(() => { DLG = false; awaySince = 0; }, 800); } }; });
+function freshReload(){
+  try{ sessionStorage.setItem('restore', JSON.stringify({ n: state.sel != null && DATA[state.sel] ? DATA[state.sel].n : '', tab: CTL.tab, q: state.q || '', y: window.scrollY, ag: AG_DAY })); }catch(e){}
+  location.replace(location.pathname + '?v=' + Date.now());
 }
-document.addEventListener('visibilitychange', () => { if(!document.hidden) checkUpdate(); });
-window.addEventListener('pageshow', e => { if(e.persisted) checkUpdate(); });
-window.addEventListener('focus', checkUpdate);
+function leave(){ if(!DLG && PACK) awaySince = awaySince || Date.now(); }
+function back(){ if(DLG || !awaySince) return; const fuera = Date.now() - awaySince; awaySince = 0; if(fuera > 1000) freshReload(); }
+document.addEventListener('visibilitychange', () => { if(document.hidden) leave(); else back(); });
+window.addEventListener('blur', leave);
+window.addEventListener('focus', back);
+window.addEventListener('pageshow', e => { if(e.persisted) freshReload(); });
+function restoreView(){
+  let r = null; try{ r = JSON.parse(sessionStorage.getItem('restore') || 'null'); sessionStorage.removeItem('restore'); }catch(e){}
+  if(!r) return;
+  if(r.ag && AGENDA[r.ag]) renderAgenda(r.ag);
+  if(r.tab && r.tab !== 'man' && r.tab !== 'con' && r.tab !== 'cla') ctlTab(r.tab); // Concentrado y Claves vuelven a pedir su contraseña
+  if(r.q){ const q = document.getElementById('q'); if(q){ q.value = r.q; state.q = r.q; render(); } }
+  const i = r.n ? DATA.findIndex(x => x.n === r.n) : -1;
+  if(i >= 0 && (!r.tab || r.tab === 'man')) openPax(i);
+  setTimeout(() => window.scrollTo({top: r.y || 0}), 60);
+}
 fetch('data.json?v='+Date.now(), {cache:'no-store'}).then(r=>r.json()).then(j=>{
   if(j.app && j.app > APP_V){ let tried=false; try{ tried=sessionStorage.getItem('reload'+j.app)==='1'; sessionStorage.setItem('reload'+j.app,'1'); }catch(e){}
     if(!tried){ location.replace(location.pathname+'?v='+j.app+Date.now()); return; } }

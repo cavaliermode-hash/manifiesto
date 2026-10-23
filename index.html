@@ -573,7 +573,6 @@ body.locked>*:not(#gate){visibility:hidden}
     <nav class="tabs" role="tablist" aria-label="Apartados">
       <button role="tab" data-tab="man" aria-selected="true">Manifiesto</button>
       <button role="tab" data-tab="pyt" aria-selected="false">Hotel y traslados</button>
-      <button type="button" class="ag-tab" data-agv="1" aria-haspopup="dialog">📄 Agenda</button>
       <button role="tab" data-tab="lle" aria-selected="false">Llegadas</button>
       <button role="tab" data-tab="sal" aria-selected="false">Salidas</button>
       <button role="tab" data-tab="con" aria-selected="false">Concentrado</button>
@@ -1398,7 +1397,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 114;
+const APP_V = 115;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

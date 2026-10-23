@@ -48,6 +48,7 @@
     const fecha = t => { const m = up(t).match(/\b(\d{1,2})\s*(ENE|FEB|MAR|ABR|MAY|JUN|JUL|AGO|SEP|OCT|NOV|DIC)[A-Z]*\b/); if (!m) return '';
       const d = new Date(Date.UTC(2026, MESES[m[2]], +m[1])); return `${DIAS[d.getUTCDay()]} ${+m[1]} de ${MES_TXT[MESES[m[2]]]}`; };
     const fechas = t => { const r = [], re = /\b(\d{1,2})\s*(ENE|FEB|MAR|ABR|MAY|JUN|JUL|AGO|SEP|OCT|NOV|DIC)[A-Z]*\b/g; let m; while ((m = re.exec(up(t)))) r.push(fecha(m[0])); return r; };
+    const isoFechas = t => { const r = [], re = /\b(\d{1,2})\s*(ENE|FEB|MAR|ABR|MAY|JUN|JUL|AGO|SEP|OCT|NOV|DIC)[A-Z]*\b/g; let m; while ((m = re.exec(up(t)))) r.push(`2026-${pad(MESES[m[2]] + 1)}-${pad(m[1])}`); return r; };
     const hora = t => { const m = up(t).match(/\b(\d{1,2})(?::(\d{2}))?\s*(AM|PM)\b/); if (!m) return '';
       let h = +m[1] % 12; if (m[3] === 'PM') h += 12; return `${pad(h)}:${m[2] || '00'} h`; };
     // Puntos de encuentro conocidos, escritos de forma clara.
@@ -56,7 +57,9 @@
     const lugar = (t, conPernocta) => { const u = up(t); if (/SAN CARLOS/.test(u)) return 'la sede del evento en San Carlos, Sonora';
       if (/HOTEL NH/.test(u)) return 'el Hotel NH Collection Mexico City Airport T2' + (conPernocta ? ', donde tienes tu hospedaje' : '');
       const h = clean(t).match(/Hotel [^,.]*/i); return h ? 'el ' + h[0].replace(/^hotel/i, 'Hotel').replace(/\s+donde.*$/i, '') : ''; };
-    function nota(k, raw, conPernocta) {
+    const CIUDAD = {MEX:'la Ciudad de México', GDL:'Guadalajara', MTY:'Monterrey', QRO:'Querétaro', PBC:'Puebla', TLC:'Toluca', MID:'Mérida', CUL:'Culiacán', LMM:'Los Mochis', ACA:'Acapulco', HMO:'Hermosillo'};
+    const fechaIso = f => { const d = new Date(f + 'T12:00:00Z'); return isNaN(d) ? '' : `${DIAS[d.getUTCDay()]} ${d.getUTCDate()} de ${MES_TXT[d.getUTCMonth()]}`; };
+    function nota(k, raw, conPernocta, x) {
       const t = clean(raw), u = up(raw);
       if (!t || /^(-+|0+|N\/?A|NA|NO APLICA|NINGUNO|X+)$/i.test(t.replace(/[.\s]/g, ''))) return '';
       if (k === 'pe') {
@@ -65,6 +68,8 @@
         return friendly(raw, true);
       }
       // k === 'tr'
+      if (/SOLO .*REGRESO/.test(u)) { const v = x && (x.c2 || x.reg);
+        return v ? `Traslado terrestre solo a tu regreso: el ${fechaIso(v.f)}, al aterrizar en ${CIUDAD[v.d] || v.d} en el vuelo ${v.v} (llegada ${v.l} h), te espera tu traslado terrestre.` : 'Traslado terrestre solo a tu regreso.'; }
       if (/LLEGA POR SU CUENTA/.test(u)) return `Llegas por tu cuenta a la sede del evento${/ESTACIONAMIENTO/.test(u) ? '; tienes estacionamiento considerado' : ''}.`;
       const f = fecha(t), h = hora(t), dest = lugar(t, conPernocta) || (conPernocta ? 'el Hotel NH Collection Mexico City Airport T2, donde tienes tu hospedaje' : '');
       const cuando = [f && `el ${f}`, h && `a las ${h}`].filter(Boolean).join(' ');
@@ -90,7 +95,7 @@
       return t.charAt(0).toUpperCase() + t.slice(1) + (/[.)]$/.test(t) ? '' : '.');
     };
     // Ciudades escritas con nombre → código de aeropuerto.
-    const CITY = {MEXICO:'MEX', 'CIUDAD DE MEXICO':'MEX', CDMX:'MEX', HERMOSILLO:'HMO', GUADALAJARA:'GDL', MERIDA:'MID', MONTERREY:'MTY', QUERETARO:'QRO', QUETERARO:'QRO',
+    const CITY = {ACAPULCO:'ACA', MEXICO:'MEX', 'CIUDAD DE MEXICO':'MEX', CDMX:'MEX', HERMOSILLO:'HMO', GUADALAJARA:'GDL', MERIDA:'MID', MONTERREY:'MTY', QUERETARO:'QRO', QUETERARO:'QRO',
       CULIACAN:'CUL', TIJUANA:'TIJ', 'LOS MOCHIS':'LMM', TOLUCA:'TLC', PUEBLA:'PBC', CANCUN:'CUN', 'LOS CABOS':'SJD', AIFA:'NLU', MAZATLAN:'MZT', CHIHUAHUA:'CUU', LEON:'BJX', OAXACA:'OAX', VERACRUZ:'VER', VILLAHERMOSA:'VSA', 'SAN LUIS POTOSI':'SLP', AGUASCALIENTES:'AGU', MORELIA:'MLM', TORREON:'TRC', 'CIUDAD JUAREZ':'CJS', TAMPICO:'TAM', 'PUERTO VALLARTA':'PVR', 'LA PAZ':'LAP', 'CIUDAD OBREGON':'CEN', GUAYMAS:'GYM'};
     const ap = v => { const u = up(v ?? ''); return CITY[u] || u; };
     const leg = (r, m) => {
@@ -113,8 +118,11 @@
                  st: clean(r[iSt]).toUpperCase(), rol: iRol >= 0 ? clean(r[iRol]) : '', rg: iRegion >= 0 && !empty(r[iRegion]) ? up(r[iRegion]) : '',
         c1: leg(r, C.c1), ida: leg(r, C.ida), reg: leg(r, C.reg), c2: leg(r, C.c2),
         ci: idaKey ? code(idaKey) : code(unaKey), cr: regKey ? code(regKey) : code(unaKey) };
-      const pe = iPe >= 0 ? nota('pe', r[iPe]) : '';
-      x.notas = [iTr >= 0 && (t => t && { k: 'tr', t })(nota('tr', r[iTr], !!pe)), pe && { k: 'pe', t: pe }].filter(Boolean);
+      let pe = iPe >= 0 ? nota('pe', r[iPe]) : '';
+      // Sin pernocta si su primer vuelo sale de su ciudad el mismo día del check-out (o después): ese día vuela directo, no duerme en el hotel.
+      const prim = leg(r, C.c1) || leg(r, C.ida), co = pe ? isoFechas(r[iPe])[1] : '';
+      if (pe && prim && co && prim.o && prim.o !== 'MEX' && prim.f >= co) pe = '';
+      x.notas = [iTr >= 0 && (t => t && { k: 'tr', t })(nota('tr', r[iTr], !!pe, x)), pe && { k: 'pe', t: pe }].filter(Boolean);
       if (!x.notas.length) delete x.notas;
       if (!x.cr && x.ci && x.reg) x.cr = x.ci; // sin reserva de regreso: es la misma clave de la ida
       x.cl = x.ci || x.cr; // compatibilidad con páginas guardadas en el navegador

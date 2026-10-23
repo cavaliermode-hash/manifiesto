@@ -735,7 +735,7 @@ const esc = s => String(s??'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;',
 const MES = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
 const DIA = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
 function fmtDate(s){ const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(s||''); if(!m) return s||''; const d=new Date(Date.UTC(+m[1],m[2]-1,+m[3])); return `${DIA[d.getUTCDay()]} ${+m[3]} ${MES[m[2]-1]}`; }
-const AP = {MEX:'Cd. de México',TIJ:'Tijuana',GDL:'Guadalajara',MTY:'Monterrey',HMO:'Hermosillo',LMM:'Los Mochis',TLC:'Toluca',PBC:'Puebla',NLU:'AIFA',CUN:'Cancún',SJD:'Los Cabos',MID:'Mérida',QRO:'Querétaro',BJX:'León',CUL:'Culiacán',MZT:'Mazatlán',VER:'Veracruz',OAX:'Oaxaca',VSA:'Villahermosa',CJS:'Cd. Juárez',CUU:'Chihuahua',TRC:'Torreón',SLP:'San Luis Potosí',AGU:'Aguascalientes',MXL:'Mexicali',PVR:'Puerto Vallarta'};
+const AP = {ACA:'Acapulco',MEX:'Cd. de México',TIJ:'Tijuana',GDL:'Guadalajara',MTY:'Monterrey',HMO:'Hermosillo',LMM:'Los Mochis',TLC:'Toluca',PBC:'Puebla',NLU:'AIFA',CUN:'Cancún',SJD:'Los Cabos',MID:'Mérida',QRO:'Querétaro',BJX:'León',CUL:'Culiacán',MZT:'Mazatlán',VER:'Veracruz',OAX:'Oaxaca',VSA:'Villahermosa',CJS:'Cd. Juárez',CUU:'Chihuahua',TRC:'Torreón',SLP:'San Luis Potosí',AGU:'Aguascalientes',MXL:'Mexicali',PVR:'Puerto Vallarta'};
 const legs = r => [r.c1,r.ida,r.reg,r.c2].filter(Boolean);
 const confirmed = r => /CONFIRM/.test(r.st);
 const state = {sel:null, q:'', st:'', ida:'', reg:'', view:'pax', hits:new Map()};
@@ -1214,6 +1214,7 @@ function pytData(){
     let key, sub, det = '';
     if(m){ key = 'Punto de encuentro: ' + m[1].split(',')[0]; sub = [cuando, m[1].split(',').slice(1).join(',').trim()].filter(Boolean).join(' · '); }
     else if(/domicilio/i.test(t)){ key = 'Desde su domicilio'; sub = 'Se recoge en el domicilio registrado y regresa a la misma dirección.'; det = [cuando, dest && '→ ' + dest].filter(Boolean).join(' '); }
+    else if(/solo a tu regreso/i.test(t)){ key = 'Solo traslado de regreso'; sub = 'Se le recibe al aterrizar de regreso.'; det = ((t.match(/el (\S+ \d+ de \S+), al aterrizar en (.+?) en el vuelo (.+?) \(llegada ([\d:]+) h\)/) || []).slice(1).join(' · ')) || t; }
     else if(/por tu cuenta/i.test(t)){ key = 'Llegan por su cuenta'; sub = /estacionamiento/i.test(t) ? 'Considerar estacionamiento.' : ''; }
     else { key = 'Otros traslados'; sub = ''; det = t; }
     if(!grupos.has(key)) grupos.set(key, {sub, pax: []});

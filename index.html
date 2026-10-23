@@ -568,7 +568,7 @@ body.locked>*:not(#gate){visibility:hidden}
     </div>
     <div class="eyebrow" id="ev">Manifiesto de itinerario</div>
     <h1>SEGUNDA CUMBRE UNIVERSALES</h1>
-    <p class="sub">Escribe tu nombre (palabras completas)</p>
+    <p class="sub">Escribe tu nombre o apellido (mínimo 3 letras)</p>
     <div class="sub" id="upd"></div>
     <nav class="tabs" role="tablist" aria-label="Apartados">
       <button role="tab" data-tab="man" aria-selected="true">Manifiesto</button>
@@ -654,7 +654,7 @@ body.locked>*:not(#gate){visibility:hidden}
   <div id="csum" hidden></div>
   </section>
 
-<div class="wrap qhint-w"><div id="qhint" class="empty start qhint" hidden>🔎 <b>Escribe tu nombre y apellido</b> para ver tu itinerario y tu reserva.<br>Usa palabras completas, sin abreviar. Los acentos no importan.</div></div>
+<div class="wrap qhint-w"><div id="qhint" class="empty start qhint" hidden>🔎 <b>Escribe tu nombre o apellido</b> para ver tu itinerario y tu reserva.<br>Con 3 letras o más es suficiente. Los acentos no importan.</div></div>
 <div class="controls">
   <div class="wrap">
     <div class="search">
@@ -724,7 +724,7 @@ body.locked>*:not(#gate){visibility:hidden}
     <details><summary>¿Con cuánto tiempo debo llegar al aeropuerto?</summary><p>Al menos 2 horas antes de la salida de tu vuelo. En <b>Ver mi reserva</b> aparece la hora límite calculada para tu vuelo.</p></details>
     <details><summary>¿Qué necesito llevar?</summary><p>Una identificación oficial vigente (INE o pasaporte) con el mismo nombre de tu reserva, y tu clave de reserva o pase de abordar.</p></details>
     <details><summary>¿Los horarios están en hora de qué ciudad?</summary><p>Cada horario está en la hora local del aeropuerto. En estas fechas, Sonora tiene 1 hora menos que la Ciudad de México: si sales de Hermosillo a las 12:39, en la Ciudad de México son las 13:39.</p></details>
-    <details><summary>No encuentro mi nombre, ¿qué hago?</summary><p>Escribe tu nombre o apellido completo, sin abreviar (por ejemplo, <b>GARCIA</b> en lugar de <b>GAR</b>). Los acentos no importan. Si aun así no apareces o algún dato está mal, contacta a tu coordinador de Viajes El Corte Inglés.</p></details>
+    <details><summary>No encuentro mi nombre, ¿qué hago?</summary><p>Escribe al menos 3 letras de tu nombre o apellido (por ejemplo, <b>GAR</b> encuentra a <b>GARCIA</b>). Los acentos no importan. Si aun así no apareces o algún dato está mal, contacta a tu coordinador de Viajes El Corte Inglés.</p></details>
   </section>
   <p class="foot">Horarios en hora local de cada aeropuerto.</p>
 </main>
@@ -749,9 +749,11 @@ const legs = r => [r.c1,r.ida,r.reg,r.c2].filter(Boolean);
 const confirmed = r => /CONFIRM/.test(r.st);
 const state = {sel:null, q:'', st:'', ida:'', reg:'', view:'pax', hits:new Map()};
 
+/* Búsqueda: cada palabra escrita de 3 letras o más debe aparecer en el nombre (sin acentos, en cualquier parte). */
+const qTerms = () => norm(state.q).split(/\s+/).filter(t => t.length >= 3);
 function hl(text){
   text = String(text??''); if(!state.q) return esc(text);
-  const terms = norm(state.q).split(/\s+/).filter(Boolean), n = norm(text), mk = new Array(text.length).fill(false);
+  const terms = qTerms(), n = norm(text), mk = new Array(text.length).fill(false);
   terms.forEach(t=>{let i=0;while((i=n.indexOf(t,i))>-1){for(let j=i;j<i+t.length;j++)mk[j]=true;i+=t.length;}});
   let o='',op=false; for(let i=0;i<text.length;i++){ if(mk[i]&&!op){o+='<mark>';op=true} if(!mk[i]&&op){o+='</mark>';op=false} o+=esc(text[i]); }
   return o+(op?'</mark>':'');
@@ -972,12 +974,12 @@ function tableTSV(rows){
   return [['Apellidos','Nombre','Clave de reserva ida','Clave de reserva regreso']].concat(byApellido(rows).map(({r,ap,nom})=>[ap, nom, r.ci||'', r.cr||''])).map(a=>a.join('\t')).join('\n');
 }
 function filtered(){
-  const terms = norm(state.q).split(/\s+/).filter(Boolean);
+  const terms = qTerms();
   return DATA.filter(r =>
     (!state.st || (state.st==='CONF') === confirmed(r)) &&
     (!state.ida || (r.ida&&r.ida.v===state.ida) || (r.c1&&r.c1.v===state.ida)) &&
     (!state.reg || (r.reg&&r.reg.v===state.reg) || (r.c2&&r.c2.v===state.reg)) &&
-    (!terms.length || terms.every(t=>r._w.has(t))));
+    (!terms.length || terms.every(t=>r._n.includes(t))));
 }
 function render(){
   const ctrl = document.querySelector('.controls');
@@ -986,13 +988,13 @@ function render(){
     ctrl.hidden = true; $('#qhint').hidden = true; $('#out').innerHTML = detailView(DATA[state.sel]); return;
   }
   ctrl.hidden = false;
-  if(!norm(state.q).trim()){ $('#clear').hidden = true;
+  if(!qTerms().length){ $('#clear').hidden = !state.q;
     $('#qhint').hidden = false; $('#out').innerHTML = ''; return; }
   $('#qhint').hidden = false;
   const rows = filtered();
   $('#count').innerHTML = `<b>${rows.length}</b> resultado${rows.length===1?'':'s'}`;
   $('#clear').hidden = !state.q;
-  if(!rows.length){ $('#out').innerHTML = `<div class="empty"><b>No encontramos a nadie${state.q?` con “${esc(state.q)}”`:''}.</b><br>Escribe tu nombre o apellido completo, sin abreviar (por ejemplo <b>GARCIA</b>, no <b>GAR</b>). Los acentos no importan.</div>`; return; }
+  if(!rows.length){ $('#out').innerHTML = `<div class="empty"><b>No encontramos a nadie${state.q?` con “${esc(state.q)}”`:''}.</b><br>Revisa cómo lo escribiste o prueba solo con tu apellido (mínimo 3 letras). Los acentos no importan.</div>`; return; }
   $('#out').innerHTML = state.view==='flight' ? flightView(rows) : state.view==='table' ? tableView(rows) : `<div class="plist">${rows.map(paxRow).join('')}</div>`;
 }
 function fillSelect(sel, keys, label){
@@ -1002,7 +1004,7 @@ function fillSelect(sel, keys, label){
 }
 function init(){
   // Búsqueda solo por nombre: cada palabra escrita debe ser una palabra completa del nombre.
-  DATA.forEach(r => { r._w = new Set(norm(r.n).split(/\s+/).filter(Boolean)); });
+  DATA.forEach(r => { r._w = new Set(norm(r.n).split(/\s+/).filter(Boolean)); r._n = norm(r.n); });
   // Orden por llegada: fecha y hora en que aterriza el vuelo de ida; sin vuelo al final.
   const arr = r => r.ida ? r.ida.f+' '+(r.ida.l||r.ida.s) : '9999';
   DATA.sort((a,b)=> arr(a).localeCompare(arr(b)) || a.n.localeCompare(b.n,'es'));
@@ -1404,7 +1406,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 118;
+const APP_V = 119;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

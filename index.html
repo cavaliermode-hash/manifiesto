@@ -572,6 +572,7 @@ body.locked>*:not(#gate){visibility:hidden}
     <nav class="tabs" role="tablist" aria-label="Apartados">
       <button role="tab" data-tab="man" aria-selected="true">Manifiesto</button>
       <button role="tab" data-tab="pyt" aria-selected="false">Hotel y traslados</button>
+      <button type="button" class="ag-tab" data-agv="1" aria-haspopup="dialog">📄 Agenda</button>
       <button role="tab" data-tab="lle" aria-selected="false">Llegadas</button>
       <button role="tab" data-tab="sal" aria-selected="false">Salidas</button>
       <button role="tab" data-tab="con" aria-selected="false">Concentrado</button>
@@ -1045,7 +1046,7 @@ function closePax(){ state.sel = null; render(); const q=document.getElementById
 window.addEventListener('popstate', e => { if(!$('#agv').hidden){ agvClose(); return; } state.sel = e.state && e.state.sel!=null ? e.state.sel : null; render(); });
 /* ---------- Visor de agenda con botón Regresar ---------- */
 function agvClose(){ $('#agv').hidden = true; document.body.style.overflow = ''; const o = $('#ag-open'); if(o) o.focus({preventScroll:true}); }
-document.addEventListener('click', e => { const a = e.target.closest('#ag-open'); if(!a) return; e.preventDefault();
+document.addEventListener('click', e => { const a = e.target.closest('#ag-open, [data-agv]'); if(!a) return; e.preventDefault();
   const img = $('#agv-img'); if(!img.src) img.src = 'agenda-cumbre.jpg';
   $('.agv-body').classList.remove('zoom'); $('#agv').hidden = false; document.body.style.overflow = 'hidden'; $('.agv-body').scrollTop = 0;
   history.pushState(Object.assign({}, history.state, {agv:1}), ''); $('#agv-back').focus(); });
@@ -1317,7 +1318,7 @@ $('#kreset').addEventListener('click', async () => {
   CTL.marks[KON.m] = {}; ctlSave(); konRender(); syncPush({op:'clear', t:KON.m}); $('#kmsg').textContent = 'Marcas borradas.'; });
 function ctlTab(t){
   CTL.tab = t; CTL.filter = 'all';
-  document.querySelectorAll('.tabs button').forEach(b => b.setAttribute('aria-selected', b.dataset.tab === t));
+  document.querySelectorAll('.tabs button[data-tab]').forEach(b => b.setAttribute('aria-selected', b.dataset.tab === t));
   document.querySelectorAll('.cstat').forEach(b => b.setAttribute('aria-pressed', b.dataset.f === 'all'));
   const on = t !== 'man', con = t === 'con', cla = t === 'cla', pyt = t === 'pyt'; document.body.classList.toggle('vctl', on);
   $('#ctl').hidden = !on || con || cla || pyt; $('#con').hidden = !con; $('#cla').hidden = !cla; $('#pyt').hidden = !pyt; $('#pmsg').textContent = ''; $('#cmsg2').textContent = ''; $('#cmsg').textContent = ''; $('#kmsg').textContent = '';
@@ -1330,7 +1331,7 @@ async function conGate(){
   if(await sha256(pw.trim().toLowerCase()) !== RESET_H){ alert('Contraseña incorrecta.'); return false; }
   return true;
 }
-document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', async () => {
+document.querySelectorAll('.tabs button[data-tab]').forEach(b => b.addEventListener('click', async () => {
   if((b.dataset.tab === 'con' || b.dataset.tab === 'cla') && !(await conGate())) return; ctlTab(b.dataset.tab); }));
 document.querySelectorAll('.cstat').forEach(b => b.addEventListener('click', () => {
   CTL.filter = b.dataset.f; document.querySelectorAll('.cstat').forEach(x => x.setAttribute('aria-pressed', x === b)); ctlRender(); }));
@@ -1396,7 +1397,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 112;
+const APP_V = 113;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

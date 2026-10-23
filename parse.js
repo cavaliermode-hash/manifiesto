@@ -129,6 +129,7 @@
       x.cl = x.ci || x.cr; // compatibilidad con páginas guardadas en el navegador
       if (x.c1 && x.ida && !x.ida.o) x.ida.o = x.c1.d;
       if (x.c2 && x.reg && !x.c2.o) x.c2.o = x.reg.d;
+      if (/^STAFF/i.test(x.rol)) continue; // el staff (STAFF, STAFF VECI, STAFF METLIFE) no aparece en el manifiesto
       rows.push(x);
     }
     return rows;

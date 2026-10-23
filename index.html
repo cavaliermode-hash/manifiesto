@@ -1095,6 +1095,13 @@ function agItems(D){
   const ag = document.getElementById('agenda'); if(ag) ag.classList.toggle('ag-compact', !sel);
   const inf = document.getElementById('info'); if(inf) inf.hidden = !sel;
   const sv = document.getElementById('services'); if(sv) sv.hidden = !!sel;
+  if(sel && !tierra){ // con vuelo: traslado hotel → aeropuerto de Hermosillo antes del regreso; el pick up se comparte en sitio
+    const v = sel.reg, out = [];
+    D.it.forEach(x => { if(/^Regreso a tu ciudad/.test(x[2]) && v){
+      out.push(['', '', 'Traslado Hotel Marinaterra a aeropuerto de Hermosillo', 'El horario de pick up al aeropuerto se compartirá al finalizar las actividades en sitio', 1, 'Antes de tu vuelo']);
+      out.push([x[0], x[1], x[2], `Tu vuelo: ${v.v} · sale de ${AP[v.o] || v.o} a las ${v.s} h`, x[4], x[5]]); }
+      else out.push(x); });
+    return out; }
   if(!tierra) return D.it;
   return D.it.filter(x => !/aeropuerto/i.test(x[2] + ' ' + x[3]) && !/^Llegadas$/.test(x[2]))
     .map(x => /^Regreso a tu ciudad/.test(x[2]) ? [x[0], x[1], 'Regreso a tu ciudad de origen', 'Traslado terrestre: revisa tus indicaciones especiales', x[4], x[5]] : x);
@@ -1406,7 +1413,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 121;
+const APP_V = 122;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

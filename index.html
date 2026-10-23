@@ -552,7 +552,6 @@ body.locked>*:not(#gate){visibility:hidden}
 <body>
 <div id="gate" hidden>
   <form id="gate-form" class="gate-box" autocomplete="off">
-    <img src="logo-eci.png" alt="Viajes El Corte Inglés" width="900" height="126">
     <p class="eyebrow">Manifiesto de itinerario</p>
     <h2>SEGUNDA CUMBRE UNIVERSALES</h2>
     <label for="gate-pin">Escribe el PIN de acceso que recibiste</label>
@@ -563,9 +562,6 @@ body.locked>*:not(#gate){visibility:hidden}
 </div>
 <header class="board">
   <div class="wrap">
-    <div class="logos">
-      <img class="logo" src="logo-eci.png" alt="Viajes El Corte Inglés" width="900" height="126">
-    </div>
     <div class="eyebrow" id="ev">Manifiesto de itinerario</div>
     <h1>SEGUNDA CUMBRE UNIVERSALES</h1>
     <p class="sub">Escribe tu nombre o apellido (mínimo 3 letras)</p>
@@ -1416,7 +1412,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 128;
+const APP_V = 129;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

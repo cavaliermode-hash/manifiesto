@@ -677,13 +677,9 @@ body.locked>*:not(#gate){visibility:hidden}
 <main class="wrap">
   <div id="out" class="list"><div class="empty">Cargando…</div></div>
   <section class="services" id="services" aria-label="Servicios de tu viaje">
-    <div class="svc">
-      <span class="svc-i" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg></span>
-      <div><p class="svc-k">Según tu ruta</p><h3>Traslados y pernoctas</h3><p class="svc-d">Incluye los traslados y pernoctas correspondientes a su viaje, con base en su ciudad de origen, que apliquen por ruta.</p></div>
-    </div>
     <div class="svc solo-vuelo">
       <span class="svc-i" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 22h20"/><path d="M6.4 17.5 3 14l2-1 3 1.5 3.5-2-5-5 2-1 7 3.5 4-2.2a2 2 0 0 1 2 3.4L7.8 17.9a1.4 1.4 0 0 1-1.4-.4z"/></svg></span>
-      <div><p class="svc-k">Vuelos</p><h3>Itinerario a su medida</h3><p class="svc-d">Desde su ciudad de origen o aeropuerto más cercano.</p></div>
+      <div><p class="svc-k">Vuelos</p><h3>Itinerario a su medida</h3><p class="svc-d">Desde su ciudad de origen o aeropuerto más cercano.</p><p class="svc-d">Incluye los traslados y pernoctas correspondientes a su viaje, con base en su ciudad de origen, que apliquen por ruta.</p></div>
     </div>
     <div class="svc solo-vuelo">
       <span class="svc-i" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="15" rx="3"/><path d="M4 11h16"/><path d="M8 18v3M16 18v3"/><circle cx="8" cy="14.5" r=".6" fill="currentColor"/><circle cx="16" cy="14.5" r=".6" fill="currentColor"/></svg></span>
@@ -1435,7 +1431,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 139;
+const APP_V = 140;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

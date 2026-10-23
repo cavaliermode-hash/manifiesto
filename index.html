@@ -567,7 +567,7 @@ body.locked>*:not(#gate){visibility:hidden}
   <div class="wrap">
     <div class="eyebrow" id="ev">Manifiesto de itinerario</div>
     <h1>SEGUNDA CUMBRE UNIVERSALES</h1>
-    <p class="sub">Escribe tu nombre o apellido (mínimo 3 letras)</p>
+    <p class="sub">Escribe tu nombre completo (nombres y apellidos)</p>
     <div class="sub" id="upd"></div>
     <nav class="tabs" role="tablist" aria-label="Apartados">
       <button role="tab" data-tab="man" aria-selected="true">Manifiesto</button>
@@ -653,7 +653,7 @@ body.locked>*:not(#gate){visibility:hidden}
   <div id="csum" hidden></div>
   </section>
 
-<div class="wrap qhint-w"><div id="qhint" class="empty start qhint" hidden>🔎 <b>Escribe tu nombre o apellido</b> para ver tu itinerario y tu reserva.<br>Con 3 letras o más es suficiente. Los acentos no importan.</div></div>
+<div class="wrap qhint-w"><div id="qhint" class="empty start qhint" hidden>🔎 <b>Escribe tu nombre completo</b> (nombres y apellidos) para ver tu itinerario y tu reserva.<br>Por seguridad solo aparece tu reserva si el nombre coincide completo. Los acentos no importan.</div></div>
 <div class="controls">
   <div class="wrap">
     <div class="search">
@@ -723,7 +723,7 @@ body.locked>*:not(#gate){visibility:hidden}
     <details><summary>¿Con cuánto tiempo debo llegar al aeropuerto?</summary><p>Al menos 2 horas antes de la salida de tu vuelo. En <b>Ver mi reserva</b> aparece la hora límite calculada para tu vuelo.</p></details>
     <details><summary>¿Qué necesito llevar?</summary><p>Una identificación oficial vigente (INE o pasaporte) con el mismo nombre de tu reserva, y tu clave de reserva o pase de abordar.</p></details>
     <details><summary>¿Los horarios están en hora de qué ciudad?</summary><p>Cada horario está en la hora local del aeropuerto. En estas fechas, Sonora tiene 1 hora menos que la Ciudad de México: si sales de Hermosillo a las 12:39, en la Ciudad de México son las 13:39.</p></details>
-    <details><summary>No encuentro mi nombre, ¿qué hago?</summary><p>Escribe al menos 3 letras de tu nombre o apellido (por ejemplo, <b>GAR</b> encuentra a <b>GARCIA</b>). Los acentos no importan. Si aun así no apareces o algún dato está mal, contacta a tu coordinador de Viajes El Corte Inglés.</p></details>
+    <details><summary>No encuentro mi nombre, ¿qué hago?</summary><p>Escribe tu nombre completo, con todos tus nombres y tus dos apellidos, tal como aparece en tu reserva (por ejemplo, <b>MARIA FERNANDA SOLANA GARCIA</b>). Los acentos y el orden no importan. Si aun así no apareces o algún dato está mal, contacta a tu coordinador de Viajes El Corte Inglés.</p></details>
   </section>
   <p class="foot">Horarios en hora local de cada aeropuerto.</p>
 </main>
@@ -748,8 +748,9 @@ const legs = r => [r.c1,r.ida,r.reg,r.c2].filter(Boolean);
 const confirmed = r => /CONFIRM/.test(r.st);
 const state = {sel:null, q:'', st:'', ida:'', reg:'', view:'pax', hits:new Map()};
 
-/* Búsqueda: cada palabra escrita de 3 letras o más debe aparecer en el nombre (sin acentos, en cualquier parte). */
-const qTerms = () => norm(state.q).split(/\s+/).filter(t => t.length >= 3);
+/* Búsqueda por nombre completo: solo hay resultado si las palabras escritas son exactamente todas las del nombre
+   (sin importar acentos ni orden). Así nadie ve la reserva de otra persona con nombre o apellido parecido. */
+const qTerms = () => norm(state.q).split(/\s+/).filter(Boolean);
 function hl(text){
   text = String(text??''); if(!state.q) return esc(text);
   const terms = qTerms(), n = norm(text), mk = new Array(text.length).fill(false);
@@ -978,7 +979,7 @@ function filtered(){
     (!state.st || (state.st==='CONF') === confirmed(r)) &&
     (!state.ida || (r.ida&&r.ida.v===state.ida) || (r.c1&&r.c1.v===state.ida)) &&
     (!state.reg || (r.reg&&r.reg.v===state.reg) || (r.c2&&r.c2.v===state.reg)) &&
-    (!terms.length || terms.every(t=>r._n.includes(t))));
+    (!terms.length || (new Set(terms).size === r._w.size && terms.every(t => r._w.has(t)))));
 }
 function render(){
   const ctrl = document.querySelector('.controls');
@@ -993,7 +994,7 @@ function render(){
   const rows = filtered();
   $('#count').innerHTML = `<b>${rows.length}</b> resultado${rows.length===1?'':'s'}`;
   $('#clear').hidden = !state.q;
-  if(!rows.length){ $('#out').innerHTML = `<div class="empty"><b>No encontramos a nadie${state.q?` con “${esc(state.q)}”`:''}.</b><br>Revisa cómo lo escribiste o prueba solo con tu apellido (mínimo 3 letras). Los acentos no importan.</div>`; return; }
+  if(!rows.length){ $('#out').innerHTML = `<div class="empty"><b>No encontramos a nadie${state.q?` con “${esc(state.q)}”`:''}.</b><br>Escribe tu nombre completo: todos tus nombres y tus dos apellidos, tal como aparecen en tu reserva. Los acentos no importan.</div>`; return; }
   $('#out').innerHTML = state.view==='flight' ? flightView(rows) : state.view==='table' ? tableView(rows) : `<div class="plist">${rows.map(paxRow).join('')}</div>`;
 }
 function fillSelect(sel, keys, label){
@@ -1423,7 +1424,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 135;
+const APP_V = 136;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

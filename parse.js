@@ -49,7 +49,7 @@
       const d = new Date(Date.UTC(2026, MESES[m[2]], +m[1])); return `${DIAS[d.getUTCDay()]} ${+m[1]} de ${MES_TXT[MESES[m[2]]]}`; };
     const fechas = t => { const r = [], re = /\b(\d{1,2})\s*(ENE|FEB|MAR|ABR|MAY|JUN|JUL|AGO|SEP|OCT|NOV|DIC)[A-Z]*\b/g; let m; while ((m = re.exec(up(t)))) r.push(fecha(m[0])); return r; };
     const isoFechas = t => { const r = [], re = /\b(\d{1,2})\s*(ENE|FEB|MAR|ABR|MAY|JUN|JUL|AGO|SEP|OCT|NOV|DIC)[A-Z]*\b/g; let m; while ((m = re.exec(up(t)))) r.push(`2026-${pad(MESES[m[2]] + 1)}-${pad(m[1])}`); return r; };
-    const hora = t => { const m = up(t).match(/\b(\d{1,2})(?::(\d{2}))?\s*(AM|PM)\b/); if (!m) return '';
+    const hora = t => { const m = up(t).match(/\b(\d{1,2})(?::(\d{2}))?\s*(AM|PM)\b/); if (!m) { const h = up(t).match(/A LAS (\d{1,2}):(\d{2})/); return h ? `${pad(h[1])}:${h[2]} h` : ''; }
       let h = +m[1] % 12; if (m[3] === 'PM') h += 12; return `${pad(h)}:${m[2] || '00'} h`; };
     // Puntos de encuentro conocidos, escritos de forma clara.
     const PUNTOS = [[/METEPEC/i, 'Plaza Metepec (Towns Square), Av. Ignacio Comonfort 1100, Residencial la Providencia, Metepec, Estado de México'],
@@ -75,6 +75,7 @@
       const cuando = [f && `el ${f}`, h && `a las ${h}`].filter(Boolean).join(' ');
       if (/PUNTO DE ENCUENTRO/.test(u)) { const p = PUNTOS.find(([re]) => re.test(u)); const punto = p ? p[1] : friendly(t.split(/punto de encuentro,?/i)[1].split(/,?\s*su regreso/i)[0], true).replace(/\.$/, '');
         return `Traslado terrestre: ${cuando ? cuando + ' ' : ''}te recogemos en el punto de encuentro ${punto}${dest ? ','+'' : ''}${dest ? ` para llevarte ${dest.replace(/^el /, 'al ').replace(/^la /, 'a la ')}` : ''}. A tu regreso, el traslado te deja en el mismo punto de encuentro.`; }
+      if (/DESDE (EL )?AEROPUERTO/.test(u)) return `Traslado terrestre: ${cuando ? cuando + ' ' : ''}te recogemos en el aeropuerto${dest ? ` para llevarte ${dest.replace(/^el /, 'al ').replace(/^la /, 'a la ')}` : ''}. ${/FINALIZAR/.test(u) ? 'Al terminar el evento' : 'A tu regreso'}, el traslado te lleva de vuelta al mismo aeropuerto.`;
       if (/DOMICILIO/.test(u)) return `Traslado terrestre: ${cuando ? cuando + ' ' : ''}te recogemos en tu domicilio registrado${dest ? ` para llevarte ${dest.replace(/^el /, 'al ').replace(/^la /, 'a la ')}` : ''}. ${/FINALIZAR/.test(u) ? 'Al terminar el evento' : 'A tu regreso'}, el traslado te lleva de vuelta a la misma dirección.`;
       return friendly(raw, true);
     }

@@ -567,11 +567,11 @@ body.locked>*:not(#gate){visibility:hidden}
     <div class="sub" id="upd"></div>
     <nav class="tabs" role="tablist" aria-label="Apartados">
       <button role="tab" data-tab="man" aria-selected="true">Manifiesto</button>
+      <button role="tab" data-tab="pyt" aria-selected="false">Hotel y traslados</button>
       <button role="tab" data-tab="lle" aria-selected="false">Llegadas</button>
       <button role="tab" data-tab="sal" aria-selected="false">Salidas</button>
       <button role="tab" data-tab="con" aria-selected="false">Concentrado</button>
       <button role="tab" data-tab="cla" aria-selected="false">Claves</button>
-      <button role="tab" data-tab="pyt" aria-selected="false">Hotel y traslados</button>
     </nav>
   </div>
 </header>
@@ -1213,6 +1213,7 @@ function pytData(){
     const dest = (t.match(/para llevarte (?:al|a la|a) (.+?)(?:,|\.)/) || [])[1] || '';
     let key, sub, det = '';
     if(m){ key = 'Punto de encuentro: ' + m[1].split(',')[0]; sub = [cuando, m[1].split(',').slice(1).join(',').trim()].filter(Boolean).join(' · '); }
+    else if(/te recogemos en el aeropuerto/i.test(t)){ key = 'Desde el aeropuerto'; sub = 'Se recoge en el aeropuerto y regresa al mismo aeropuerto.'; det = [cuando, dest && '→ ' + dest].filter(Boolean).join(' '); }
     else if(/domicilio/i.test(t)){ key = 'Desde su domicilio'; sub = 'Se recoge en el domicilio registrado y regresa a la misma dirección.'; det = [cuando, dest && '→ ' + dest].filter(Boolean).join(' '); }
     else if(/solo a tu regreso/i.test(t)){ key = 'Solo traslado de regreso'; sub = 'Se le recibe al aterrizar de regreso.'; det = ((t.match(/el (\S+ \d+ de \S+), al aterrizar en (.+?) en el vuelo (.+?) \(llegada ([\d:]+) h\)/) || []).slice(1).join(' · ')) || t; }
     else if(/por tu cuenta/i.test(t)){ key = 'Llegan por su cuenta'; sub = /estacionamiento/i.test(t) ? 'Considerar estacionamiento.' : ''; }
@@ -1315,7 +1316,7 @@ async function conGate(){
   return true;
 }
 document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', async () => {
-  if((b.dataset.tab === 'con' || b.dataset.tab === 'cla' || b.dataset.tab === 'pyt') && !(await conGate())) return; ctlTab(b.dataset.tab); }));
+  if((b.dataset.tab === 'con' || b.dataset.tab === 'cla') && !(await conGate())) return; ctlTab(b.dataset.tab); }));
 document.querySelectorAll('.cstat').forEach(b => b.addEventListener('click', () => {
   CTL.filter = b.dataset.f; document.querySelectorAll('.cstat').forEach(x => x.setAttribute('aria-pressed', x === b)); ctlRender(); }));
 $('#cout').addEventListener('click', e => { const b = e.target.closest('button[data-n]'); if(!b) return;

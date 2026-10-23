@@ -271,7 +271,7 @@ table.rep{font-size:13px}
 .svc{display:grid;grid-template-columns:44px 1fr;gap:14px;align-items:start;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px 18px;box-shadow:0 1px 3px rgba(12,79,35,.06);transition:transform .15s,box-shadow .15s}
 .svc:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(12,79,35,.12)}
 .svc-i{width:44px;height:44px;border-radius:10px;background:var(--green);color:#fff;display:grid;place-items:center}
-.svc-ruta{display:flex;gap:6px;align-items:flex-start}.svc-ruta .svc-pin{flex:none;margin-top:3px;color:var(--green)}
+.svc-ruta{display:flex;gap:8px;align-items:flex-start}.svc-ruta .svc-pin{flex:none;margin-top:2px;width:22px;height:22px;padding:4px;box-sizing:border-box;border-radius:6px;background:var(--green);color:#fff}
 .svc-k{margin:0 0 3px;font:700 11.5px var(--body);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
 .svc h3{margin:0;font:700 18px/1.25 var(--body);color:var(--ink)}
 .svc-d{margin:4px 0 0;font-size:14.5px;color:var(--muted)}
@@ -1432,7 +1432,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 141;
+const APP_V = 142;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

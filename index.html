@@ -294,6 +294,7 @@ table.rep{font-size:13px}
 /* ---------- Agenda e información ---------- */
 .agenda-link{display:inline-block;margin-top:8px;font:700 13.5px var(--body);color:var(--green);text-decoration:none;border:1.5px solid var(--green);border-radius:99px;padding:5px 12px}
 .agenda-link:hover{background:var(--green);color:#fff}
+#agenda.ag-compact .ag-tabs,#agenda.ag-compact #ag-days{display:none}
 body.tierra .solo-vuelo,body.tierra [data-solo-vuelo]{display:none!important}
 .agenda{margin-top:20px;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--surface);scroll-margin-top:16px}
 .ag-head{background:var(--green);color:#fff;padding:14px 16px}
@@ -686,7 +687,7 @@ body.locked>*:not(#gate){visibility:hidden}
       <div><p class="svc-k">Hospedaje</p><h3>Hospedaje coordinado por nuestro equipo.</h3><p class="svc-sede"><span>Sede del evento</span>Hotel Marinaterra</p></div>
     </div>
   </section>
-  <section class="agenda" id="agenda" aria-labelledby="ag-t" hidden>
+  <section class="agenda ag-compact" id="agenda" aria-labelledby="ag-t">
     <div class="ag-head"><div><h2 id="ag-t">Agenda del evento</h2><p>Segunda Cumbre Universales · San Carlos, Sonora · Horarios en hora local de Sonora</p></div><a class="ag-pdf" href="agenda-cumbre.pdf" id="ag-open">📄 Ver agenda completa</a></div>
     <div class="ag-tabs" role="tablist" aria-label="Días del evento">
       <button role="tab" id="tab-3" aria-controls="day-3" data-day="3"><b>3</b><span>Martes</span></button>
@@ -1085,7 +1086,7 @@ let AG_DAY = 3;
 function agItems(D){
   const sel = state.sel != null ? DATA[state.sel] : null, tierra = !!(sel && soloTierra(sel));
   document.body.classList.toggle('tierra', tierra);
-  const ag = document.getElementById('agenda'); if(ag) ag.hidden = !sel; const inf = document.getElementById('info'); if(inf) inf.hidden = !sel; // agenda e información general: solo dentro de la reserva // la agenda solo se ve dentro de la reserva del participante
+  const ag = document.getElementById('agenda'); if(ag) ag.classList.toggle('ag-compact', !sel); // pantalla principal: solo el encabezado con "Ver agenda completa"; en la reserva, la agenda por día const inf = document.getElementById('info'); if(inf) inf.hidden = !sel; // agenda e información general: solo dentro de la reserva // la agenda solo se ve dentro de la reserva del participante
   if(!tierra) return D.it;
   return D.it.filter(x => !/aeropuerto/i.test(x[2] + ' ' + x[3]) && !/^Llegadas$/.test(x[2]))
     .map(x => /^Regreso a tu ciudad/.test(x[2]) ? [x[0], x[1], 'Regreso a tu ciudad de origen', 'Traslado terrestre: revisa tus indicaciones especiales', x[4], x[5]] : x);
@@ -1397,7 +1398,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 113;
+const APP_V = 114;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

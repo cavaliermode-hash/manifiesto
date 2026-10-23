@@ -687,7 +687,7 @@ body.locked>*:not(#gate){visibility:hidden}
     </div>
   </section>
   <section class="agenda ag-compact" id="agenda" aria-labelledby="ag-t">
-    <div class="ag-head"><div><h2 id="ag-t">Agenda del evento</h2><p>Segunda Cumbre Universales · San Carlos, Sonora · Horarios en hora local de Sonora</p></div><a class="ag-pdf" href="agenda-cumbre.pdf" id="ag-open">📄 Ver agenda completa</a></div>
+    <div class="ag-head"><div><h2 id="ag-t">Agenda del evento</h2><p>Segunda Cumbre Universales · San Carlos, Sonora · Horarios en hora local de Sonora</p></div><a class="ag-pdf" href="agenda-cumbre.jpg" id="ag-open">📄 Ver agenda completa</a></div>
     <div class="ag-tabs" role="tablist" aria-label="Días del evento">
       <button role="tab" id="tab-3" aria-controls="day-3" data-day="3"><b>3</b><span>Martes</span></button>
       <button role="tab" id="tab-4" aria-controls="day-4" data-day="4"><b>4</b><span>Miércoles</span></button>
@@ -726,8 +726,8 @@ body.locked>*:not(#gate){visibility:hidden}
 </main>
 
 <div id="agv" class="agv" role="dialog" aria-modal="true" aria-label="Agenda del evento" hidden>
-  <div class="agv-bar"><button id="agv-back" type="button">‹ Regresar</button><a href="https://cdn.jsdelivr.net/gh/cavaliermode-hash/manifiesto@main/agenda-cumbre.pdf" id="agv-pdf" target="_blank" rel="noopener">⬇ Guardar</a></div>
-  <p class="agv-tip">Toca la imagen para acercar o alejar.</p>
+  <div class="agv-bar"><button id="agv-back" type="button">‹ Regresar</button><a href="https://cdn.jsdelivr.net/gh/cavaliermode-hash/manifiesto@main/agenda-cumbre.jpg" id="agv-pdf" target="_blank" rel="noopener">⬇ Guardar</a></div>
+  <p class="agv-tip">Toca la imagen para acercar o alejar. Para guardarla, mantén presionada la imagen o usa ⬇ Guardar.</p>
   <div class="agv-body"><img id="agv-img" alt="Agenda de la Segunda Cumbre Universales: actividades del 3 al 5 de noviembre, dress code y recomendaciones"></div>
 </div>
 <script src="parse.js"></script>
@@ -911,7 +911,7 @@ function waTxt(r){
   L.push(''); if(soloTierra(r)) L.push('🚐 *Traslado terrestre*'); seg('🛫', 'Ida (conexión)', r.c1); seg('🛫', 'Ida', r.ida); seg('🛬', 'Regreso', r.reg); seg('🛬', 'Regreso (conexión)', r.c2);
   if((r.notas||[]).length){ L.push('', '📌 *Indicaciones especiales para ti*'); r.notas.forEach(n => L.push('• ' + n.t.replace(/Hotel Marinaterra/g, '*Hotel Marinaterra*'))); }
   L.push('', '🏨 *Sede del evento:* Hotel Marinaterra, San Carlos, Sonora', '',
-    '🗓️ *Agenda del evento (PDF):*', base + 'agenda-cumbre.pdf', '',
+    '🗓️ *Agenda del evento:*', base + 'agenda-cumbre.jpg', '',
     '🔎 *Consulta tu reserva cuando quieras:*', base, '',
     '*Importante.-* Le recordamos que MetLife cubre únicamente las noches de hotel y traslados terrestres que estén dentro del evento o por ruta.', '',
     'Le enviamos un cordial saludo deseándole un buen viaje y nos reiteramos a sus órdenes.', '', '_Viajes El Corte Inglés_');
@@ -921,7 +921,7 @@ function mailBox(r){
   const i = DATA.indexOf(r);
   return `<section class="mailbox wa" aria-labelledby="wa-t">
     <h3 id="wa-t">💬 Envíatelo por WhatsApp</h3>
-    <p>Escribe tu número de celular a 10 dígitos y toca el botón: se abrirá WhatsApp con tu clave, tus vuelos, tus indicaciones y el enlace a la <b>agenda del evento (PDF)</b>. Si lo dejas vacío, podrás elegir el chat al que quieres mandarlo.</p>
+    <p>Escribe tu número de celular a 10 dígitos y toca el botón: se abrirá WhatsApp con tu clave, tus vuelos, tus indicaciones y el enlace a la <b>agenda del evento</b>. Si lo dejas vacío, podrás elegir el chat al que quieres mandarlo.</p>
     <form class="mb-form" data-wa="${i}" novalidate>
       <label class="sr" for="wa-tel">Tu número de celular (10 dígitos)</label>
       <input id="wa-tel" type="tel" inputmode="numeric" autocomplete="tel-national" placeholder="10 dígitos (opcional)" maxlength="16">
@@ -1054,9 +1054,17 @@ document.addEventListener('click', e => { const a = e.target.closest('#ag-open, 
   history.pushState(Object.assign({}, history.state, {agv:1}), ''); $('#agv-back').focus(); });
 $('#agv-img').addEventListener('click', e => { const bd = $('.agv-body'), r = e.target.getBoundingClientRect(), fx = (e.clientX - r.left) / r.width, fy = (e.clientY - r.top) / r.height;
   bd.classList.toggle('zoom'); if(bd.classList.contains('zoom')){ const im = e.target; bd.scrollLeft = fx * im.offsetWidth - bd.clientWidth / 2; bd.scrollTop = fy * im.offsetHeight - bd.clientHeight / 2; } });
-/* "Guardar": abre el PDF en el navegador web (fuera de la app), donde se descarga o guarda. Se usa la copia en jsDelivr (sirve el PDF para verlo y guardarlo)
+/* "Guardar": abre la imagen de la agenda en el navegador web (fuera de la app), donde se guarda en Fotos o se comparte. Se usa la copia en jsDelivr.
    para que la app no lo abra dentro de sí misma, sin botones. */
-$('#agv-pdf').addEventListener('click', () => { DLG = true; setTimeout(() => { DLG = false; awaySince = 0; }, 3000); });
+$('#agv-pdf').addEventListener('click', async e => {
+  DLG = true; setTimeout(() => { DLG = false; awaySince = 0; }, 3000);
+  // En el celular: menú de compartir del teléfono con la imagen ("Guardar imagen", WhatsApp…). Si no se puede, se abre en el navegador.
+  if(navigator.share && navigator.canShare){ e.preventDefault();
+    try{ const blob = await (await fetch('agenda-cumbre.jpg')).blob(); const file = new File([blob], 'Agenda Segunda Cumbre Universales.jpg', {type:'image/jpeg'});
+      if(navigator.canShare({files:[file]})){ await navigator.share({files:[file], title:'Agenda Segunda Cumbre Universales'}); return; } }
+    catch(err){ if(err && err.name === 'AbortError') return; }
+    window.open($('#agv-pdf').href, '_blank'); }
+});
 $('#agv-back').addEventListener('click', () => { if(history.state && history.state.agv) history.back(); else agvClose(); });
 document.addEventListener('keydown', e => { if(e.key === 'Escape' && !$('#agv').hidden) $('#agv-back').click(); });
 /* ---------- Agenda ---------- */
@@ -1412,7 +1420,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 129;
+const APP_V = 130;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

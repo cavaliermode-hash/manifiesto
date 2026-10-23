@@ -694,7 +694,7 @@ body.locked>*:not(#gate){visibility:hidden}
     </div>
     <div id="ag-days"></div>
   </section>
-  <section class="info" aria-labelledby="inf-t">
+  <section class="info" id="info" aria-labelledby="inf-t" hidden>
     <h2 id="inf-t">Información general</h2>
     <div class="info-grid">
       <div class="icard"><span class="ii" aria-hidden="true">🏨</span><div><p class="ik">Hotel sede</p><p class="iv">Hotel Marinaterra · Blvd. Gabriel Estrada 12, San Carlos, Nuevo Guaymas, Sonora</p></div></div>
@@ -1084,7 +1084,7 @@ let AG_DAY = 3;
 function agItems(D){
   const sel = state.sel != null ? DATA[state.sel] : null, tierra = !!(sel && soloTierra(sel));
   document.body.classList.toggle('tierra', tierra);
-  const ag = document.getElementById('agenda'); if(ag) ag.hidden = !sel; // la agenda solo se ve dentro de la reserva del participante
+  const ag = document.getElementById('agenda'); if(ag) ag.hidden = !sel; const inf = document.getElementById('info'); if(inf) inf.hidden = !sel; // agenda e información general: solo dentro de la reserva // la agenda solo se ve dentro de la reserva del participante
   if(!tierra) return D.it;
   return D.it.filter(x => !/aeropuerto/i.test(x[2] + ' ' + x[3]) && !/^Llegadas$/.test(x[2]))
     .map(x => /^Regreso a tu ciudad/.test(x[2]) ? [x[0], x[1], 'Regreso a tu ciudad de origen', 'Traslado terrestre: revisa tus indicaciones especiales', x[4], x[5]] : x);
@@ -1396,7 +1396,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 111;
+const APP_V = 112;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

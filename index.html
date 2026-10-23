@@ -1396,7 +1396,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 110;
+const APP_V = 111;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');
@@ -1440,6 +1440,14 @@ document.addEventListener('visibilitychange', () => { if(document.hidden) leave(
 window.addEventListener('blur', leave);
 window.addEventListener('focus', back);
 window.addEventListener('pageshow', e => { if(e.persisted) freshReload(); });
+document.addEventListener('resume', () => freshReload()); // Android: la app vuelve del segundo plano
+document.addEventListener('freeze', () => { awaySince = awaySince || Date.now(); });
+/* Respaldo: mientras la página está abierta revisa cada minuto si hay versión o datos nuevos; si los hay, recarga. */
+setInterval(async () => {
+  if(document.hidden || DLG || !PACK) return;
+  try{ const j = await (await fetch('data.json?v=' + Date.now(), {cache:'no-store'})).json();
+    if((j.app && j.app > APP_V) || (j.actualizado && j.actualizado !== PACK.actualizado)) freshReload(); }catch(e){}
+}, 60000);
 function restoreView(){
   let r = null; try{ r = JSON.parse(sessionStorage.getItem('restore') || 'null'); sessionStorage.removeItem('restore'); }catch(e){}
   if(!r) return;

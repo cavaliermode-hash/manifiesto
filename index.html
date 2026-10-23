@@ -1416,7 +1416,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 127;
+const APP_V = 128;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');
@@ -1436,7 +1436,7 @@ window.addEventListener('pagehide', e => { if(e.persisted) lockNow(); });
 async function unlock(pin, fromSaved){
   try{ const d = await Cifra.descifrar(PACK.enc, pin);
     if(UNLOCKED){ gate.hidden = true; document.body.classList.remove('locked'); return; } // re-entrada tras salir de la app
-    UNLOCKED = true; DATA = d.filas; gate.hidden = true; $('#upd').textContent = 'Actualizado: ' + PACK.actualizado; init(); syncStart(pin); restoreView(); }
+    UNLOCKED = true; DATA = d.filas; gate.hidden = true; $('#upd').textContent = 'Actualizado: ' + PACK.actualizado + ' · v' + APP_V; init(); syncStart(pin); restoreView(); }
   catch(e){ showGate('PIN incorrecto. Revísalo e intenta de nuevo.'); }
 }
 $('#gate-form').addEventListener('submit', e => { e.preventDefault(); const v = gin.value.trim();

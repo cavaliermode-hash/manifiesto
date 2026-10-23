@@ -730,7 +730,7 @@ body.locked>*:not(#gate){visibility:hidden}
 </main>
 
 <div id="agv" class="agv" role="dialog" aria-modal="true" aria-label="Agenda del evento" hidden>
-  <div class="agv-bar"><button id="agv-back" type="button">‹ Regresar</button><a href="agenda-cumbre.pdf" id="agv-pdf" download="Agenda Segunda Cumbre Universales.pdf">⬇ Guardar o compartir PDF</a></div>
+  <div class="agv-bar"><button id="agv-back" type="button">‹ Regresar</button><a href="https://raw.githubusercontent.com/cavaliermode-hash/manifiesto/main/agenda-cumbre.pdf" id="agv-pdf" target="_blank" rel="noopener">⬇ Guardar</a></div>
   <p class="agv-tip">Toca la imagen para acercar o alejar.</p>
   <div class="agv-body"><img id="agv-img" alt="Agenda de la Segunda Cumbre Universales: actividades del 3 al 5 de noviembre, dress code y recomendaciones"></div>
 </div>
@@ -1058,16 +1058,9 @@ document.addEventListener('click', e => { const a = e.target.closest('#ag-open, 
   history.pushState(Object.assign({}, history.state, {agv:1}), ''); $('#agv-back').focus(); });
 $('#agv-img').addEventListener('click', e => { const bd = $('.agv-body'), r = e.target.getBoundingClientRect(), fx = (e.clientX - r.left) / r.width, fy = (e.clientY - r.top) / r.height;
   bd.classList.toggle('zoom'); if(bd.classList.contains('zoom')){ const im = e.target; bd.scrollLeft = fx * im.offsetWidth - bd.clientWidth / 2; bd.scrollTop = fy * im.offsetHeight - bd.clientHeight / 2; } });
-/* PDF de la agenda sin salir de la página: en el celular abre el menú de compartir del teléfono
-   (Guardar en Archivos, WhatsApp, correo…); en computadora se descarga. Así no se queda atrapado en un visor sin botones. */
-$('#agv-pdf').addEventListener('click', async e => {
-  const name = 'Agenda Segunda Cumbre Universales.pdf';
-  if(navigator.share && navigator.canShare){ e.preventDefault();
-    try{ const blob = await (await fetch('agenda-cumbre.pdf')).blob(); const file = new File([blob], name, {type:'application/pdf'});
-      if(navigator.canShare({files:[file]})){ DLG = true; try{ await navigator.share({files:[file], title:'Agenda Segunda Cumbre Universales'}); } finally { setTimeout(() => { DLG = false; awaySince = 0; }, 800); } return; }
-    }catch(err){ if(err && err.name === 'AbortError') return; }
-    const a = document.createElement('a'); a.href = 'agenda-cumbre.pdf'; a.download = name; document.body.appendChild(a); a.click(); a.remove(); }
-});
+/* "Guardar": abre el PDF en el navegador web (fuera de la app), donde se descarga o guarda. Se usa la dirección de GitHub
+   para que la app no lo abra dentro de sí misma, sin botones. */
+$('#agv-pdf').addEventListener('click', () => { DLG = true; setTimeout(() => { DLG = false; awaySince = 0; }, 3000); });
 $('#agv-back').addEventListener('click', () => { if(history.state && history.state.agv) history.back(); else agvClose(); });
 document.addEventListener('keydown', e => { if(e.key === 'Escape' && !$('#agv').hidden) $('#agv-back').click(); });
 /* ---------- Agenda ---------- */
@@ -1423,7 +1416,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 125;
+const APP_V = 126;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

@@ -685,7 +685,7 @@ body.locked>*:not(#gate){visibility:hidden}
       <div><p class="svc-k">Hospedaje</p><h3>Hospedaje coordinado por nuestro equipo.</h3><p class="svc-sede"><span>Sede del evento</span>Hotel Marinaterra</p></div>
     </div>
   </section>
-  <section class="agenda" id="agenda" aria-labelledby="ag-t">
+  <section class="agenda" id="agenda" aria-labelledby="ag-t" hidden>
     <div class="ag-head"><div><h2 id="ag-t">Agenda del evento</h2><p>Segunda Cumbre Universales · San Carlos, Sonora · Horarios en hora local de Sonora</p></div><a class="ag-pdf" href="agenda-cumbre.pdf" id="ag-open">📄 Ver agenda completa</a></div>
     <div class="ag-tabs" role="tablist" aria-label="Días del evento">
       <button role="tab" id="tab-3" aria-controls="day-3" data-day="3"><b>3</b><span>Martes</span></button>
@@ -1084,6 +1084,7 @@ let AG_DAY = 3;
 function agItems(D){
   const sel = state.sel != null ? DATA[state.sel] : null, tierra = !!(sel && soloTierra(sel));
   document.body.classList.toggle('tierra', tierra);
+  const ag = document.getElementById('agenda'); if(ag) ag.hidden = !sel; // la agenda solo se ve dentro de la reserva del participante
   if(!tierra) return D.it;
   return D.it.filter(x => !/aeropuerto/i.test(x[2] + ' ' + x[3]) && !/^Llegadas$/.test(x[2]))
     .map(x => /^Regreso a tu ciudad/.test(x[2]) ? [x[0], x[1], 'Regreso a tu ciudad de origen', 'Traslado terrestre: revisa tus indicaciones especiales', x[4], x[5]] : x);
@@ -1395,7 +1396,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 109;
+const APP_V = 110;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

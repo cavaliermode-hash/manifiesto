@@ -672,7 +672,7 @@ body.locked>*:not(#gate){visibility:hidden}
 
 <main class="wrap">
   <div id="out" class="list"><div class="empty">Cargando…</div></div>
-  <section class="services" aria-label="Servicios de tu viaje">
+  <section class="services" id="services" aria-label="Servicios de tu viaje">
     <div class="svc solo-vuelo">
       <span class="svc-i" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 22h20"/><path d="M6.4 17.5 3 14l2-1 3 1.5 3.5-2-5-5 2-1 7 3.5 4-2.2a2 2 0 0 1 2 3.4L7.8 17.9a1.4 1.4 0 0 1-1.4-.4z"/></svg></span>
       <div><p class="svc-k">Vuelos</p><h3>Itinerario a su medida</h3><p class="svc-d">Desde su ciudad de origen o aeropuerto más cercano.</p></div>
@@ -1089,7 +1089,10 @@ let AG_DAY = 3;
 function agItems(D){
   const sel = state.sel != null ? DATA[state.sel] : null, tierra = !!(sel && soloTierra(sel));
   document.body.classList.toggle('tierra', tierra);
-  const ag = document.getElementById('agenda'); if(ag) ag.classList.toggle('ag-compact', !sel); // pantalla principal: solo el encabezado con "Ver agenda completa"; en la reserva, la agenda por día const inf = document.getElementById('info'); if(inf) inf.hidden = !sel; // agenda e información general: solo dentro de la reserva // la agenda solo se ve dentro de la reserva del participante
+  // Pantalla principal: encabezado de agenda y tarjetas de servicios. Dentro de la reserva: agenda por día e información general.
+  const ag = document.getElementById('agenda'); if(ag) ag.classList.toggle('ag-compact', !sel);
+  const inf = document.getElementById('info'); if(inf) inf.hidden = !sel;
+  const sv = document.getElementById('services'); if(sv) sv.hidden = !!sel;
   if(!tierra) return D.it;
   return D.it.filter(x => !/aeropuerto/i.test(x[2] + ' ' + x[3]) && !/^Llegadas$/.test(x[2]))
     .map(x => /^Regreso a tu ciudad/.test(x[2]) ? [x[0], x[1], 'Regreso a tu ciudad de origen', 'Traslado terrestre: revisa tus indicaciones especiales', x[4], x[5]] : x);
@@ -1401,7 +1404,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 117;
+const APP_V = 118;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

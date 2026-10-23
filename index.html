@@ -1302,7 +1302,18 @@ const kLeg = r => KON.m === 'lle' ? r.ida : r.reg;
 const kHora = l => String((KON.m === 'lle' ? l.l : l.s) || '').padStart(5,'0');
 const kRank = {ok:0, ns:1, pe:2};
 function kRows(){
-  const rows = DATA.filter(r => kLeg(r)).map(r => { const l = kLeg(r); return {r, l, n:r.n, f:l.f + ' ' + kHora(l), v:l.v, s:kSt(r.n)}; });
+  // Con vuelo: su vuelo. Sin vuelo en ese sentido (terrestre o por su cuenta): se incluye con su traslado.
+  const MES = {enero:1,febrero:2,marzo:3,abril:4,mayo:5,junio:6,julio:7,agosto:8,septiembre:9,octubre:10,noviembre:11,diciembre:12};
+  const rows = DATA.map(r => { const l = kLeg(r);
+    if(l) return {r, l, n:r.n, f:l.f + ' ' + kHora(l), v:l.v, s:kSt(r.n)};
+    const t = notaDe(r, 'tr'), lle = KON.m === 'lle';
+    const cuenta = /por tu cuenta/i.test(t), tierra = !cuenta && (soloTierra(r) || !!t);
+    const v = cuenta ? 'Por su cuenta' : tierra ? 'Terrestre' : 'Sin vuelo asignado';
+    const m = lle ? t.match(/el \S+ (\d+) de (\S+) a las ([\d:]+) h/) : null;
+    const f = m ? `2026-${String(MES[m[2]]||11).padStart(2,'0')}-${m[1].padStart(2,'0')} ${m[3].padStart(5,'0')}` : (lle ? '2026-11-03 99:99' : '2026-11-05 99:99');
+    const lab = m ? fmtDate(f.slice(0,10)) : (lle ? 'Mar 3 nov' : 'Jue 5 nov');
+    const det = cuenta ? (lle ? (/estacionamiento/i.test(t) ? 'Llega por su cuenta · estacionamiento' : 'Llega por su cuenta') : 'Regresa por su cuenta') : tierra ? (m ? `${m[3]} h · traslado terrestre` : 'Traslado terrestre') : 'Sin vuelo asignado';
+    return {r, l:null, n:r.n, f, v, s:kSt(r.n), lab, det}; });
   const k = KON.sort;
   rows.sort((a,b) => { let c = k==='s' ? kRank[a.s]-kRank[b.s] : String(a[k]).localeCompare(String(b[k]),'es');
     if(!c) c = a.f.localeCompare(b.f) || a.n.localeCompare(b.n,'es'); return c * KON.dir; });
@@ -1316,8 +1327,8 @@ function konRender(){
   document.querySelectorAll('#con .ktable th button').forEach(b => { if(b.dataset.sort === KON.sort){ b.setAttribute('aria-sort', KON.dir>0?'ascending':'descending'); b.querySelector('span').dataset.a = KON.dir>0?'▲':'▼'; } else b.removeAttribute('aria-sort'); });
   const rows = all.filter(x => KON.filter === 'all' || x.s === KON.filter);
   $('#kbody').innerHTML = rows.map(x => { const l = x.l;
-    return `<tr class="st-${x.s}"><td class="kn">${esc(x.n)}</td><td class="kf">${esc(fmtDate(l.f))}<small>${esc(lle ? l.l : l.s)} · ${esc(l.o)}→${esc(l.d)}</small></td>
-      <td class="kv">${esc(l.v)}</td><td><div class="kb"><button class="bok" data-n="${esc(x.n)}" data-s="ok" aria-pressed="${x.s==='ok'}">✓ Check-in</button>
+    return `<tr class="st-${x.s}"><td class="kn">${esc(x.n)}</td>${l ? `<td class="kf">${esc(fmtDate(l.f))}<small>${esc(lle ? l.l : l.s)} · ${esc(l.o)}→${esc(l.d)}</small></td>
+      <td class="kv">${esc(l.v)}</td>` : `<td class="kf">${esc(x.lab)}<small>${x.v === 'Por su cuenta' ? '🚗' : '🚐'} ${esc(x.det)}</small></td><td class="kv">${esc(x.v)}</td>`}<td><div class="kb"><button class="bok" data-n="${esc(x.n)}" data-s="ok" aria-pressed="${x.s==='ok'}">✓ Check-in</button>
       <button class="bns" data-n="${esc(x.n)}" data-s="ns" aria-pressed="${x.s==='ns'}">✗ No show</button></div></td></tr>`; }).join('')
     || '<tr><td colspan="4" class="cnote">No hay invitados en este filtro.</td></tr>';
 }
@@ -1423,7 +1434,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 131;
+const APP_V = 132;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

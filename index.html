@@ -888,7 +888,6 @@ function tripSteps(r){
   const b = stepBlock('Tu regreso, paso a paso', [r.reg, r.c2]);
   if(!a && !b) return '';
   return `<div class="guide">${a}${b}</div>
-    <div class="dactions"><button class="abtn2" data-ics="${DATA.indexOf(r)}">📅 Agregar vuelos a mi calendario</button></div>
     ${mailBox(r)}`;
 }
 /* ---------- Enviar a mi correo ---------- */
@@ -1431,7 +1430,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 143;
+const APP_V = 144;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

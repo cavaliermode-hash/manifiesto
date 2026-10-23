@@ -48,7 +48,7 @@
     const KEEP = {TIJUANA:'Tijuana', ENSENADA:'Ensenada', LUCERNA:'Lucerna', HOTEL:'Hotel', TORRE:'Torre', CUPON:'cupón', METLIFE:'MetLife', SERA:'será', TOLUCA:'Toluca', MEXICO:'México'};
     const friendly = (s, quitarDomicilio) => {
       let t = clean(s);
-      if (!t || t === '-') return '';
+      if (!t || /^(-+|0+|N\/?A|NA|NO APLICA|NINGUNO|X+)$/i.test(t.replace(/[.\s]/g, ''))) return ''; // vacíos: Na., 0., N/A, -
       t = t.replace(/\bY S ASU\b/gi, 'Y A SU').replace(/\bASU\b/gi, 'A SU');
       if (quitarDomicilio) t = t.replace(/\s*DESPLAZO\b(?!\s+DE\s+\d).*$/i, ' al domicilio registrado'); // no publica direcciones particulares
       t = t.split(' ').map(w => { const u = w.replace(/[.,]/g,'').toUpperCase(); const p = w.match(/[.,]+$/); const k = KEEP[u];
@@ -81,7 +81,8 @@
                  st: clean(r[iSt]).toUpperCase(), rol: iRol >= 0 ? clean(r[iRol]) : '', rg: iRegion >= 0 && !empty(r[iRegion]) ? up(r[iRegion]) : '',
         c1: leg(r, C.c1), ida: leg(r, C.ida), reg: leg(r, C.reg), c2: leg(r, C.c2),
         ci: idaKey ? code(idaKey) : code(unaKey), cr: regKey ? code(regKey) : code(unaKey) };
-      x.notas = [['pe', iPe], ['seg', iSeg], ['tr', iTr]].map(([k, i]) => i >= 0 ? { k, t: k === 'seg' && /DESAYUN/i.test(clean(r[i])) && /ENSENADA/i.test(clean(r[i])) ? segTxt(clean(r[i])) : friendly(r[i], k === 'tr') } : null).filter(n => n && n.t);
+      x.notas = [['pe', iPe], ['seg', iSeg], ['tr', iTr]].map(([k, i]) => i >= 0 ? { k, t: k === 'seg' && /DESAYUN/i.test(clean(r[i])) && /ENSENADA/i.test(clean(r[i])) ? segTxt(clean(r[i])) : friendly(r[i], k === 'tr') } : null).filter(n => n && n.t)
+        .map(n => n.k === 'tr' && n.t.split(' ').length <= 3 && !/traslado/i.test(n.t) ? { k: n.k, t: 'Traslado: ' + n.t } : n); // solo un lugar (p. ej. "Metepec.") → "Traslado: Metepec."
       if (!x.notas.length) delete x.notas;
       if (!x.cr && x.ci && x.reg) x.cr = x.ci; // sin reserva de regreso: es la misma clave de la ida
       x.cl = x.ci || x.cr; // compatibilidad con páginas guardadas en el navegador

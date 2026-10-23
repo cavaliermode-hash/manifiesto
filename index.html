@@ -1081,18 +1081,12 @@ const ENS = -7; // San Carlos, Sonora: UTC-7 todo el año
 function nowEns(){ const n=new Date(Date.now()+ENS*3600e3); const p=x=>String(x).padStart(2,'0'); return {f:`${n.getUTCFullYear()}-${p(n.getUTCMonth()+1)}-${p(n.getUTCDate())}`, h:`${p(n.getUTCHours())}:${p(n.getUTCMinutes())}`}; }
 let AG_DAY = 3;
 /* Agenda personal: si el invitado abierto viaja solo por tierra (sin vuelos), se quitan llegadas y traslados de aeropuerto. */
-/* Agenda según el servicio de cada invitado:
-   - Pantalla principal (sin reserva abierta): sin llegadas ni traslados de aeropuerto.
-   - Reserva con vuelo: agenda completa, con llegada y traslado del aeropuerto de Hermosillo.
-   - Reserva solo por tierra: sin nada de aeropuerto; el regreso remite a su traslado terrestre. */
-const esAeropuerto = x => /aeropuerto/i.test(x[2] + ' ' + x[3]) || /^Llegadas$/.test(x[2]);
 function agItems(D){
   const sel = state.sel != null ? DATA[state.sel] : null, tierra = !!(sel && soloTierra(sel));
   document.body.classList.toggle('tierra', tierra);
-  if(sel && !tierra){ const v = sel.reg; // su vuelo de regreso, si ya lo tiene
-    return D.it.map(x => /^Regreso a tu ciudad/.test(x[2]) && v ? [x[0], x[1], x[2], `Tu vuelo: ${v.v} · ${fmtDate(v.f)} · sale de ${v.o} a las ${v.s}`, x[4], x[5]] : x); }
-  const sub = tierra ? 'Traslado terrestre: revisa tus indicaciones especiales' : 'Busca tu nombre para ver tu vuelo o traslado de regreso';
-  return D.it.filter(x => !esAeropuerto(x)).map(x => /^Regreso a tu ciudad/.test(x[2]) ? [x[0], x[1], x[2], sub, x[4], x[5]] : x);
+  if(!tierra) return D.it;
+  return D.it.filter(x => !/aeropuerto/i.test(x[2] + ' ' + x[3]) && !/^Llegadas$/.test(x[2]))
+    .map(x => /^Regreso a tu ciudad/.test(x[2]) ? [x[0], x[1], 'Regreso a tu ciudad de origen', 'Traslado terrestre: revisa tus indicaciones especiales', x[4], x[5]] : x);
 }
 function renderAgenda(day){
   AG_DAY = day; const D=AGENDA[day], now=nowEns();
@@ -1401,7 +1395,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 108;
+const APP_V = 109;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

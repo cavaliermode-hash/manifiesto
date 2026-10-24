@@ -363,6 +363,14 @@ body.tierra .solo-vuelo,body.tierra [data-solo-vuelo]{display:none!important}
 .mailbox.wa h3{color:#0B7A43}
 .wa-btn{background:#128C4B}
 .wa-btn:hover{background:#0B6B39}
+.pwm{position:fixed;inset:0;z-index:1100;background:rgba(10,30,18,.45);display:flex;align-items:center;justify-content:center;padding:20px}
+.pwm-box{width:100%;max-width:340px;background:#fff;border-top:4px solid var(--green);border-radius:12px;padding:18px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+.pwm-t{margin:0 0 10px;font-weight:600}
+.pwm-box input{width:100%;box-sizing:border-box;font:500 18px/1.2 var(--body);padding:12px;border:1px solid var(--green-line);border-radius:8px;letter-spacing:.2em}
+.pwm-e{min-height:1.2em;margin:6px 0 0;color:#B3261E;font-size:14px}
+.pwm-b{display:flex;gap:8px;justify-content:flex-end;margin-top:10px}
+.pwm-b button{font:600 15px/1 var(--body);padding:11px 16px;border-radius:8px;border:1px solid var(--green);background:var(--green);color:#fff;cursor:pointer}
+.pwm-b .sec{background:#fff;color:var(--green)}
 #gate{position:fixed;inset:0;z-index:999;background:#fff;display:flex;align-items:center;justify-content:center;padding:20px;overflow:auto}
 .gate-box{width:100%;max-width:380px;border:1px solid var(--line);border-top:4px solid var(--green);border-radius:12px;padding:22px 20px}
 .gate-box img{display:block;width:min(260px,70%);height:auto;margin-bottom:14px}
@@ -730,6 +738,14 @@ body.locked>*:not(#gate){visibility:hidden}
   <div class="agv-bar"><button id="agv-back" type="button">‹ Regresar</button></div>
   <p class="agv-tip">Toca la imagen para acercar o alejar.</p>
   <div class="agv-body"><img id="agv-img" alt="Agenda de la Segunda Cumbre Universales: actividades del 3 al 5 de noviembre, dress code y recomendaciones"></div>
+</div>
+<div id="pwm" class="pwm" role="dialog" aria-modal="true" aria-labelledby="pwm-t" hidden>
+  <form id="pwm-f" class="pwm-box" autocomplete="off">
+    <p id="pwm-t" class="pwm-t">Escribe la contraseña:</p>
+    <input id="pwm-i" type="password" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" aria-label="Contraseña">
+    <p id="pwm-e" class="pwm-e" role="alert"></p>
+    <div class="pwm-b"><button type="button" id="pwm-c" class="sec">Cancelar</button><button type="submit">Entrar</button></div>
+  </form>
 </div>
 <script src="parse.js"></script>
 <script src="cifra.js"></script>
@@ -1349,7 +1365,7 @@ $('#kcopy').addEventListener('click', async () => {
   catch(e){ const a = document.createElement('textarea'); a.value = t; document.body.appendChild(a); a.select(); document.execCommand('copy'); a.remove(); }
   $('#kmsg').textContent = 'Resumen copiado. Pégalo en WhatsApp.'; });
 $('#kreset').addEventListener('click', async () => {
-  const pw = prompt('Para borrar las marcas de ' + (KON.m === 'lle' ? 'llegadas' : 'regresos (salidas)') + ' escribe la contraseña:'); if(pw === null) return;
+  const pw = await askPw('Para borrar las marcas de ' + (KON.m === 'lle' ? 'llegadas' : 'regresos (salidas)') + ' escribe la contraseña:'); if(pw === null) return;
   if(await sha256(pw.trim().toLowerCase()) !== RESET_H){ $('#kmsg').textContent = 'Contraseña incorrecta. No se borró nada.'; return; }
   CTL.marks[KON.m] = {}; ctlSave(); konRender(); syncPush({op:'clear', t:KON.m}); $('#kmsg').textContent = 'Marcas borradas.'; });
 function ctlTab(t){
@@ -1364,8 +1380,22 @@ function ctlTab(t){
   if(con) konRender(); else if(cla) claRender(); else if(pyt) pytRender(); else if(on) ctlRender();
 }
 // contraseña del Concentrado: se pide cada vez que se entra a la sección (no se guarda)
+/* Cuadro de contraseña propio: lo que se escribe se ve oculto (••••), no en texto. */
+function askPw(msg){
+  return new Promise(res => {
+    const m = $('#pwm'), f = $('#pwm-f'), i = $('#pwm-i');
+    $('#pwm-t').textContent = msg; $('#pwm-e').textContent = ''; i.value = ''; m.hidden = false; DLG = true;
+    setTimeout(() => i.focus(), 30);
+    const done = v => { m.hidden = true; f.onsubmit = null; $('#pwm-c').onclick = null; m.onclick = null; document.removeEventListener('keydown', esc); setTimeout(() => { DLG = false; awaySince = 0; }, 300); res(v); };
+    const esc = e => { if(e.key === 'Escape') done(null); };
+    document.addEventListener('keydown', esc);
+    f.onsubmit = e => { e.preventDefault(); done(i.value); };
+    $('#pwm-c').onclick = () => done(null);
+    m.onclick = e => { if(e.target === m) done(null); };
+  });
+}
 async function conGate(){
-  const pw = prompt('Para abrir esta sección escribe la contraseña:'); if(pw === null) return false;
+  const pw = await askPw('Para abrir esta sección escribe la contraseña:'); if(pw === null) return false;
   if(await sha256(pw.trim().toLowerCase()) !== RESET_H){ alert('Contraseña incorrecta.'); return false; }
   return true;
 }
@@ -1428,7 +1458,7 @@ $('#cprint').addEventListener('click', () => window.print());
 const RESET_H = 'b657566bf67734e25c3c22b2750003d3b4655b05c8e0524d511847b214e97b73'; // contraseña del equipo VECI (se compara sin mayúsculas)
 async function sha256(t){ const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(t)); return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2,'0')).join(''); }
 $('#creset').addEventListener('click', async () => {
-  const pw = prompt('Para borrar las marcas de ' + (CTL.tab === 'lle' ? 'Llegadas' : 'Salidas') + ' escribe la contraseña:');
+  const pw = await askPw('Para borrar las marcas de ' + (CTL.tab === 'lle' ? 'Llegadas' : 'Salidas') + ' escribe la contraseña:');
   if(pw === null) return;
   if(await sha256(pw.trim().toLowerCase()) !== RESET_H){ $('#cmsg').textContent = 'Contraseña incorrecta. No se borró nada.'; return; }
   CTL.marks[CTL.tab] = {}; ctlSave(); ctlRender(); syncPush({op:'clear', t:CTL.tab}); $('#cmsg').textContent = 'Marcas borradas.'; });
@@ -1439,7 +1469,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 151;
+const APP_V = 152;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

@@ -1090,8 +1090,22 @@ async function descargarPDF(r, msg, ver){
     setTimeout(() => URL.revokeObjectURL(url), 60000); msg.textContent = 'Itinerario de ' + tcase(r.n) + ' descargado.';
   }catch(e){ if(win) win.close(); msg.textContent = 'No se pudo generar el PDF. Revisa tu conexión e intenta de nuevo.'; }
 }
-document.addEventListener('click', e => { const b = e.target.closest('[data-pdf], [data-pdfv]'); if(!b) return;
-  const ver = b.hasAttribute('data-pdfv'); descargarPDF(DATA[+(ver ? b.dataset.pdfv : b.dataset.pdf)], $('#cmsg2'), ver); });
+/* "PDF": abre una página web aparte (?pdf=NOMBRE) que genera el itinerario y lo muestra directo,
+   sin menú de compartir; funciona igual en computadora, navegador del celular y la app de pantalla de inicio. */
+document.addEventListener('click', e => { const b = e.target.closest('[data-pdf], [data-pdfv]'); if(!b) return; e.preventDefault();
+  const r = DATA[+(b.dataset.pdfv ?? b.dataset.pdf)]; DLG = true; setTimeout(() => { DLG = false; awaySince = 0; }, 3000);
+  window.open(location.pathname + '?pdf=' + encodeURIComponent(r.n), '_blank'); });
+function pdfDirecto(){
+  const n = new URLSearchParams(location.search).get('pdf'); if(!n) return false;
+  const r = DATA.find(x => x.n === n.trim().toUpperCase());
+  document.title = r ? 'Itinerario ' + tcase(r.n) : 'Itinerario';
+  document.body.insertAdjacentHTML('beforeend', `<div style="position:fixed;inset:0;z-index:2000;background:#fff;font:600 17px/1.5 system-ui,sans-serif;color:#136c34;padding:40px 20px;text-align:center" id="pdfst">${r ? 'Generando itinerario de ' + esc(tcase(r.n)) + '…' : 'No se encontró la reserva.'}</div>`);
+  if(!r) return true;
+  itinPDF(r).then(blob => { const url = URL.createObjectURL(new File([blob], 'Itinerario ' + tcase(r.n) + '.pdf', {type:'application/pdf'}));
+    $('#pdfst').innerHTML = `<a href="${url}" style="color:#136c34">Abrir itinerario de ${esc(tcase(r.n))} (PDF)</a>`; location.replace(url); })
+    .catch(() => { $('#pdfst').textContent = 'No se pudo generar el PDF. Revisa tu conexión y recarga.'; });
+  return true;
+}
 function mailBox(r){
   const i = DATA.indexOf(r);
   return `<section class="mailbox wa" aria-labelledby="wa-t">
@@ -1633,7 +1647,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 165;
+const APP_V = 166;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');
@@ -1653,7 +1667,7 @@ window.addEventListener('pagehide', e => { if(e.persisted) lockNow(); });
 async function unlock(pin, fromSaved){
   try{ const d = await Cifra.descifrar(PACK.enc, pin);
     if(UNLOCKED){ gate.hidden = true; document.body.classList.remove('locked'); return; } // re-entrada tras salir de la app
-    UNLOCKED = true; DATA = d.filas; gate.hidden = true; $('#upd').textContent = 'Actualizado: ' + PACK.actualizado + ' · v' + APP_V; init(); syncStart(pin); restoreView(); }
+    UNLOCKED = true; DATA = d.filas; gate.hidden = true; $('#upd').textContent = 'Actualizado: ' + PACK.actualizado + ' · v' + APP_V; init(); syncStart(pin); if(!pdfDirecto()) restoreView(); }
   catch(e){ showGate('PIN incorrecto. Revísalo e intenta de nuevo.'); }
 }
 $('#gate-form').addEventListener('submit', e => { e.preventDefault(); const v = gin.value.trim();

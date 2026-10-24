@@ -1043,10 +1043,6 @@ async function itinPDF(r){
     if(pe) bul(pe); }
   // Sede y agenda
   head('Sede del evento'); para('Hotel Marinaterra · Blvd. Gabriel Estrada 12, San Carlos, Nuevo Guaymas, Sonora');
-  head('Agenda del evento (hora local de Sonora)');
-  Object.values(AGENDA).forEach(D => { para(D.d, {b:1, after:1});
-    agItems(D).forEach(([a,b,t,s,,lab]) => bul(`${lab || (b ? a + '-' + b : a) || ''}${(lab || a) ? ' · ' : ''}${t}${s ? ' (' + s + ')' : ''}`)); y += 3; });
-  // Información general y puntos importantes, tomados de la página según su servicio
   const tierra = soloTierra(r);
   const cards = [...document.querySelectorAll('#info .icard')].filter(c => !(tierra && c.classList.contains('solo-vuelo')));
   if(cards.length){ head('Información general');
@@ -1611,7 +1607,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 159;
+const APP_V = 160;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

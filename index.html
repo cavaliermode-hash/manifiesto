@@ -712,10 +712,10 @@ body.locked>*:not(#gate){visibility:hidden}
   <section data-solo-vuelo class="important" aria-labelledby="imp-t">
     <h2 id="imp-t">Puntos importantes de su vuelo</h2>
     <ul>
-      <li>El check-in podrá realizarse 24 horas antes de la salida del itinerario, si la aerolínea lo permite. De lo contrario, deberá presentarse 2 horas antes en los mostradores de la línea aérea.</li>
+      <li>El <b>check-in</b> podrá realizarse <b>24 horas antes</b> de la salida del itinerario, si la aerolínea lo permite. De lo contrario, deberá presentarse <b>2 horas antes</b> en los mostradores de la línea aérea.</li>
       <li>Identifique la clave con la leyenda <b>Reserva de la aerolínea</b>.</li>
-      <li>Para administrar su reserva o confirmar su itinerario utilice únicamente las 6 letras de la reservación para entrar a la página de la aerolínea.</li>
-      <li><b>Qué necesita llevar:</b> una identificación oficial vigente (INE o pasaporte) con el mismo nombre de su reserva, y su clave de reserva o pase de abordar.</li>
+      <li>Para administrar su reserva o confirmar su itinerario utilice <b>únicamente las 6 letras de la reservación</b> para entrar a la página de la aerolínea.</li>
+      <li><b>Qué necesita llevar:</b> una <b>identificación oficial vigente</b> (INE o pasaporte) <b>con el mismo nombre de su reserva</b>, y su <b>clave de reserva o pase de abordar</b>.</li>
     </ul>
   </section>
   <section class="faq" aria-labelledby="faq-t">
@@ -1427,7 +1427,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 148;
+const APP_V = 149;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

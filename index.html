@@ -1134,8 +1134,20 @@ $('#out').addEventListener('submit', e=>{
 const CTL = {tab:'man', filter:'all', marks:{lle:{}, sal:{}}};
 try{ CTL.marks = Object.assign(CTL.marks, JSON.parse(localStorage.getItem('ctl-cumbre') || '{}')); }catch(e){}
 const ctlSave = () => { try{ localStorage.setItem('ctl-cumbre', JSON.stringify(CTL.marks)); }catch(e){} };
-const ctlLeg = r => CTL.tab === 'lle' ? r.ida : r.reg;
-const ctlHora = l => String((CTL.tab === 'lle' ? l.l : l.s) || '').padStart(5,'0');
+/* Llegadas/Salidas: quien no tiene vuelo en ese sentido (terrestre o por su cuenta) entra como un "vuelo" de traslado. */
+function tierraLeg(r, lle){
+  const t = notaDe(r, 'tr'), cuenta = /por tu cuenta/i.test(t), tierra = !cuenta && (soloTierra(r) || !!t);
+  if(!cuenta && !tierra) return null;
+  const MES = {octubre:10, noviembre:11, diciembre:12};
+  const m = lle ? t.match(/el \S+ (\d+) de (\S+) a las ([\d:]+) h/) : null;
+  const f = m ? `2026-${String(MES[m[2]]||11).padStart(2,'0')}-${m[1].padStart(2,'0')}` : (lle ? '2026-11-03' : '2026-11-05');
+  const h = m ? m[3].padStart(5,'0') : '—', v = cuenta ? '🚗 Por su cuenta' : '🚐 Traslado terrestre';
+  const route = cuenta ? (lle ? 'Llega por su cuenta a la sede' + (/estacionamiento/i.test(t) ? ' · estacionamiento' : '') : 'Regresa por su cuenta')
+    : (lle ? (/aeropuerto de hermosillo/i.test(t) ? 'Aeropuerto de Hermosillo → Hotel sede' : /domicilio/i.test(t) ? 'Domicilio → ' + (/san carlos/i.test(t) ? 'Hotel sede' : 'Hotel NH') : 'Traslado terrestre') : 'Hotel sede → regreso terrestre');
+  return {terr:true, f, l: lle ? h : '', s: lle ? '' : h, v, o: lle ? 'Terrestre' : 'Hotel sede', d: lle ? 'Hotel sede' : 'Terrestre', route};
+}
+const ctlLeg = r => { const lle = CTL.tab === 'lle'; return (lle ? r.ida : r.reg) || tierraLeg(r, lle); };
+const ctlHora = l => { const v = String((CTL.tab === 'lle' ? l.l : l.s) || ''); return v === '—' ? '—' : v.padStart(5,'0'); };
 const ctlSt = n => (CTL.marks[CTL.tab] || {})[n] || 'pe';
 function ctlGroups(){
   const g = {};
@@ -1146,7 +1158,7 @@ function ctlGroups(){
 function ctlRender(){
   const lle = CTL.tab === 'lle';
   $('#ct-t').textContent = lle ? 'Llegadas' : 'Salidas';
-  $('#ct-s').textContent = lle ? 'Vuelos de llegada en orden de fecha y hora de llegada.' : 'Vuelos de regreso en orden de fecha y hora de salida.';
+  $('#ct-s').textContent = lle ? 'Vuelos y traslados de llegada en orden de fecha y hora.' : 'Vuelos y traslados de regreso en orden de fecha y hora.';
   const all = DATA.filter(r => ctlLeg(r)), c = {ok:0, ns:0, pe:0};
   all.forEach(r => c[ctlSt(r.n)]++);
   $('#cs-all').textContent = all.length; $('#cs-ok').textContent = c.ok; $('#cs-ns').textContent = c.ns; $('#cs-pe').textContent = c.pe;
@@ -1156,7 +1168,7 @@ function ctlRender(){
     const l = G.l, ok = G.pax.filter(r => ctlSt(r.n) === 'ok').length;
     if(l.f !== day){ html += `<h3 class="cday">${esc(fmtDate(l.f))}</h3>`; day = l.f; }
     html += `<section class="cfl"><div class="cfh"><span class="t">${esc(ctlHora(l))}</span><span class="v">${esc(l.v)}</span>
-      <span class="r">${esc(l.o)} ${esc(l.s)} → ${esc(l.d)} ${esc(l.l)}</span><span class="c">${G.pax.length} ${G.pax.length===1?"pasajero":"pasajeros"}</span>${faUrl(l.v) ? `<a class="fa-link" href="${faUrl(l.v)}" target="_blank" rel="noopener">Estatus ↗</a>` : ''}</div><ul class="cnames">` +
+      <span class="r">${l.terr ? esc(l.route) : `${esc(l.o)} ${esc(l.s)} → ${esc(l.d)} ${esc(l.l)}`}</span><span class="c">${G.pax.length} ${G.pax.length===1?"pasajero":"pasajeros"}</span>${faUrl(l.v) ? `<a class="fa-link" href="${faUrl(l.v)}" target="_blank" rel="noopener">Estatus ↗</a>` : ''}</div><ul class="cnames">` +
       pax.map(r => { const s = ctlSt(r.n), cx = lle ? r.c1 : r.c2;
         const con = cx ? ` · conexión ${esc(cx.v)} ${lle ? 'desde ' + esc(cx.o) : 'a ' + esc(cx.d)}` : '';
         const clave = lle ? (r.ci || r.cr) : (r.cr || r.ci);
@@ -1375,7 +1387,7 @@ function ctlDayText(f, groups){
   const lle = CTL.tab === 'lle', all = groups.flatMap(G => G.pax), c = {ok:0, ns:0, pe:0}; all.forEach(r => c[ctlSt(r.n)]++);
   const L = [`*${lle ? 'Llegadas' : 'Salidas'} · ${fmtDate(f)} · Cumbre Universales*`, `Pasajeros ${all.length} · Check-in ${c.ok} · No show ${c.ns} · Pendientes ${c.pe}`];
   groups.forEach(G => { const l = G.l, k = {ok:0, ns:0, pe:0}; G.pax.forEach(r => k[ctlSt(r.n)]++);
-    L.push('', `${ctlHora(l)} ${l.v} (${l.o} → ${l.d}) · ${G.pax.length} pax · ✅${k.ok} ❌${k.ns} ⏳${k.pe}`);
+    L.push('', `${ctlHora(l)} ${l.v} (${l.terr ? l.route : l.o + ' → ' + l.d}) · ${G.pax.length} pax · ✅${k.ok} ❌${k.ns} ⏳${k.pe}`);
     const u = faUrl(l.v); if(u) L.push('Estatus: ' + u);
     G.pax.forEach(r => { const s = ctlSt(r.n); L.push(`  ${s==='ok'?'✅':s==='ns'?'❌':'⏳'} ${tcase(r.n)}`); }); });
   return L.join('\n');
@@ -1386,7 +1398,7 @@ function ctlSumRender(){
     return `<section class="sumday"><h4>${esc(fmtDate(f))}<span>${gs.length} ${gs.length===1?'vuelo':'vuelos'} · ${all.length} pasajeros · ✅ ${c.ok} · ❌ ${c.ns} · ⏳ ${c.pe}</span></h4>
       <table><thead><tr><th>${lle?'Llega':'Sale'}</th><th>Vuelo</th><th>Pax</th><th>✅</th><th>❌</th><th>⏳</th><th>Vuelo<br>estatus</th></tr></thead><tbody>` +
       gs.map(G => { const l = G.l, k = {ok:0, ns:0, pe:0}; G.pax.forEach(r => k[ctlSt(r.n)]++); const u = faUrl(l.v);
-        return `<tr><td class="n">${esc(ctlHora(l))}</td><td>${esc(l.v)}<br><small>${esc(l.o)} → ${esc(l.d)}</small></td><td class="n">${G.pax.length}</td><td class="n ok">${k.ok}</td><td class="n ns">${k.ns}</td><td class="n pe">${k.pe}</td>
+        return `<tr><td class="n">${esc(ctlHora(l))}</td><td>${esc(l.v)}<br><small>${l.terr ? esc(l.route) : esc(l.o) + ' → ' + esc(l.d)}</small></td><td class="n">${G.pax.length}</td><td class="n ok">${k.ok}</td><td class="n ns">${k.ns}</td><td class="n pe">${k.pe}</td>
           <td>${u ? `<a class="fa-link" href="${u}" target="_blank" rel="noopener">Ver ↗</a>` : '—'}</td></tr>`; }).join('') +
       `</tbody></table><button class="sumcopy" data-day="${esc(f)}">Copiar resumen del ${esc(fmtDate(f))}</button></section>`; }).join('');
 }
@@ -1404,7 +1416,7 @@ function ctlResumen(){
   let day = '';
   ctlGroups().forEach(G => { const l = G.l;
     if(l.f !== day){ L.push('', '*' + fmtDate(l.f) + '*'); day = l.f; }
-    L.push(`${ctlHora(l)} ${l.v} (${l.o} → ${l.d})`);
+    L.push(`${ctlHora(l)} ${l.v} (${l.terr ? l.route : l.o + ' → ' + l.d})`);
     G.pax.forEach(r => { const s = ctlSt(r.n); L.push(`  ${s==='ok'?'✅':s==='ns'?'❌':'⏳'} ${tcase(r.n)}`); }); });
   return L.join('\n');
 }
@@ -1427,7 +1439,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 149;
+const APP_V = 150;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

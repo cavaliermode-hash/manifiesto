@@ -86,24 +86,24 @@ main{padding-block:16px 48px}
 .verified{font:600 13px var(--body);color:var(--ok);align-self:center}
 .copy{border:0;background:rgba(255,255,255,.12);color:var(--board-ink);font:600 12px var(--body);border-radius:6px;padding:5px 8px;cursor:pointer}
 .legs{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--line)}
-.fcards{display:grid;gap:10px;padding:12px;border-top:1px solid var(--line)}
-.fcard{display:grid;grid-template-columns:160px 1fr;border:2px solid #CDE8D5;border-radius:14px;overflow:hidden;background:#fff}
-.fc-s{color:#fff;padding:6px 14px;display:flex;flex-direction:column;justify-content:center;gap:2px}
+.fcards{display:grid;gap:8px;padding:10px;border-top:1px solid var(--line)}
+.fcard{display:grid;grid-template-columns:158px 1fr;border:1.5px solid #CDE8D5;border-radius:12px;overflow:hidden;background:#fff}
+.fc-s{color:#fff;padding:2px 12px;display:flex;flex-direction:column;justify-content:center;gap:0}
 .fc-ida .fc-s{background:#14532D}.fc-reg .fc-s{background:#15803D}
-.fc-h{padding-top:12px}.fc-d{font-size:13.5px;opacity:.9}.fc-k{font:800 15px/1.1 var(--body);letter-spacing:.08em;text-transform:uppercase}
-.fc-fv{font:700 13.5px/1.25 var(--body)}
-.fc-m{min-width:0;padding:6px 16px;display:flex;flex-direction:column;justify-content:center}
-.fc-hm{padding-top:12px;font-size:13px;font-weight:600;color:var(--muted)}
-.fc-seg{display:flex;align-items:center;gap:12px;padding:4px 0}
+.fc-h{flex-direction:row;justify-content:flex-start;align-items:baseline;gap:7px;padding-top:8px;white-space:nowrap}.fc-d{font-size:12.5px;opacity:.9}.fc-k{font:800 13px/1.1 var(--body);letter-spacing:.08em;text-transform:uppercase}
+.fc-fv{font:700 12.5px/1.2 var(--body)}
+.fc-m{min-width:0;padding:2px 14px;display:flex;flex-direction:column;justify-content:center}
+.fc-hm{padding-top:8px;font-size:12px;font-weight:600;color:var(--muted)}
+.fc-seg{display:flex;align-items:center;gap:10px;padding:2px 0}
 .fc-end{display:flex;flex-direction:column;gap:2px;min-width:0}.fc-end.r{align-items:flex-end;text-align:right}
-.fc-t{font:700 26px/1 var(--mono);color:var(--ink)}
-.fc-end span{font-size:13px;color:var(--muted);white-space:nowrap}.fc-end span b{color:var(--ink)}
+.fc-t{font:700 21px/1 var(--mono);color:var(--ink)}
+.fc-end span{font-size:12px;color:var(--muted);white-space:nowrap}.fc-end span b{color:var(--ink)}
 .fc-mid{flex:1;min-width:40px;display:flex;flex-direction:column;align-items:center;gap:3px}
 .fc-mid i{display:block;width:100%;border-top:2px dashed #9FD3AE}
 .fc-fl{display:none;font-size:11px;font-weight:700;color:var(--muted);text-align:center}.fc-du{font-size:12px;font-weight:700;color:var(--green);white-space:nowrap}
-.fc-con{align-self:center;font-size:12px;color:var(--muted);background:#F0F8F2;border-radius:6px;padding:3px 10px}
-.fcard > :nth-last-child(-n+2){padding-bottom:12px}
-@media (max-width:560px){.fcard{grid-template-columns:1fr}.fc-s:not(.fc-h){display:none}.fc-h{flex-direction:row;align-items:baseline;gap:10px;padding:8px 12px}.fc-hm{padding:8px 12px 0}.fc-m{padding:4px 12px}.fc-fl{display:block}.fc-t{font-size:22px}.fc-end span{font-size:12px}.fcards{padding:10px}}
+.fc-con{align-self:center;font-size:11px;color:var(--muted);background:#F0F8F2;border-radius:6px;padding:1px 8px;margin:1px 0}
+.fcard > :nth-last-child(-n+2){padding-bottom:8px}
+@media (max-width:560px){.fcard{grid-template-columns:1fr}.fc-s:not(.fc-h){display:none}.fc-h{padding:5px 10px}.fc-hm{display:none}.fc-m{padding:2px 10px}.fc-fl{display:block;font-size:10px}.fc-t{font-size:19px}.fc-end span{font-size:11px}.fc-du{font-size:11px}.fcards{padding:8px;gap:6px}.fc-seg{gap:6px}}
 .leg{padding:12px 16px;display:grid;gap:8px;align-content:start}
 .leg+.leg{border-left:1px solid var(--line)}
 .leg h4{margin:0;font:700 13px/1 var(--body);letter-spacing:.12em;text-transform:uppercase;display:flex;gap:8px;align-items:center}
@@ -1008,28 +1008,28 @@ async function itinPDF(r){
   // Vuelos
   // Tarjetas de vuelo como en la página: Ida / Regreso con horas grandes, duración y conexión.
   const pcard = (title, legs, fill) => { legs = legs.filter(Boolean); if(!legs.length) return;
-    const SEG = 50, CON = 16, TOP = 30, h = TOP + 10 + legs.length * SEG + (legs.length - 1) * CON, x0 = M, w = W - 2*M, side = 120;
+    const SEG = 38, CON = 12, TOP = 20, h = TOP + 10 + legs.length * SEG + (legs.length - 1) * CON, x0 = M, w = W - 2*M, side = 132;
     need(h + 10);
     doc.setDrawColor(205,232,213); doc.setLineWidth(1.5); doc.setFillColor(255,255,255); doc.roundedRect(x0, y, w, h, 8, 8, 'FD');
     doc.setFillColor(...fill); doc.roundedRect(x0, y, side, h, 8, 8, 'F'); doc.rect(x0 + side - 10, y, 10, h, 'F');
     // Fecha, luego IDA/REGRESO; cada número de vuelo en el mismo renglón que su horario.
-    doc.setTextColor(255,255,255); doc.setFont('helvetica','normal'); doc.setFontSize(9.5); doc.text(fmtDate(legs[0].f), x0 + 12, y + 15);
-    doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.text(title.toUpperCase(), x0 + 12, y + 29);
+    doc.setTextColor(255,255,255); doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.text(fmtDate(legs[0].f), x0 + 10, y + 15);
+    doc.setFont('helvetica','bold'); doc.setFontSize(10.5); doc.text(title.toUpperCase(), x0 + 10 + doc.getTextWidth(fmtDate(legs[0].f)) + 8, y + 15);
     doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(...MUT);
-    doc.text(pdfTxt(cityOf(legs[0].o) + ' > ' + cityOf(legs[legs.length-1].d)), x0 + side + 14, y + 22);
-    let yy = y + TOP + 4; const L = x0 + side + 14, R = x0 + w - 14;
+    doc.text(pdfTxt(cityOf(legs[0].o) + ' > ' + cityOf(legs[legs.length-1].d)), x0 + side + 14, y + 15);
+    let yy = y + TOP; const L = x0 + side + 14, R = x0 + w - 14;
     legs.forEach((l, i) => {
       if(i > 0){ const wmin = Math.round((when(l,'s') - when(legs[i-1],'l')) / 60000);
         doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(...MUT);
-        doc.text(pdfTxt(`Conexión en ${cityOf(l.o)}${wmin > 0 ? ' · ' + durTxt(wmin) : ''}`), (L + R) / 2, yy + 10, {align:'center'}); yy += CON; }
-      doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(9.5); doc.splitTextToSize(pdfTxt(l.v), side - 22).forEach((t, k) => doc.text(t, x0 + 12, yy + 22 + k * 11));
-      doc.setFont('courier','bold'); doc.setFontSize(20); doc.setTextColor(...INK);
-      doc.text(l.s || '-', L, yy + 24); doc.text(l.l || '-', R, yy + 24, {align:'right'});
-      doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.text(l.o, L, yy + 38); doc.text(l.d, R - doc.getTextWidth(' ' + pdfTxt(cityOf(l.d))), yy + 38, {align:'right'});
-      doc.setFont('helvetica','normal'); doc.setTextColor(...MUT); doc.text(' ' + pdfTxt(cityOf(l.o)), L + doc.getTextWidth(l.o) + 2, yy + 38); doc.text(' ' + pdfTxt(cityOf(l.d)), R, yy + 38, {align:'right'});
+        doc.text(pdfTxt(`Conexión en ${cityOf(l.o)}${wmin > 0 ? ' · ' + durTxt(wmin) : ''}`), (L + R) / 2, yy + 7, {align:'center'}); yy += CON; }
+      doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(9.5); doc.splitTextToSize(pdfTxt(l.v), side - 20).forEach((t, k) => doc.text(t, x0 + 10, yy + 17 + k * 10));
+      doc.setFont('courier','bold'); doc.setFontSize(16); doc.setTextColor(...INK);
+      doc.text(l.s || '-', L, yy + 17); doc.text(l.l || '-', R, yy + 17, {align:'right'});
+      doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.text(l.o, L, yy + 29); doc.text(l.d, R - doc.getTextWidth(' ' + pdfTxt(cityOf(l.d))), yy + 29, {align:'right'});
+      doc.setFont('helvetica','normal'); doc.setTextColor(...MUT); doc.text(' ' + pdfTxt(cityOf(l.o)), L + doc.getTextWidth(l.o) + 2, yy + 29); doc.text(' ' + pdfTxt(cityOf(l.d)), R, yy + 29, {align:'right'});
       const mL = L + 92, mR = R - 92;
-      if(mR - mL > 40){ doc.setDrawColor(159,211,174); doc.setLineWidth(1.2); doc.setLineDashPattern([4,3], 0); doc.line(mL, yy + 20, mR, yy + 20); doc.setLineDashPattern([], 0);
-        doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(...G); doc.text(durTxt(legMin(l)), (mL + mR) / 2, yy + 32, {align:'center'}); }
+      if(mR - mL > 40){ doc.setDrawColor(159,211,174); doc.setLineWidth(1.2); doc.setLineDashPattern([4,3], 0); doc.line(mL, yy + 13, mR, yy + 13); doc.setLineDashPattern([], 0);
+        doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(...G); doc.text(durTxt(legMin(l)), (mL + mR) / 2, yy + 25, {align:'center'}); }
       yy += SEG; });
     y += h + 10; };
   if(r.c1 || r.ida || r.reg || r.c2){ head('Vuelos');
@@ -1611,7 +1611,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 158;
+const APP_V = 159;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

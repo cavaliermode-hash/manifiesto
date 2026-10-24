@@ -87,22 +87,23 @@ main{padding-block:16px 48px}
 .copy{border:0;background:rgba(255,255,255,.12);color:var(--board-ink);font:600 12px var(--body);border-radius:6px;padding:5px 8px;cursor:pointer}
 .legs{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--line)}
 .fcards{display:grid;gap:10px;padding:12px;border-top:1px solid var(--line)}
-.fcard{display:flex;border:2px solid #CDE8D5;border-radius:14px;overflow:hidden;background:#fff}
-.fc-side{flex:0 0 150px;box-sizing:border-box;padding:12px 14px;color:#fff;display:flex;flex-direction:column;justify-content:center;gap:4px}
-.fc-ida .fc-side{background:#14532D}.fc-reg .fc-side{background:#15803D}
-.fc-k{font:800 15px/1 var(--body);letter-spacing:.08em;text-transform:uppercase}
-.fc-v{font:700 14px/1.25 var(--body)}.fc-d{font-size:13.5px}
-.fc-main{flex:1;min-width:0;padding:10px 16px;display:flex;flex-direction:column;justify-content:center;gap:6px}
-.fc-seg{display:flex;align-items:center;gap:12px}
+.fcard{display:grid;grid-template-columns:160px 1fr;border:2px solid #CDE8D5;border-radius:14px;overflow:hidden;background:#fff}
+.fc-s{color:#fff;padding:6px 14px;display:flex;flex-direction:column;justify-content:center;gap:2px}
+.fc-ida .fc-s{background:#14532D}.fc-reg .fc-s{background:#15803D}
+.fc-h{padding-top:12px}.fc-d{font-size:13.5px;opacity:.9}.fc-k{font:800 15px/1.1 var(--body);letter-spacing:.08em;text-transform:uppercase}
+.fc-fv{font:700 13.5px/1.25 var(--body)}
+.fc-m{min-width:0;padding:6px 16px;display:flex;flex-direction:column;justify-content:center}
+.fc-hm{padding-top:12px;font-size:13px;font-weight:600;color:var(--muted)}
+.fc-seg{display:flex;align-items:center;gap:12px;padding:4px 0}
 .fc-end{display:flex;flex-direction:column;gap:2px;min-width:0}.fc-end.r{align-items:flex-end;text-align:right}
-.fc-t{font:700 26px/1 var(--mono,ui-monospace,monospace);color:var(--ink)}
+.fc-t{font:700 26px/1 var(--mono);color:var(--ink)}
 .fc-end span{font-size:13px;color:var(--muted);white-space:nowrap}.fc-end span b{color:var(--ink)}
 .fc-mid{flex:1;min-width:40px;display:flex;flex-direction:column;align-items:center;gap:3px}
 .fc-mid i{display:block;width:100%;border-top:2px dashed #9FD3AE}
-.fc-fl{font-size:11px;font-weight:700;color:var(--muted);text-align:center}.fc-du{font-size:12px;font-weight:700;color:var(--green);white-space:nowrap}
+.fc-fl{display:none;font-size:11px;font-weight:700;color:var(--muted);text-align:center}.fc-du{font-size:12px;font-weight:700;color:var(--green);white-space:nowrap}
 .fc-con{align-self:center;font-size:12px;color:var(--muted);background:#F0F8F2;border-radius:6px;padding:3px 10px}
-.fc-none{margin:0;color:var(--muted)}
-@media (max-width:560px){.fcard{flex-direction:column}.fc-side{flex:none;flex-direction:row;flex-wrap:wrap;align-items:baseline;gap:4px 10px;padding:8px 12px}.fc-main{padding:10px 12px}.fc-t{font-size:22px}.fc-end span{font-size:12px}.fcards{padding:10px}}
+.fcard > :nth-last-child(-n+2){padding-bottom:12px}
+@media (max-width:560px){.fcard{grid-template-columns:1fr}.fc-s:not(.fc-h){display:none}.fc-h{flex-direction:row;align-items:baseline;gap:10px;padding:8px 12px}.fc-hm{padding:8px 12px 0}.fc-m{padding:4px 12px}.fc-fl{display:block}.fc-t{font-size:22px}.fc-end span{font-size:12px}.fcards{padding:10px}}
 .leg{padding:12px 16px;display:grid;gap:8px;align-content:start}
 .leg+.leg{border-left:1px solid var(--line)}
 .leg h4{margin:0;font:700 13px/1 var(--body);letter-spacing:.12em;text-transform:uppercase;display:flex;gap:8px;align-items:center}
@@ -816,16 +817,19 @@ const legMin = l => Math.round((when(l,'l') - when(l,'s')) / 60000);
 const cityOf = c => AP[c] || c;
 function flightCard(cls, title, legs){
   legs = legs.filter(Boolean);
-  if(!legs.length) return `<div class="fcard fc-${cls}"><div class="fc-side"><span class="fc-k">${title}</span></div><div class="fc-main"><p class="fc-none">Sin vuelo asignado todavía</p></div></div>`;
-  const segs = legs.map((l, i) => {
-    let con = '';
-    if(i > 0){ const w = Math.round((when(l,'s') - when(legs[i-1],'l')) / 60000); con = `<div class="fc-con">Conexión en ${esc(cityOf(l.o))}${w > 0 ? ' · ' + durTxt(w) : ''}</div>`; }
-    return con + `<div class="fc-seg">
+  if(!legs.length) return `<div class="fcard fc-${cls}"><div class="fc-s fc-h"><span class="fc-k">${title}</span></div><div class="fc-m fc-hm">Sin vuelo asignado todavía</div></div>`;
+  // Encabezado: fecha y luego IDA/REGRESO; cada número de vuelo va en el mismo renglón que su horario.
+  let h = `<div class="fc-s fc-h"><span class="fc-d">${esc(fmtDate(legs[0].f))}</span><span class="fc-k">${title}</span></div>
+    <div class="fc-m fc-hm">${esc(cityOf(legs[0].o))} → ${esc(cityOf(legs[legs.length-1].d))}</div>`;
+  legs.forEach((l, i) => {
+    if(i > 0){ const w = Math.round((when(l,'s') - when(legs[i-1],'l')) / 60000);
+      h += `<div class="fc-s"></div><div class="fc-m"><div class="fc-con">Conexión en ${esc(cityOf(l.o))}${w > 0 ? ' · ' + durTxt(w) : ''}</div></div>`; }
+    h += `<div class="fc-s fc-fv">${esc(l.v)}</div><div class="fc-m"><div class="fc-seg">
       <div class="fc-end"><b class="fc-t">${esc(l.s || '—')}</b><span><b>${esc(l.o)}</b> ${esc(cityOf(l.o))}</span></div>
       <div class="fc-mid"><span class="fc-fl">${esc(l.v)}</span><i aria-hidden="true"></i><span class="fc-du">${durTxt(legMin(l))}</span></div>
       <div class="fc-end r"><b class="fc-t">${esc(l.l || '—')}</b><span><b>${esc(l.d)}</b> ${esc(cityOf(l.d))}</span></div>
-    </div>`; }).join('');
-  return `<div class="fcard fc-${cls}"><div class="fc-side"><span class="fc-k">${title}</span><b class="fc-v">${legs.map(l => esc(l.v)).join(' · ')}</b><span class="fc-d">${esc(fmtDate(legs[0].f))}</span></div><div class="fc-main">${segs}</div></div>`;
+    </div></div>`; });
+  return `<div class="fcard fc-${cls}">${h}</div>`;
 }
 function paxCard(r){
   const keys = [];
@@ -1004,25 +1008,27 @@ async function itinPDF(r){
   // Vuelos
   // Tarjetas de vuelo como en la página: Ida / Regreso con horas grandes, duración y conexión.
   const pcard = (title, legs, fill) => { legs = legs.filter(Boolean); if(!legs.length) return;
-    const SEG = 50, CON = 16, h = 16 + legs.length * SEG + (legs.length - 1) * CON, x0 = M, w = W - 2*M, side = 120;
+    const SEG = 50, CON = 16, TOP = 30, h = TOP + 10 + legs.length * SEG + (legs.length - 1) * CON, x0 = M, w = W - 2*M, side = 120;
     need(h + 10);
     doc.setDrawColor(205,232,213); doc.setLineWidth(1.5); doc.setFillColor(255,255,255); doc.roundedRect(x0, y, w, h, 8, 8, 'FD');
     doc.setFillColor(...fill); doc.roundedRect(x0, y, side, h, 8, 8, 'F'); doc.rect(x0 + side - 10, y, 10, h, 'F');
-    doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.text(title.toUpperCase(), x0 + 12, y + 22);
-    doc.setFontSize(9.5); doc.splitTextToSize(legs.map(l => l.v).join(' · '), side - 22).slice(0,3).forEach((t, i) => doc.text(t, x0 + 12, y + 37 + i * 11));
-    doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.text(fmtDate(legs[0].f), x0 + 12, y + h - 12);
-    let yy = y + 8; const L = x0 + side + 14, R = x0 + w - 14;
+    // Fecha, luego IDA/REGRESO; cada número de vuelo en el mismo renglón que su horario.
+    doc.setTextColor(255,255,255); doc.setFont('helvetica','normal'); doc.setFontSize(9.5); doc.text(fmtDate(legs[0].f), x0 + 12, y + 15);
+    doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.text(title.toUpperCase(), x0 + 12, y + 29);
+    doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(...MUT);
+    doc.text(pdfTxt(cityOf(legs[0].o) + ' > ' + cityOf(legs[legs.length-1].d)), x0 + side + 14, y + 22);
+    let yy = y + TOP + 4; const L = x0 + side + 14, R = x0 + w - 14;
     legs.forEach((l, i) => {
       if(i > 0){ const wmin = Math.round((when(l,'s') - when(legs[i-1],'l')) / 60000);
         doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(...MUT);
         doc.text(pdfTxt(`Conexión en ${cityOf(l.o)}${wmin > 0 ? ' · ' + durTxt(wmin) : ''}`), (L + R) / 2, yy + 10, {align:'center'}); yy += CON; }
+      doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(9.5); doc.splitTextToSize(pdfTxt(l.v), side - 22).forEach((t, k) => doc.text(t, x0 + 12, yy + 22 + k * 11));
       doc.setFont('courier','bold'); doc.setFontSize(20); doc.setTextColor(...INK);
       doc.text(l.s || '-', L, yy + 24); doc.text(l.l || '-', R, yy + 24, {align:'right'});
       doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.text(l.o, L, yy + 38); doc.text(l.d, R - doc.getTextWidth(' ' + pdfTxt(cityOf(l.d))), yy + 38, {align:'right'});
       doc.setFont('helvetica','normal'); doc.setTextColor(...MUT); doc.text(' ' + pdfTxt(cityOf(l.o)), L + doc.getTextWidth(l.o) + 2, yy + 38); doc.text(' ' + pdfTxt(cityOf(l.d)), R, yy + 38, {align:'right'});
       const mL = L + 92, mR = R - 92;
       if(mR - mL > 40){ doc.setDrawColor(159,211,174); doc.setLineWidth(1.2); doc.setLineDashPattern([4,3], 0); doc.line(mL, yy + 20, mR, yy + 20); doc.setLineDashPattern([], 0);
-        doc.setFontSize(8); doc.setTextColor(...MUT); doc.text(pdfTxt(l.v), (mL + mR) / 2, yy + 14, {align:'center'});
         doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(...G); doc.text(durTxt(legMin(l)), (mL + mR) / 2, yy + 32, {align:'center'}); }
       yy += SEG; });
     y += h + 10; };
@@ -1605,7 +1611,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 157;
+const APP_V = 158;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

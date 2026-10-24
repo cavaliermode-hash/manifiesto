@@ -272,7 +272,8 @@ table.rep{font-size:13px}
 .abtn:hover{background:var(--green);color:#fff}
 .dactions{margin-top:12px}
 .th-plain{display:block;padding:9px 8px;font:600 11px/1.2 var(--body);letter-spacing:.06em;text-transform:uppercase;color:var(--green-dark,#0c4f23)}
-.cpdf{white-space:nowrap}.cpdf button{font:600 12px/1 var(--body);padding:6px 9px;margin:2px;border-radius:6px;border:1px solid var(--green);background:#fff;color:var(--green);cursor:pointer}.cpdf button{background:var(--green);color:#fff}
+.cpdf{white-space:nowrap}.cpdf{display:flex;flex-direction:column;align-items:stretch;gap:4px}.cpdf button,.cpdf .cwa{margin:0;text-align:center}.cpdf button{font:600 12px/1 var(--body);padding:6px 9px;margin:2px;border-radius:6px;border:1px solid var(--green);background:#fff;color:var(--green);cursor:pointer}.cpdf button{background:var(--green);color:#fff}
+.cwa{display:inline-block;font:600 12px/1 var(--body);padding:6px 9px;margin:2px;border-radius:6px;background:#1FA855;color:#fff;text-decoration:none}.cwa.na{background:#eee;color:var(--muted)}
 .pdf-msg{font-size:13px;color:var(--muted);margin-left:6px}
 .abtn2{font:700 14px var(--body);background:var(--green);color:#fff;border:0;border-radius:8px;padding:10px 14px;cursor:pointer}
 .abtn2:hover{background:var(--green-dark)}
@@ -646,7 +647,7 @@ body.locked>*:not(#gate){visibility:hidden}
 </section>
 <section class="wrap ctl" id="cla" hidden>
   <h2 class="ct">Claves de reserva</h2>
-  <p class="cs">Todas las claves en una sola lista. Ordena tocando el encabezado de cada columna; toca una clave para copiarla. En <b>Itinerario</b> toca <b>PDF</b> para abrir la reserva de cada persona en otra pestaña; desde ahí se puede descargar o compartir.</p>
+  <p class="cs">Todas las claves en una sola lista. Ordena tocando el encabezado de cada columna; toca una clave para copiarla. En <b>Itinerario</b> toca <b>PDF</b> para abrir la reserva de cada persona en otra pestaña, o <b>WhatsApp</b> para enviarle su itinerario directo a su celular registrado.</p>
   <div class="ktable-wrap"><table class="ktable ctab">
     <thead><tr>
       <th><button data-sort="n">Nombre <span></span></button></th>
@@ -1415,7 +1416,9 @@ function claRender(){
   const cell = x => !x.ci && !x.cr ? '—' : (!x.cr || x.cr === x.ci) ? btn(x.ci) : !x.ci ? `<span class="cl">Regreso</span>${btn(x.cr)}`
     : `<span class="cl">Ida</span>${btn(x.ci)}<br><span class="cl">Regreso</span>${btn(x.cr)}`;
   $('#cbody').innerHTML = claRows().map(x => `<tr><td class="kn">${esc(tcase(x.n))}</td><td class="cc">${cell(x)}</td>
-    <td class="cpdf"><button data-pdfv="${x.i}" title="Abrir el itinerario de ${esc(tcase(x.n))}">📄 PDF</button></td></tr>`).join('');
+    <td class="cpdf"><button data-pdfv="${x.i}" title="Abrir el itinerario de ${esc(tcase(x.n))}">📄 PDF</button>${TEL[x.n]
+      ? `<a class="cwa" href="https://wa.me/52${TEL[x.n]}?text=${encodeURIComponent(waTxt(DATA[x.i]))}" target="_blank" rel="noopener" title="Enviar por WhatsApp a ${esc(tcase(x.n))} (${TEL[x.n]})">💬 WhatsApp</a>`
+      : '<span class="cwa na" title="Sin teléfono registrado">Sin tel.</span>'}</td></tr>`).join('');
 }
 /* ---------- Traslados y pernoctas ---------- */
 const notaDe = (r, k) => ((r.notas || []).find(n => n.k === k) || {}).t || '';
@@ -1555,8 +1558,11 @@ function askPw(msg){
 async function conGate(){
   const pw = await askPw('Para abrir esta sección escribe la contraseña:'); if(pw === null) return false;
   if(await sha256(pw.trim().toLowerCase()) !== RESET_H){ alert('Contraseña incorrecta.'); return false; }
+  // Teléfonos de los invitados: van cifrados con la contraseña del equipo y solo se abren aquí.
+  if(PACK && PACK.tel && !Object.keys(TEL).length){ try{ TEL = (await Cifra.descifrar(PACK.tel, pw)).tel || {}; }catch(e){ TEL = {}; } }
   return true;
 }
+let TEL = {};
 document.querySelectorAll('.tabs button[data-tab]').forEach(b => b.addEventListener('click', async () => {
   // dentro de VECI se cambia de sección sin volver a pedir contraseña
   if(b.dataset.tab !== 'man' && CTL.tab === 'man' && !(await conGate())) return; ctlTab(b.dataset.tab); }));
@@ -1627,7 +1633,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 164;
+const APP_V = 165;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

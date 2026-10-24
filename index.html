@@ -1138,6 +1138,11 @@ function mailBox(r){
       <button class="abtn2 wa-btn" type="submit">Enviar por WhatsApp</button>
     </form>
     <p class="mb-msg" id="wa-msg" role="status"></p>
+  </section>
+  <section class="mailbox pdfbox" aria-labelledby="pdf-t">
+    <h3 id="pdf-t">📄 Ver mi manifiesto completo en PDF</h3>
+    <p>Abre en otra pestaña tu <b>manifiesto completo</b> en PDF: tus claves de reserva, tus vuelos con horarios, tus traslados y pernoctas (si te corresponden), la sede del evento, la información general y los puntos importantes de tu vuelo. Desde ahí lo puedes guardar, imprimir o compartir.</p>
+    <button class="abtn2" type="button" data-pdfv="${i}">Ver en PDF</button>
   </section>`;
 }
 function icsFor(r){
@@ -1670,7 +1675,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 168;
+const APP_V = 169;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

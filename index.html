@@ -273,7 +273,7 @@ table.rep{font-size:13px}
 .dactions{margin-top:12px}
 .th-plain{display:block;padding:9px 8px;font:600 11px/1.2 var(--body);letter-spacing:.06em;text-transform:uppercase;color:var(--green-dark,#0c4f23)}
 .cpdf{white-space:nowrap}.cpdf{display:flex;flex-direction:column;align-items:stretch;gap:4px}.cpdf button,.cpdf .cwa{margin:0;text-align:center}.cpdf button{font:600 12px/1 var(--body);padding:6px 9px;margin:2px;border-radius:6px;border:1px solid var(--green);background:#fff;color:var(--green);cursor:pointer}.cpdf button{background:var(--green);color:#fff}
-.cwa{display:inline-block;font:600 12px/1 var(--body);padding:6px 9px;margin:2px;border-radius:6px;background:#1FA855;color:#fff;text-decoration:none}.cwa.na{background:#eee;color:var(--muted)}
+.cwa{display:inline-block;font:600 12px/1 var(--body);padding:6px 9px;margin:2px;border-radius:6px;background:#1FA855;color:#fff;text-decoration:none}.cwa.na{background:#eee;color:var(--muted)}.cwa.cml{background:#1E5BA8}
 .pdf-msg{font-size:13px;color:var(--muted);margin-left:6px}
 .abtn2{font:700 14px var(--body);background:var(--green);color:#fff;border:0;border-radius:8px;padding:10px 14px;cursor:pointer}
 .abtn2:hover{background:var(--green-dark)}
@@ -647,7 +647,7 @@ body.locked>*:not(#gate){visibility:hidden}
 </section>
 <section class="wrap ctl" id="cla" hidden>
   <h2 class="ct">Claves de reserva</h2>
-  <p class="cs">Todas las claves en una sola lista. Ordena tocando el encabezado de cada columna; toca una clave para copiarla. En <b>Itinerario</b> toca <b>PDF</b> para abrir la reserva de cada persona en otra pestaña, o <b>WhatsApp</b> para enviarle su itinerario directo a su celular registrado.</p>
+  <p class="cs">Todas las claves en una sola lista. Ordena tocando el encabezado de cada columna; toca una clave para copiarla. En <b>Itinerario</b> toca <b>PDF</b> para abrir la reserva de cada persona en otra pestaña, <b>WhatsApp</b> o <b>Correo</b> para enviarle su itinerario a su celular o correo registrado.</p>
   <div class="ktable-wrap"><table class="ktable ctab">
     <thead><tr>
       <th><button data-sort="n">Nombre <span></span></button></th>
@@ -962,6 +962,31 @@ function resumenTxt(r){
     '- El check-in podrá realizarse 24 horas antes de la salida, si la aerolínea lo permite. De lo contrario, preséntate 2 horas antes en los mostradores.',
     '- Para administrar tu reserva usa únicamente las 6 letras de la clave en la página de la aerolínea.',
     '', 'Consulta tu itinerario y la agenda del evento: ' + location.origin + location.pathname, '', 'Viajes El Corte Inglés');
+  return L.join('\n');
+}
+/* Correo: la misma información que el PDF (reserva, vuelos, traslados y pernoctas, sede, información general,
+   puntos importantes y nota de MetLife) y el enlace para abrir su itinerario en PDF. */
+function mailTxt(r){
+  const L = [], base = location.origin + location.pathname, tierra = soloTierra(r);
+  const seg = (lab, l) => l && L.push(`${lab}: ${l.v} · ${fmtDate(l.f)} · ${l.o} ${l.s} > ${l.d} ${l.l} (hora local)`);
+  L.push(`Hola, ${r.n.toUpperCase()}:`, '', 'Estos son los datos de tu viaje a la Segunda Cumbre Universales.', '');
+  const dos = !!(r.ci && r.cr && r.ci !== r.cr);
+  L.push('DATOS DE LA RESERVA'); if(dos) L.push('Tienes una clave para la ida y otra para el regreso (aparecen junto a sus vuelos).');
+  else if(r.ci || r.cr) L.push(`Clave de reserva: ${r.ci || r.cr}`); else if(tierra) L.push('Viaje por traslado terrestre.');
+  if(!tierra){ L.push('', 'VUELOS');
+    if(dos) L.push(`Clave de reserva de ida: ${r.ci}`); seg('Ida (conexión)', r.c1); seg('Ida', r.ida);
+    if(dos) L.push(`Clave de reserva de regreso: ${r.cr}`); seg('Regreso', r.reg); seg('Regreso (conexión)', r.c2); }
+  const tr = notaDe(r, 'tr'), pe = notaDe(r, 'pe');
+  if(tr || pe || tierra){ L.push('', 'TRASLADOS Y PERNOCTAS'); if(tr) L.push('- ' + tr); else if(tierra) L.push('- Traslado terrestre.'); if(pe) L.push('- ' + pe); }
+  L.push('', 'SEDE DEL EVENTO', 'Hotel Marinaterra · Blvd. Gabriel Estrada 12, San Carlos, Nuevo Guaymas, Sonora');
+  const cards = [...document.querySelectorAll('#info .icard')].filter(c => !(tierra && c.classList.contains('solo-vuelo')));
+  if(cards.length){ L.push('', 'INFORMACIÓN GENERAL');
+    cards.forEach(c => { const k = c.querySelector('.ik'), lis = c.querySelectorAll('li'), v = c.querySelector('.iv');
+      L.push((k ? k.textContent.trim() : '') + ':'); if(lis.length) lis.forEach(li => L.push('- ' + li.innerText.trim())); else L.push(v ? v.innerText.trim() : ''); }); }
+  if(!tierra){ L.push('', 'PUNTOS IMPORTANTES DE SU VUELO'); document.querySelectorAll('section.important li').forEach(li => L.push('- ' + li.innerText.trim())); }
+  L.push('', 'Importante.- Le recordamos que MetLife cubre únicamente las noches de hotel y traslados terrestres que estén dentro del evento o por ruta.',
+    '', 'Tu itinerario en PDF: ' + base + '?pdf=' + encodeURIComponent(r.n),
+    '', 'Le enviamos un cordial saludo deseándole un buen viaje y nos reiteramos a sus órdenes.', '', 'Viajes El Corte Inglés');
   return L.join('\n');
 }
 function waTxt(r){
@@ -1428,7 +1453,9 @@ function claRender(){
   $('#cbody').innerHTML = claRows().map(x => `<tr><td class="kn">${esc(tcase(x.n))}</td><td class="cc">${cell(x)}</td>
     <td class="cpdf"><button data-pdfv="${x.i}" title="Abrir el itinerario de ${esc(tcase(x.n))}">📄 PDF</button>${TEL[x.n]
       ? `<a class="cwa" href="https://wa.me/52${TEL[x.n]}?text=${encodeURIComponent(waTxt(DATA[x.i]))}" target="_blank" rel="noopener" title="Enviar por WhatsApp a ${esc(tcase(x.n))} (${TEL[x.n]})">💬 WhatsApp</a>`
-      : '<span class="cwa na" title="Sin teléfono registrado">Sin tel.</span>'}</td></tr>`).join('');
+      : '<span class="cwa na" title="Sin teléfono registrado">Sin tel.</span>'}${MAIL[x.n]
+      ? `<a class="cwa cml" href="mailto:${encodeURIComponent(MAIL[x.n])}?subject=${encodeURIComponent('Tu itinerario · Segunda Cumbre Universales')}&body=${encodeURIComponent(mailTxt(DATA[x.i]))}" title="Enviar por correo a ${esc(tcase(x.n))} (${esc(MAIL[x.n])})">✉️ Correo</a>`
+      : '<span class="cwa na" title="Sin correo registrado">Sin correo</span>'}</td></tr>`).join('');
 }
 /* ---------- Traslados y pernoctas ---------- */
 const notaDe = (r, k) => ((r.notas || []).find(n => n.k === k) || {}).t || '';
@@ -1569,10 +1596,10 @@ async function conGate(){
   const pw = await askPw('Para abrir esta sección escribe la contraseña:'); if(pw === null) return false;
   if(await sha256(pw.trim().toLowerCase()) !== RESET_H){ alert('Contraseña incorrecta.'); return false; }
   // Teléfonos de los invitados: van cifrados con la contraseña del equipo y solo se abren aquí.
-  if(PACK && PACK.tel && !Object.keys(TEL).length){ try{ TEL = (await Cifra.descifrar(PACK.tel, pw)).tel || {}; }catch(e){ TEL = {}; } }
+  if(PACK && PACK.tel && !Object.keys(TEL).length){ try{ const c = await Cifra.descifrar(PACK.tel, pw); TEL = c.tel || {}; MAIL = c.mail || {}; }catch(e){ TEL = {}; MAIL = {}; } }
   return true;
 }
-let TEL = {};
+let TEL = {}, MAIL = {};
 document.querySelectorAll('.tabs button[data-tab]').forEach(b => b.addEventListener('click', async () => {
   // dentro de VECI se cambia de sección sin volver a pedir contraseña
   if(b.dataset.tab !== 'man' && CTL.tab === 'man' && !(await conGate())) return; ctlTab(b.dataset.tab); }));
@@ -1643,7 +1670,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 167;
+const APP_V = 168;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

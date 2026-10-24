@@ -656,14 +656,14 @@ body.locked>*:not(#gate){visibility:hidden}
     </tr></thead>
     <tbody id="cbody"></tbody>
   </table></div>
-  <div class="ctools"><button id="clcopy">Copiar resumen</button></div>
+  <div class="ctools" hidden><button id="clcopy">Copiar resumen</button></div>
   <p id="cmsg2" class="kmsg" role="status"></p>
 </section>
 <section class="wrap ctl" id="pyt" hidden>
   <h2 class="ct">Traslados y pernoctas</h2>
   <p class="cs">Quiénes pernoctan en el Hotel NH y quiénes tienen traslado terrestre, agrupados por punto de encuentro.</p>
   <div id="pout"></div>
-  <div class="ctools"><button id="pcopy">Copiar resumen</button></div>
+  <div class="ctools" hidden><button id="pcopy">Copiar resumen</button></div>
   <p id="pmsg" class="kmsg" role="status"></p>
 </section>
 <section class="wrap ctl" id="ctl" hidden>
@@ -676,10 +676,6 @@ body.locked>*:not(#gate){visibility:hidden}
     <button class="cstat pe" data-f="pe" aria-pressed="false"><b id="cs-pe">0</b><span>Pendientes</span></button>
   </div>
   <div id="cout"></div>
-  <div class="important cimp" id="ct-imp">
-    <h2>Punto importante</h2>
-    <p>*Le recordamos que MetLife cubre únicamente las noches de hotel y traslados terrestres que estén dentro del evento o por ruta.</p>
-  </div>
   <div class="ctools" hidden>
     <button id="ccopy">Copiar resumen</button>
     <button id="cday">Resumen por día</button>
@@ -1647,7 +1643,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 166;
+const APP_V = 167;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

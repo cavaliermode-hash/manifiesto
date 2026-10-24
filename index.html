@@ -271,6 +271,8 @@ table.rep{font-size:13px}
 .abtn{display:inline-flex;align-items:center;gap:6px;margin-top:4px;font:700 13.5px var(--body);color:var(--green);border:1.5px solid var(--green);border-radius:8px;padding:8px 12px;text-decoration:none}
 .abtn:hover{background:var(--green);color:#fff}
 .dactions{margin-top:12px}
+.th-plain{display:block;padding:9px 8px;font:600 11px/1.2 var(--body);letter-spacing:.06em;text-transform:uppercase;color:var(--green-dark,#0c4f23)}
+.cpdf{white-space:nowrap}.cpdf button{font:600 12px/1 var(--body);padding:6px 9px;margin:2px;border-radius:6px;border:1px solid var(--green);background:#fff;color:var(--green);cursor:pointer}.cpdf button[data-pdf]{background:var(--green);color:#fff}
 .pdf-msg{font-size:13px;color:var(--muted);margin-left:6px}
 .abtn2{font:700 14px var(--body);background:var(--green);color:#fff;border:0;border-radius:8px;padding:10px 14px;cursor:pointer}
 .abtn2:hover{background:var(--green-dark)}
@@ -644,11 +646,12 @@ body.locked>*:not(#gate){visibility:hidden}
 </section>
 <section class="wrap ctl" id="cla" hidden>
   <h2 class="ct">Claves de reserva</h2>
-  <p class="cs">Todas las claves en una sola lista. Ordena tocando el encabezado de cada columna; toca una clave para copiarla.</p>
+  <p class="cs">Todas las claves en una sola lista. Ordena tocando el encabezado de cada columna; toca una clave para copiarla. En <b>Itinerario</b> puedes ver o descargar el PDF de la reserva de cada persona.</p>
   <div class="ktable-wrap"><table class="ktable ctab">
     <thead><tr>
       <th><button data-sort="n">Nombre <span></span></button></th>
       <th><button data-sort="ci">Clave de reserva <span></span></button></th>
+      <th><span class="th-plain">Itinerario</span></th>
     </tr></thead>
     <tbody id="cbody"></tbody>
   </table></div>
@@ -879,7 +882,6 @@ function detailView(r){
     <button class="back" id="back"><span aria-hidden="true">‹</span> Volver a la búsqueda</button>
     <div class="dhello">
       <p class="dsub">Estos son los datos de tu viaje. Guarda tu clave de reserva: la necesitarás para hacer check-in.</p>
-      <div class="dactions"><button class="abtn2" data-pdf="${DATA.indexOf(r)}">📄 Descargar mi itinerario (PDF)</button> <span class="pdf-msg" role="status"></span></div>
     </div>
     ${countdownHTML(r)}
     ${notasHTML(r)}
@@ -1068,21 +1070,24 @@ async function itinPDF(r){
   para('Viajes El Corte Inglés', {b:1, c:G});
   return doc.output('blob');
 }
-async function descargarPDF(r, msg){
+async function descargarPDF(r, msg, ver){
   const name = 'Itinerario ' + tcase(r.n) + '.pdf';
-  msg.textContent = 'Generando…';
+  msg = msg || {textContent:''};
+  const win = ver ? window.open('', '_blank') : null; // se abre en el clic para que el navegador no lo bloquee
+  msg.textContent = 'Generando itinerario de ' + tcase(r.n) + '…';
   try{
     const blob = await itinPDF(r), file = new File([blob], name, {type:'application/pdf'});
     DLG = true; setTimeout(() => { DLG = false; awaySince = 0; }, 3000);
+    if(ver){ const url = URL.createObjectURL(blob); if(win) win.location.href = url; else location.href = url; msg.textContent = ''; return; }
     if(/iPhone|iPad|Android/i.test(navigator.userAgent) && navigator.canShare && navigator.canShare({files:[file]})){
       try{ await navigator.share({files:[file], title:name}); msg.textContent = ''; return; }catch(e){ if(e && e.name === 'AbortError'){ msg.textContent = ''; return; } }
     }
     const url = URL.createObjectURL(blob), a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 60000); msg.textContent = 'Itinerario descargado.';
-  }catch(e){ msg.textContent = 'No se pudo generar el PDF. Revisa tu conexión e intenta de nuevo.'; }
+    setTimeout(() => URL.revokeObjectURL(url), 60000); msg.textContent = 'Itinerario de ' + tcase(r.n) + ' descargado.';
+  }catch(e){ if(win) win.close(); msg.textContent = 'No se pudo generar el PDF. Revisa tu conexión e intenta de nuevo.'; }
 }
-document.addEventListener('click', e => { const b = e.target.closest('[data-pdf]'); if(!b) return;
-  descargarPDF(DATA[+b.dataset.pdf], b.parentElement.querySelector('.pdf-msg')); });
+document.addEventListener('click', e => { const b = e.target.closest('[data-pdf], [data-pdfv]'); if(!b) return;
+  const ver = b.hasAttribute('data-pdfv'); descargarPDF(DATA[+(ver ? b.dataset.pdfv : b.dataset.pdf)], $('#cmsg2'), ver); });
 function mailBox(r){
   const i = DATA.indexOf(r);
   return `<section class="mailbox wa" aria-labelledby="wa-t">
@@ -1396,7 +1401,7 @@ async function syncStart(pin){
 /* ---------- Claves de reserva ---------- */
 const CLA = {sort:'n', dir:1};
 function claRows(){
-  const rows = DATA.map(r => ({n:r.n, ci:r.ci || (!r.cr ? r.cl || '' : ''), cr:r.cr || ''}));
+  const rows = DATA.map((r, i) => ({i, n:r.n, ci:r.ci || (!r.cr ? r.cl || '' : ''), cr:r.cr || ''}));
   const k = CLA.sort;
   rows.sort((a,b) => { const v = x => k==='ci' ? (x.ci || x.cr) : x[k]; let c = (k==='n' ? 0 : (!v(a)) - (!v(b))) || String(v(a)).localeCompare(String(v(b)),'es'); if(!c) c = a.n.localeCompare(b.n,'es'); return c * CLA.dir; });
   return rows;
@@ -1406,7 +1411,8 @@ function claRender(){
   const btn = c => `<button data-c="${esc(c)}" title="Copiar">${esc(c)}</button>`;
   const cell = x => !x.ci && !x.cr ? '—' : (!x.cr || x.cr === x.ci) ? btn(x.ci) : !x.ci ? `<span class="cl">Regreso</span>${btn(x.cr)}`
     : `<span class="cl">Ida</span>${btn(x.ci)}<br><span class="cl">Regreso</span>${btn(x.cr)}`;
-  $('#cbody').innerHTML = claRows().map(x => `<tr><td class="kn">${esc(tcase(x.n))}</td><td class="cc">${cell(x)}</td></tr>`).join('');
+  $('#cbody').innerHTML = claRows().map(x => `<tr><td class="kn">${esc(tcase(x.n))}</td><td class="cc">${cell(x)}</td>
+    <td class="cpdf"><button data-pdfv="${x.i}" title="Ver el itinerario de ${esc(tcase(x.n))}">Ver</button><button data-pdf="${x.i}" title="Descargar el itinerario de ${esc(tcase(x.n))}">⬇ PDF</button></td></tr>`).join('');
 }
 /* ---------- Traslados y pernoctas ---------- */
 const notaDe = (r, k) => ((r.notas || []).find(n => n.k === k) || {}).t || '';
@@ -1618,7 +1624,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 161;
+const APP_V = 162;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

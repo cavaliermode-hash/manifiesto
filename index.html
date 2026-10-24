@@ -715,16 +715,8 @@ body.locked>*:not(#gate){visibility:hidden}
       <li>El check-in podrá realizarse 24 horas antes de la salida del itinerario, si la aerolínea lo permite. De lo contrario, deberá presentarse 2 horas antes en los mostradores de la línea aérea.</li>
       <li>Identifique la clave con la leyenda <b>Reserva de la aerolínea</b>.</li>
       <li>Para administrar su reserva o confirmar su itinerario utilice únicamente las 6 letras de la reservación para entrar a la página de la aerolínea.</li>
+      <li><b>Qué necesita llevar:</b> una identificación oficial vigente (INE o pasaporte) con el mismo nombre de su reserva, y su clave de reserva o pase de abordar.</li>
     </ul>
-  </section>
-  <section class="faq" aria-labelledby="faq-t">
-    <h2 id="faq-t">Preguntas frecuentes</h2>
-    <details><summary>¿Dónde encuentro mi clave de reserva?</summary><p>Escribe tu nombre en el buscador y toca <b>Ver mi reserva</b>. Tu clave tiene 6 letras y números. Si tu vuelo de ida y el de regreso tienen claves distintas, verás las dos. Usa el botón <b>Copiar</b> para pegarla en la página de la aerolínea.</p></details>
-    <details><summary>¿Cuándo y cómo hago mi check-in?</summary><p>Se abre 24 horas antes de tu vuelo, si la aerolínea lo permite. Entra a la página o app de tu aerolínea con tu clave de reserva y tu apellido. En <b>Ver mi reserva</b> te decimos la fecha y hora exacta en que abre. Si no puedes hacerlo en línea, preséntate 2 horas antes en el mostrador de la aerolínea.</p></details>
-    <details><summary>¿Con cuánto tiempo debo llegar al aeropuerto?</summary><p>Al menos 2 horas antes de la salida de tu vuelo. En <b>Ver mi reserva</b> aparece la hora límite calculada para tu vuelo.</p></details>
-    <details><summary>¿Qué necesito llevar?</summary><p>Una identificación oficial vigente (INE o pasaporte) con el mismo nombre de tu reserva, y tu clave de reserva o pase de abordar.</p></details>
-    <details><summary>¿Los horarios están en hora de qué ciudad?</summary><p>Cada horario está en la hora local del aeropuerto. En estas fechas, Sonora tiene 1 hora menos que la Ciudad de México: si sales de Hermosillo a las 12:39, en la Ciudad de México son las 13:39.</p></details>
-    <details><summary>No encuentro mi nombre, ¿qué hago?</summary><p>Escribe tu nombre completo, con todos tus nombres y tus dos apellidos, tal como aparece en tu reserva (por ejemplo, <b>MARIA FERNANDA SOLANA GARCIA</b>). Los acentos y el orden no importan. Si aun así no apareces o algún dato está mal, contacta a tu coordinador de Viajes El Corte Inglés.</p></details>
   </section>
   <p class="foot">Horarios en hora local de cada aeropuerto.</p>
 </main>
@@ -1430,7 +1422,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 146;
+const APP_V = 147;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

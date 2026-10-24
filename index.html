@@ -819,11 +819,11 @@ function tierraBlock(r){
 const durTxt = m => m > 0 ? `${Math.floor(m/60)} h ${String(m%60).padStart(2,'0')} min` : '';
 const legMin = l => Math.round((when(l,'l') - when(l,'s')) / 60000);
 const cityOf = c => AP[c] || c;
-function flightCard(cls, title, legs){
+function flightCard(cls, title, legs, sinTitulo){ // sinTitulo: la clave de arriba ya dice ida/regreso
   legs = legs.filter(Boolean);
   if(!legs.length) return `<div class="fcard fc-${cls}"><div class="fc-s fc-h"><span class="fc-k">${title}</span></div><div class="fc-m fc-hm">Sin vuelo asignado todavía</div></div>`;
   // Encabezado: fecha y luego IDA/REGRESO; cada número de vuelo va en el mismo renglón que su horario.
-  let h = `<div class="fc-s fc-h"><span class="fc-d">${esc(fmtDate(legs[0].f))}</span><span class="fc-k">${title}</span></div>
+  let h = `<div class="fc-s fc-h"><span class="fc-d">${esc(fmtDate(legs[0].f))}</span>${sinTitulo ? '' : `<span class="fc-k">${title}</span>`}</div>
     <div class="fc-m fc-hm">${esc(cityOf(legs[0].o))} → ${esc(cityOf(legs[legs.length-1].d))}</div>`;
   legs.forEach((l, i) => {
     if(i > 0){ const w = Math.round((when(l,'s') - when(legs[i-1],'l')) / 60000);
@@ -849,7 +849,7 @@ function paxCard(r){
     <div class="phead"><p class="name">${hl(r.n)}</p>
       <div class="who">${[r.rol, r.rg].filter(Boolean).map(hl).join(' · ')}</div></div>
     ${keys.length?`<div class="clave"><h4>Datos de la reserva</h4><div class="keys">${keys.join('')}</div></div>`:''}
-    ${soloTierra(r) ? `<div class="legs">${tierraBlock(r)}</div>` : `<div class="fcards">${kIda}${flightCard('ida','Ida',[r.c1, r.ida])}${kReg}${flightCard('reg','Regreso',[r.reg, r.c2])}</div>`}
+    ${soloTierra(r) ? `<div class="legs">${tierraBlock(r)}</div>` : `<div class="fcards">${kIda}${flightCard('ida','Ida',[r.c1, r.ida], dos)}${kReg}${flightCard('reg','Regreso',[r.reg, r.c2], dos)}</div>`}
   </article>`;
 }
 const tcase = s => String(s||'').toLowerCase().replace(/(^|\s)\S/g, c => c.toUpperCase());
@@ -1018,14 +1018,14 @@ async function itinPDF(r){
   else para('Clave de reserva: pendiente');
   // Vuelos
   // Tarjetas de vuelo como en la página: Ida / Regreso con horas grandes, duración y conexión.
-  const pcard = (title, legs, fill) => { legs = legs.filter(Boolean); if(!legs.length) return;
+  const pcard = (title, legs, fill, sinTitulo) => { legs = legs.filter(Boolean); if(!legs.length) return;
     const SEG = 38, CON = 12, TOP = 20, h = TOP + 10 + legs.length * SEG + (legs.length - 1) * CON, x0 = M, w = W - 2*M, side = 132;
     need(h + 10);
     doc.setDrawColor(205,232,213); doc.setLineWidth(1.5); doc.setFillColor(255,255,255); doc.roundedRect(x0, y, w, h, 8, 8, 'FD');
     doc.setFillColor(...fill); doc.roundedRect(x0, y, side, h, 8, 8, 'F'); doc.rect(x0 + side - 10, y, 10, h, 'F');
     // Fecha, luego IDA/REGRESO; cada número de vuelo en el mismo renglón que su horario.
     doc.setTextColor(255,255,255); doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.text(fmtDate(legs[0].f), x0 + 10, y + 15);
-    doc.setFont('helvetica','bold'); doc.setFontSize(10.5); doc.text(title.toUpperCase(), x0 + 10 + doc.getTextWidth(fmtDate(legs[0].f)) + 8, y + 15);
+    doc.setFont('helvetica','bold'); doc.setFontSize(10.5); if(!sinTitulo) doc.text(title.toUpperCase(), x0 + 10 + doc.getTextWidth(fmtDate(legs[0].f)) + 8, y + 15);
     doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(...MUT);
     doc.text(pdfTxt(cityOf(legs[0].o) + ' > ' + cityOf(legs[legs.length-1].d)), x0 + side + 14, y + 15);
     let yy = y + TOP; const L = x0 + side + 14, R = x0 + w - 14;
@@ -1045,9 +1045,9 @@ async function itinPDF(r){
     y += h + 10; };
   if(r.c1 || r.ida || r.reg || r.c2){ head('Vuelos');
     if(dos) para('Clave de reserva de ida: ' + r.ci, {b:1, s:11.5});
-    pcard('Ida', [r.c1, r.ida], [20,83,45]); if(!r.c1 && !r.ida) bul('Ida: sin vuelo asignado todavía');
+    pcard('Ida', [r.c1, r.ida], [20,83,45], dos); if(!r.c1 && !r.ida) bul('Ida: sin vuelo asignado todavía');
     if(dos){ y += 8; para('Clave de reserva de regreso: ' + r.cr, {b:1, s:11.5}); }
-    pcard('Regreso', [r.reg, r.c2], [21,128,61]); if(!r.reg && !r.c2) bul('Regreso: sin vuelo asignado todavía');
+    pcard('Regreso', [r.reg, r.c2], [21,128,61], dos); if(!r.reg && !r.c2) bul('Regreso: sin vuelo asignado todavía');
     para('Horarios en hora local de cada aeropuerto.', {s:8.5, c:MUT}); }
   // Traslados y pernoctas
   const tr = notaDe(r, 'tr'), pe = notaDe(r, 'pe');
@@ -1624,7 +1624,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 162;
+const APP_V = 163;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

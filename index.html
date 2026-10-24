@@ -922,7 +922,7 @@ function resumenTxt(r){
 function waTxt(r){
   const L = [], base = location.origin + location.pathname.replace(/[^\/]*$/, '');
   const seg = (ic, lab, l) => l && L.push(`${ic} *${lab}:* ${l.v}`, `    📅 ${fmtDate(l.f)}`, `    ${l.o} ${l.s} → ${l.d} ${l.l}`);
-  L.push(`👋 Hola, *${tcase(r.n)}*`, '', '✈️ *Tu viaje a la Segunda Cumbre Universales*', '');
+  L.push(`👋 Hola, *${r.n.toUpperCase()}*`, '', '✈️ *Tu viaje a la Segunda Cumbre Universales*', '');
   if(r.ci && r.cr && r.ci !== r.cr) L.push(`🔑 *Clave de reserva de ida:* ${r.ci}`, `🔑 *Clave de reserva de regreso:* ${r.cr}`);
   else if(r.ci || r.cr) L.push(`🔑 *Clave de reserva:* ${r.ci || r.cr}`);
   L.push(''); if(soloTierra(r)) L.push('🚐 *Traslado terrestre*'); seg('🛫', 'Ida (conexión)', r.c1); seg('🛫', 'Ida', r.ida); seg('🛬', 'Regreso', r.reg); seg('🛬', 'Regreso (conexión)', r.c2);
@@ -1469,7 +1469,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 154;
+const APP_V = 155;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

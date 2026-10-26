@@ -993,16 +993,19 @@ function mailTxt(r){
    Un enlace de correo solo admite texto simple, así que el formato se copia al portapapeles y se pega en el mensaje. */
 function mailHTML(r, enPDF){
   // Compatible con Outlook: colores y tamaños en cada texto (Outlook ignora "font:" abreviado y el color heredado de la celda).
-  const G = '#136c34', G2 = '#15803D', G1 = '#14532D', MUT = '#5C6B80', INK = '#16301F', base = location.origin + location.pathname;
+  const MUT = '#5C6B80', INK = '#16301F', base = location.origin + location.pathname;
+  // PDF: verdes oscuros con texto blanco. Correo: verdes claros con texto verde oscuro, porque Outlook al pegar
+  // a veces quita el color blanco y el texto quedaría negro sobre verde oscuro, ilegible.
+  const G = '#136c34', G1 = enPDF ? '#14532D' : '#D7EBDD', G2 = enPDF ? '#15803D' : '#E6F3EA', HB = enPDF ? '#136c34' : '#D7EBDD', ON = enPDF ? '#ffffff' : '#0F3D22';
   const tierra = soloTierra(r), dos = !!(r.ci && r.cr && r.ci !== r.cr);
   // Además del estilo, cada texto va dentro de <font color/face/size>: Outlook conserva esas etiquetas al pegar aunque quite los estilos.
   const fsz = px => px >= 20 ? 5 : px >= 17 ? 4 : px >= 14 ? 3 : px >= 12 ? 2 : 1;
   const T = (t, sz = 14, c = INK, w = 'normal', fam = 'Arial,sans-serif', extra = '') => { let x = `<font color="${c}" face="${fam.split(',')[0].replace(/'/g, '')}" size="${fsz(sz)}"><span style="font-family:${fam};font-size:${sz}px;font-weight:${w};color:${c};${extra}">${t}</span></font>`; return w === 'bold' ? `<b>${x}</b>` : x; };
-  const W = (t, sz = 13, w = 'normal', extra = '') => T(t, sz, '#ffffff', w, 'Arial,sans-serif', extra); // texto blanco sobre verde
+  const W = (t, sz = 13, w = 'normal', extra = '') => T(t, sz, ON, w, 'Arial,sans-serif', extra); // texto sobre fondo verde
   const M = (t, sz = 22) => T(t, sz, INK, 'bold', "'Courier New',monospace");
   const h2 = t => `<tr data-h="1"><td style="padding:16px 0 6px"><table cellpadding="0" cellspacing="0"><tr><td width="4" bgcolor="${G}" style="background:${G};width:4px">&nbsp;</td><td style="padding-left:8px">${T(t.toUpperCase(), 14, G, 'bold', 'Arial,sans-serif', 'letter-spacing:.5px')}</td></tr></table></td></tr>`;
   const p = (t, st = '') => `<tr><td style="font-family:Arial,sans-serif;font-size:14px;line-height:1.45;color:${INK};${st}">${t}</td></tr>`;
-  const key = (lab, v) => `<tr><td style="padding:6px 0"><table cellpadding="6" cellspacing="0"><tr><td bgcolor="${G}" style="background:${G};border-radius:8px;padding:6px 12px">${W(lab.toUpperCase(), 12, 'bold', 'letter-spacing:.5px')}&nbsp;&nbsp;${T(esc(v), 18, '#ffffff', 'bold', "'Courier New',monospace", 'letter-spacing:2px')}</td></tr></table></td></tr>`;
+  const key = (lab, v) => `<tr><td style="padding:6px 0"><table cellpadding="6" cellspacing="0"><tr><td bgcolor="${HB}" style="background:${HB};border-radius:8px;padding:6px 12px">${W(lab.toUpperCase(), 12, 'bold', 'letter-spacing:.5px')}&nbsp;&nbsp;${T(esc(v), 18, ON, 'bold', "'Courier New',monospace", 'letter-spacing:2px')}</td></tr></table></td></tr>`;
   const card = (title, legs, fill, sinTitulo) => { legs = legs.filter(Boolean); if(!legs.length) return '';
     let rows = `<tr><td bgcolor="${fill}" style="background:${fill};padding:8px 12px" colspan="2">${W(esc(fmtDate(legs[0].f)), 13)}${sinTitulo ? '' : '&nbsp;&nbsp;' + W(title.toUpperCase(), 13, 'bold', 'letter-spacing:1px')}&nbsp;&nbsp;${W(esc(cityOf(legs[0].o)) + ' &rarr; ' + esc(cityOf(legs[legs.length-1].d)), 13)}</td></tr>`;
     legs.forEach((l, i) => {
@@ -1015,7 +1018,7 @@ function mailHTML(r, enPDF){
           <td align="right" style="text-align:right">${M(esc(l.l || '-'))}<br>${T(esc(l.d), 12, INK, 'bold')} ${T(esc(cityOf(l.d)), 12, MUT)}</td>
         </tr></table></td></tr>`; });
     return `<tr><td style="padding:4px 0 8px"><table width="100%" cellpadding="6" cellspacing="0" style="border:2px solid #CDE8D5;border-collapse:separate">${rows}</table></td></tr>`; };
-  let b = `<tr><td bgcolor="${G}" style="background:${G};padding:14px 18px">${W('MANIFIESTO DE ITINERARIO', 11, 'bold', 'letter-spacing:1.5px')}<br>${W('SEGUNDA CUMBRE UNIVERSALES', 20, 'bold')}</td></tr>`;
+  let b = `<tr><td bgcolor="${HB}" style="background:${HB};padding:14px 18px">${W('MANIFIESTO DE ITINERARIO', 11, 'bold', 'letter-spacing:1.5px')}<br>${W('SEGUNDA CUMBRE UNIVERSALES', 20, 'bold')}</td></tr>`;
   b += p(`${T(esc(r.n.toUpperCase()), 17, INK, 'bold')}${r.rol ? '<br>' + T(esc(r.rol), 14, MUT) : ''}`, 'padding-top:12px');
   b += h2('Datos de la reserva');
   if(dos) b += p(T('Tienes una clave para la ida y otra para el regreso; cada una aparece junto a sus vuelos.'));
@@ -1790,7 +1793,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 179;
+const APP_V = 180;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

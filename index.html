@@ -985,7 +985,7 @@ function mailTxt(r){
       L.push((k ? k.textContent.trim() : '') + ':'); if(lis.length) lis.forEach(li => L.push('- ' + li.innerText.trim())); else L.push(v ? v.innerText.trim() : ''); }); }
   if(!tierra){ L.push('', 'PUNTOS IMPORTANTES DE SU VUELO'); document.querySelectorAll('section.important li').forEach(li => L.push('- ' + li.innerText.trim())); }
   L.push('', 'Importante.- Le recordamos que MetLife cubre únicamente las noches de hotel y traslados terrestres que estén dentro del evento o por ruta.',
-    '', 'Tu itinerario en PDF: ' + base + '?pdf=' + encodeURIComponent(r.n),
+
     '', 'Le enviamos un cordial saludo deseándole un buen viaje y nos reiteramos a sus órdenes.', '', 'Viajes El Corte Inglés');
   return L.join('\n');
 }
@@ -1033,7 +1033,7 @@ function mailHTML(r, enPDF){
     const pts = [...document.querySelectorAll('section.important li')].map(li => `<tr><td valign="top" style="padding:3px 6px 3px 0">${T('•', 14, G, 'bold')}</td><td style="padding:3px 0">${T(li.innerHTML.replace(/<b>/g, `<b style="color:${INK}">`))}</td></tr>`).join('');
     b += `<tr><td bgcolor="#F0F8F2" style="background:#F0F8F2;border-left:4px solid ${G};padding:10px 14px"><table cellpadding="0" cellspacing="0">${pts}</table></td></tr>`; }
   b += `<tr><td style="padding-top:12px"><table width="100%" cellpadding="0" cellspacing="0"><tr><td bgcolor="#FFF7E6" style="background:#FFF7E6;border-left:4px solid #E0A100;padding:10px 14px">${T('Importante.- Le recordamos que MetLife cubre únicamente las noches de hotel y traslados terrestres que estén dentro del evento o por ruta.', 14, INK, 'bold')}</td></tr></table></td></tr>`;
-  if(!enPDF) b += `<tr><td style="padding:16px 0"><table cellpadding="0" cellspacing="0"><tr><td bgcolor="${G}" style="background:${G};border-radius:8px;padding:10px 18px"><a href="${base}?pdf=${encodeURIComponent(r.n)}" style="text-decoration:none">${W('📄 Ver mi itinerario en PDF', 14, 'bold')}</a></td></tr></table></td></tr>`;
+  // (sin botón de PDF en el correo)
   b += p(T('Le enviamos un cordial saludo deseándole un buen viaje y nos reiteramos a sus órdenes.')) + p(T('Viajes El Corte Inglés', 14, G, 'bold', 'Arial,sans-serif', 'font-style:italic'), 'padding-top:6px;padding-bottom:10px');
   return `<table width="640" cellpadding="4" cellspacing="0" style="width:640px;max-width:640px;font-family:Arial,sans-serif;background:#ffffff">${b}</table>`;
 }
@@ -1790,7 +1790,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 178;
+const APP_V = 179;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

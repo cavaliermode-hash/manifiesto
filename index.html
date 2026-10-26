@@ -1265,7 +1265,7 @@ async function descargarPDF(r, msg, ver){
    sin menú de compartir; funciona igual en computadora, navegador del celular y la app de pantalla de inicio. */
 document.addEventListener('click', e => { const b = e.target.closest('[data-pdf], [data-pdfv]'); if(!b) return; e.preventDefault();
   const r = DATA[+(b.dataset.pdfv ?? b.dataset.pdf)]; DLG = true; setTimeout(() => { DLG = false; awaySince = 0; }, 3000);
-  window.open(location.pathname + '?pdf=' + encodeURIComponent(r.n), '_blank'); });
+  window.open(location.pathname + '?pdf=' + encodeURIComponent(r.n) + '&v=' + APP_V + '.' + Date.now(), '_blank'); /* v: evita que el navegador use una versión guardada */ });
 function pdfDirecto(){
   const n = new URLSearchParams(location.search).get('pdf'); if(!n) return false;
   const r = DATA.find(x => x.n === n.trim().toUpperCase());
@@ -1828,7 +1828,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 187;
+const APP_V = 188;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

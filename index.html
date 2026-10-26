@@ -1030,26 +1030,44 @@ function mailHTML(r, enPDF){
           <td align="right" style="text-align:right">${M(esc(l.l || '-'), C ? 18 : 22)}<br>${T(esc(l.d), 12, INK, 'bold')} ${T(esc(cityOf(l.d)), 12, MUT)}</td>
         </tr></table></td></tr>`; });
     return `<tr><td style="padding:${C ? '2px 0 3px' : '4px 0 8px'}"><table width="100%" cellpadding="${C ? 3 : 6}" cellspacing="0" style="border:2px solid #CDE8D5;border-collapse:separate">${rows}</table></td></tr>`; };
-  let b = `<tr><td bgcolor="${HB}" style="background:${HB};padding:${C ? '8px 14px' : '14px 18px'}">${W('MANIFIESTO DE ITINERARIO', C ? 10 : 11, 'bold', 'letter-spacing:1.5px')}<br>${W('SEGUNDA CUMBRE UNIVERSALES', C ? 17 : 20, 'bold')}</td></tr>`;
+  // PDF: tarjeta de vuelo en una sola línea por tramo, con la clave dentro del encabezado
+  const cardC = (title, legs, fill, clave) => { legs = legs.filter(Boolean); if(!legs.length) return '';
+    let rows = `<tr><td bgcolor="${fill}" style="background:${fill};padding:3px 10px" colspan="4">${W(esc(fmtDate(legs[0].f)), 12, 'bold')}&nbsp;&nbsp;${W(title.toUpperCase(), 11, 'bold', 'letter-spacing:1px')}&nbsp;&nbsp;${W(esc(cityOf(legs[0].o)) + ' &rarr; ' + esc(cityOf(legs[legs.length-1].d)), 12)}${clave ? `<span style="float:right">${W('CLAVE', 10, 'bold', 'letter-spacing:.5px')}&nbsp;${T(esc(clave), 13, ON, 'bold', "'Courier New',monospace", 'letter-spacing:1.5px')}</span>` : ''}</td></tr>`;
+    legs.forEach((l, i) => {
+      if(i > 0){ const w = Math.round((when(l,'s') - when(legs[i-1],'l')) / 60000);
+        rows += `<tr><td colspan="4" align="center" style="text-align:center;padding:0">${T('Conexión en ' + esc(cityOf(l.o)) + (w > 0 ? ' · ' + durTxt(w) : ''), 10, MUT)}</td></tr>`; }
+      rows += `<tr><td style="padding:2px 10px;width:150px">${T(esc(l.v), 11, INK, 'bold')}</td>
+        <td style="padding:2px 6px">${M(esc(l.s || '-'), 15)} ${T(esc(l.o), 11, INK, 'bold')} ${T(esc(cityOf(l.o)), 11, MUT)}</td>
+        <td align="center" style="text-align:center;padding:2px 6px">${T('&rarr; ' + durTxt(legMin(l)), 11, G, 'bold')}</td>
+        <td align="right" style="text-align:right;padding:2px 10px">${M(esc(l.l || '-'), 15)} ${T(esc(l.d), 11, INK, 'bold')} ${T(esc(cityOf(l.d)), 11, MUT)}</td></tr>`; });
+    return `<tr><td style="padding:1px 0 3px"><table width="100%" cellpadding="0" cellspacing="0" style="border:1.5px solid #CDE8D5;border-collapse:separate">${rows}</table></td></tr>`; };
+  let b = `<tr><td bgcolor="${HB}" style="background:${HB};padding:${C ? '6px 12px' : '14px 18px'}">${C ? W('SEGUNDA CUMBRE UNIVERSALES', 15, 'bold') + '&nbsp;&nbsp;' + W('· MANIFIESTO DE ITINERARIO', 10, 'bold', 'letter-spacing:1px') : W('MANIFIESTO DE ITINERARIO', 11, 'bold', 'letter-spacing:1.5px') + '<br>' + W('SEGUNDA CUMBRE UNIVERSALES', 20, 'bold')}</td></tr>`;
   b += p(`${T('Estimado(a)', C ? 13 : 15, MUT)} ${T(esc(r.n.toUpperCase()), C ? 15 : 17, INK, 'bold')}`, C ? 'padding-top:6px' : 'padding-top:12px');
-  if(!(C && dos)) b += h2('Datos de la reserva');
-  if(dos){ if(!C) b += p(T('Tienes una clave para la ida y otra para el regreso; cada una aparece junto a sus vuelos.')); }
+  if(C){ // PDF compacto: la clave va junto al nombre o dentro de cada tarjeta de vuelo
+    if(!dos && (r.ci || r.cr)) b = b.replace(/<\/td><\/tr>$/, `<span style="float:right">${T('CLAVE DE RESERVA', 10, MUT, 'bold', 'Arial,sans-serif', 'letter-spacing:.5px')}&nbsp;${T(esc(r.ci || r.cr), 15, ON, 'bold', "'Courier New',monospace", 'letter-spacing:2px;background:${HB};padding:1px 8px;border-radius:6px')}</span></td></tr>`);
+    if(tierra) b += p(T('Viaje por traslado terrestre.', fs, INK, 'bold'));
+    else { b += h2('Vuelos <span style="font-weight:normal;color:' + MUT + ';letter-spacing:0;font-size:10px">(hora local de cada aeropuerto)</span>');
+      b += cardC('Ida', [r.c1, r.ida], G1, dos ? r.ci : '') + cardC('Regreso', [r.reg, r.c2], G2, dos ? r.cr : ''); }
+  }
+  if(!C) b += h2('Datos de la reserva');
+  if(C){} else if(dos){ b += p(T('Tienes una clave para la ida y otra para el regreso; cada una aparece junto a sus vuelos.')); }
   else if(r.ci || r.cr) b += key('Clave de reserva', r.ci || r.cr); else if(tierra) b += p(T('Viaje por traslado terrestre.', fs, INK, 'bold'));
-  if(!tierra){ b += h2('Vuelos');
+  if(!tierra && !C){ b += h2('Vuelos');
     if(dos) b += key('Clave de reserva de ida', r.ci); b += card('Ida', [r.c1, r.ida], G1, dos);
     if(dos) b += key('Clave de reserva de regreso', r.cr); b += card('Regreso', [r.reg, r.c2], G2, dos);
     b += p(T('Horarios en hora local de cada aeropuerto.', 11, MUT)); }
   const tr = notaDe(r, 'tr'), pe = notaDe(r, 'pe');
   if(tr || pe || tierra){ b += h2('Traslados y pernoctas'); if(tr) b += p(T('🚐 ' + esc(tr))); else if(tierra) b += p(T('🚐 Traslado terrestre.')); if(pe) b += p(T('🏨 ' + esc(pe))); }
-  b += h2('Sede del evento') + p(T('Hotel Marinaterra', fs, INK, 'bold') + T(' · Blvd. Gabriel Estrada 12, San Carlos, Nuevo Guaymas, Sonora'));
+  b += h2(C ? 'Sede del evento y llegada' : 'Sede del evento') + p(T('Hotel Marinaterra', fs, INK, 'bold') + T(' · Blvd. Gabriel Estrada 12, San Carlos, Nuevo Guaymas, Sonora'));
   const cards = [...document.querySelectorAll('#info .icard')].filter(c => !(tierra && c.classList.contains('solo-vuelo')) && !/clima|vestimenta|hotel sede/i.test((c.querySelector('.ik') || {}).textContent || ''));
-  if(cards.length){ b += h2('Información general'); cards.forEach(c => { const k = c.querySelector('.ik'), v = c.querySelector('.iv'); b += p(T(esc(k ? k.textContent : ''), fs, INK, 'bold') + '<br>' + T(esc(v ? v.innerText : ''))); }); }
+  if(cards.length){ if(!C) b += h2('Información general'); cards.forEach(c => { const k = c.querySelector('.ik'), v = c.querySelector('.iv'); b += p(T(esc(k ? k.textContent : ''), fs, INK, 'bold') + '<br>' + T(esc(v ? v.innerText : ''))); }); }
   if(!tierra){ b += h2('Puntos importantes de su vuelo');
-    const pts = [...document.querySelectorAll('section.important li')].map(li => `<tr><td valign="top" style="padding:${C ? '1px 6px 1px 0' : '3px 6px 3px 0'}">${T('•', fs, G, 'bold')}</td><td style="padding:${C ? '1px 0' : '3px 0'}">${T(li.innerHTML.replace(/<b>/g, `<b style="color:${INK}">`))}</td></tr>`).join('');
+    const pts = [...document.querySelectorAll('section.important li')].map(li => `<tr><td valign="top" style="padding:${C ? '1px 6px 1px 0' : '3px 6px 3px 0'}">${T('•', C ? 11 : fs, G, 'bold')}</td><td style="padding:${C ? '1px 0;line-height:1.25' : '3px 0'}">${T(li.innerHTML.replace(/<b>/g, `<b style="color:${INK}">`), C ? 11 : fs)}</td></tr>`).join('');
     b += `<tr><td bgcolor="#F0F8F2" style="background:#F0F8F2;border-left:4px solid ${G};padding:${C ? '5px 12px' : '10px 14px'}"><table cellpadding="0" cellspacing="0">${pts}</table></td></tr>`; }
-  b += `<tr><td style="padding-top:${C ? 6 : 12}px"><table width="100%" cellpadding="0" cellspacing="0"><tr><td bgcolor="#FFF7E6" style="background:#FFF7E6;border-left:4px solid #E0A100;padding:${C ? '5px 12px' : '10px 14px'}">${T('Importante.- Le recordamos que MetLife cubre únicamente las noches de hotel y traslados terrestres que estén dentro del evento o por ruta.', fs, INK, 'bold')}</td></tr></table></td></tr>`;
+  b += `<tr><td style="padding-top:${C ? 6 : 12}px"><table width="100%" cellpadding="0" cellspacing="0"><tr><td bgcolor="#FFF7E6" style="background:#FFF7E6;border-left:4px solid #E0A100;padding:${C ? '5px 12px;line-height:1.25' : '10px 14px'}">${T('Importante.- Le recordamos que MetLife cubre únicamente las noches de hotel y traslados terrestres que estén dentro del evento o por ruta.', C ? 11 : fs, INK, 'bold')}</td></tr></table></td></tr>`;
   // (sin botón de PDF en el correo)
-  b += p(T('Le enviamos un cordial saludo deseándole un buen viaje y nos reiteramos a sus órdenes.')) + p(T('Viajes El Corte Inglés', fs, G, 'bold', 'Arial,sans-serif', 'font-style:italic'), C ? 'padding-top:2px;padding-bottom:4px' : 'padding-top:6px;padding-bottom:10px');
+  if(C) b += p(T('Le enviamos un cordial saludo deseándole un buen viaje y nos reiteramos a sus órdenes.', 11) + '&nbsp;&nbsp;' + T('Viajes El Corte Inglés', 11, G, 'bold', 'Arial,sans-serif', 'font-style:italic'), 'padding-top:4px');
+  else b += p(T('Le enviamos un cordial saludo deseándole un buen viaje y nos reiteramos a sus órdenes.')) + p(T('Viajes El Corte Inglés', fs, G, 'bold', 'Arial,sans-serif', 'font-style:italic'), C ? 'padding-top:2px;padding-bottom:4px' : 'padding-top:6px;padding-bottom:10px');
   return `<table width="640" cellpadding="4" cellspacing="0" style="width:640px;max-width:640px;font-family:Arial,sans-serif;background:#ffffff">${b}</table>`;
 }
 /* Correo con formato:
@@ -1805,7 +1823,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 185;
+const APP_V = 186;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

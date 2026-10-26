@@ -469,7 +469,7 @@ body.vctl .controls, body.vctl main.wrap{display:none}
 .kstat b{display:block;font:700 22px/1.1 var(--mono)} .kstat span{font-size:12px;color:var(--muted)}
 .kstat[aria-pressed="true"]{border-color:var(--green);box-shadow:inset 0 0 0 2px var(--green)}
 .kstat.ok b{color:var(--green)} .kstat.ns b{color:#B3261E} .kstat.pe b{color:#8A5A00}
-.csearch{position:relative;margin:8px 0 4px}.csearch input{width:100%;box-sizing:border-box;font:inherit;font-size:16px;padding:10px 70px 10px 12px;border:1.5px solid var(--line);border-radius:10px;background:#fff}.csearch input:focus{outline:none;border-color:#136c34;box-shadow:0 0 0 3px #D7EBDD}#cqn{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:13px;color:#5C6B80}.cnone{text-align:center;color:#5C6B80;padding:16px!important}
+.csearch{position:relative;margin:8px 0 4px}.csearch input{width:100%;box-sizing:border-box;font:inherit;font-size:16px;padding:10px 70px 10px 12px;border:1.5px solid var(--line);border-radius:10px;background:#fff}.csearch input:focus{outline:none;border-color:#136c34;box-shadow:0 0 0 3px #D7EBDD}.ctl li[hidden],.ctl tr[hidden],.ctl section[hidden],.ctl h3[hidden],.ctl .pgrp[hidden]{display:none!important}#cqn,.vqn{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:13px;color:#5C6B80}.cnone{text-align:center;color:#5C6B80;padding:16px!important}
 .ktable-wrap{border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-top:6px}
 .pgrp{margin:18px 0 0}.pgrp h3{margin:0 0 2px;font:700 17px/1.25 var(--display);color:var(--green-dark)}.pgrp .pw{margin:0 0 8px;color:var(--muted);font-size:14px}.pgrp .pc{font-weight:700;color:var(--green)}
 .ptag{display:inline-block;font:600 11px/1 var(--body);padding:4px 7px;border-radius:999px;background:var(--green-soft);color:var(--green-dark);margin-left:6px;white-space:nowrap}
@@ -635,6 +635,7 @@ body.locked>*:not(#gate){visibility:hidden}
     <button data-m="sal" aria-pressed="false">Regresos (Salidas)</button>
   </div>
   <p class="cs">Todos los invitados en una sola lista, sin importar la fecha. Marca Check-in o No show y ordena tocando el encabezado de cada columna.</p>
+  <div class="csearch"><input id="kq" class="vq" type="search" placeholder="🔍 Buscar por nombre o apellido" autocomplete="off" aria-label="Buscar por nombre o apellido"><span class="vqn"></span></div>
   <div class="cstats" role="group" aria-label="Filtrar">
     <button class="kstat" data-f="all" aria-pressed="true"><b id="ks-all">0</b><span>Total</span></button>
     <button class="kstat ok" data-f="ok" aria-pressed="false"><b id="ks-ok">0</b><span>Check-in</span></button>
@@ -676,6 +677,7 @@ body.locked>*:not(#gate){visibility:hidden}
 <section class="wrap ctl" id="pyt" hidden>
   <h2 class="ct">Traslados y pernoctas</h2>
   <p class="cs">Quiénes pernoctan en el Hotel NH y quiénes tienen traslado terrestre, agrupados por punto de encuentro.</p>
+  <div class="csearch"><input id="pq" class="vq" type="search" placeholder="🔍 Buscar por nombre o apellido" autocomplete="off" aria-label="Buscar por nombre o apellido"><span class="vqn"></span></div>
   <div id="pout"></div>
   <div class="ctools" hidden><button id="pcopy">Copiar resumen</button></div>
   <p id="pmsg" class="kmsg" role="status"></p>
@@ -683,6 +685,7 @@ body.locked>*:not(#gate){visibility:hidden}
 <section class="wrap ctl" id="ctl" hidden>
   <h2 class="ct" id="ct-t"></h2>
   <p class="cs" id="ct-s"></p>
+  <div class="csearch"><input id="lq" class="vq" type="search" placeholder="🔍 Buscar por nombre o apellido" autocomplete="off" aria-label="Buscar por nombre o apellido"><span class="vqn"></span></div>
   <div class="cstats" role="group" aria-label="Filtrar" hidden>
     <button class="cstat" data-f="all" aria-pressed="true"><b id="cs-all">0</b><span>Total</span></button>
     <button class="cstat ok" data-f="ok" aria-pressed="false"><b id="cs-ok">0</b><span>Check-in</span></button>
@@ -1602,6 +1605,27 @@ function claRows(){
   return q.length ? rows.filter(x => { const t = norm(x.n + ' ' + x.ci + ' ' + x.cr); return q.every(w => t.includes(w)); }) : rows;
 }
 document.addEventListener('input', e => { if(e.target.id === 'cq') claRender(); });
+/* Buscador en Llegadas/Salidas, Traslados y pernoctas y Concentrado: oculta a quien no coincida (nombre o apellido, sin acentos)
+   y las tarjetas, grupos o días que se quedan vacíos. Se vuelve a aplicar cada vez que la lista se redibuja. */
+const VQ = {lq:'#cout', pq:'#pout', kq:'#kbody'};
+function vFiltra(id){
+  const inp = document.getElementById(id), cont = $(VQ[id]); if(!inp || !cont) return;
+  const q = norm(inp.value).split(/\s+/).filter(Boolean), ok = el => !q.length || q.every(w => norm(el.textContent).includes(w));
+  let n = 0, tot = 0;
+  if(id === 'lq'){
+    cont.querySelectorAll('.cnames li').forEach(li => { const v = ok(li); li.hidden = !v; tot++; if(v) n++; });
+    cont.querySelectorAll('section.cfl').forEach(sc => { sc.hidden = q.length > 0 && !sc.querySelector('.cnames li:not([hidden])'); });
+    cont.querySelectorAll('h3.cday').forEach(h => { let x = h.nextElementSibling, vis = false; while(x && !x.matches('h3.cday')){ if(x.matches('section.cfl') && !x.hidden) vis = true; x = x.nextElementSibling; } h.hidden = q.length > 0 && !vis; });
+  } else if(id === 'pq'){
+    cont.querySelectorAll('tr').forEach(tr => { const v = ok(tr); tr.hidden = !v; tot++; if(v) n++; });
+    cont.querySelectorAll('.pgrp').forEach(g => { g.hidden = q.length > 0 && !g.querySelector('tr:not([hidden])'); });
+  } else {
+    cont.querySelectorAll('tr').forEach(tr => { const v = ok(tr); tr.hidden = !v; tot++; if(v) n++; });
+  }
+  const c = inp.parentNode.querySelector('.vqn'); if(c) c.textContent = q.length ? (n ? `${n} de ${tot}` : 'Sin resultados') : '';
+}
+document.addEventListener('input', e => { if(VQ[e.target.id]) vFiltra(e.target.id); });
+addEventListener('DOMContentLoaded', () => Object.entries(VQ).forEach(([id, sel]) => { const c = $(sel); if(c) new MutationObserver(() => vFiltra(id)).observe(c, {childList:true, subtree:true}); }));
 function claRender(){
   document.querySelectorAll('#cla .ktable th button').forEach(b => { if(b.dataset.sort === CLA.sort){ b.setAttribute('aria-sort', CLA.dir>0?'ascending':'descending'); b.querySelector('span').dataset.a = CLA.dir>0?'▲':'▼'; } else b.removeAttribute('aria-sort'); });
   const btn = c => `<button data-c="${esc(c)}" title="Copiar">${esc(c)}</button>`;
@@ -1828,7 +1852,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 188;
+const APP_V = 189;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

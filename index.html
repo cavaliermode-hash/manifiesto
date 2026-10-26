@@ -597,6 +597,16 @@ body.locked>*:not(#gate){visibility:hidden}
 .fc-ida .fc-s{background:#D7EBDD!important;color:#0F3D22!important}.fc-reg .fc-s{background:#E6F3EA!important;color:#0F3D22!important}
 .fc-s .fc-d{opacity:1}
 @media (max-width:560px){.fc-h{border-bottom:1px solid #CDE8D5}}
+
+/* Claves y Traslados y pernoctas: nombres en mayúsculas y renglones compactos */
+#cla .ktable td,#pyt .ktable td{padding:3px 6px!important}
+#cla .ktable td.kn,#pyt .ktable td.kn{font-size:11.5px!important;line-height:1.2;text-transform:uppercase;letter-spacing:.01em}
+#pyt .ktable td.kn small{font-size:10.5px;text-transform:none}
+#cla .cpdf button,#cla .cpdf .cwa,#pyt .cpdf button,#pyt .cpdf .cwa{width:27px!important;height:26px!important;font-size:14px!important;border-radius:5px}
+#cla .ctab td.cc{font-size:12px}#cla .ctab td.cc button{padding:2px 5px}
+#pyt .ptag{font-size:9.5px;padding:2px 5px;margin-left:4px}
+#pyt .pgrp{margin-top:12px}#pyt .pgrp h3{font-size:14.5px}#pyt .pw{font-size:12px;margin-bottom:5px}
+#cla .ktable th button{padding-top:6px;padding-bottom:6px}
 </style>
 </head>
 <body>
@@ -1638,7 +1648,7 @@ function claRender(){
   const cell = x => !x.ci && !x.cr ? '—' : (!x.cr || x.cr === x.ci) ? btn(x.ci) : !x.ci ? `<span class="cl">Regreso</span>${btn(x.cr)}`
     : `<span class="cl">Ida</span>${btn(x.ci)}<br><span class="cl">Regreso</span>${btn(x.cr)}`;
   const L = claRows(), qn = $('#cqn'); if(qn) qn.textContent = $('#cq').value.trim() ? `${L.length} de ${DATA.length}` : '';
-  $('#cbody').innerHTML = (L.length ? '' : '<tr><td colspan="3" class="cnone">Sin resultados para esa búsqueda.</td></tr>') + L.map(x => `<tr><td class="kn">${esc(tcase(x.n))}</td><td class="cc">${cell(x)}</td>
+  $('#cbody').innerHTML = (L.length ? '' : '<tr><td colspan="3" class="cnone">Sin resultados para esa búsqueda.</td></tr>') + L.map(x => `<tr><td class="kn">${esc(x.n)}</td><td class="cc">${cell(x)}</td>
     ${accBtns(x.i)}</tr>`).join('');
 }
 /* ---------- Traslados y pernoctas ---------- */
@@ -1666,11 +1676,11 @@ function pytRender(){
   const {pern, grupos} = pytData(), tras = [...grupos.values()].reduce((a, g) => a + g.pax.length, 0);
   const tabla = (filas, conDet) => `<div class="ktable-wrap"><table class="ktable"><tbody>${filas.join('')}</tbody></table></div>`;
   let h = `<div class="pgrp"><h3>🏨 Pernoctan en el Hotel NH Collection Mexico City Airport T2</h3><p class="pw"><span class="pc">${pern.length} ${pern.length===1?'persona':'personas'}</span> · check-in lunes 2 nov · check-out martes 3 nov</p>`
-    + tabla(pern.map(r => `<tr><td class="kn">${esc(tcase(r.n))}${notaDe(r,'tr')?'<span class="ptag">🚗 Traslado</span>':''}</td>${accBtns(DATA.indexOf(r))}</tr>`)) + '</div>';
+    + tabla(pern.map(r => `<tr><td class="kn">${esc(r.n)}${notaDe(r,'tr')?'<span class="ptag">🚗 Traslado</span>':''}</td>${accBtns(DATA.indexOf(r))}</tr>`)) + '</div>';
   h += `<div class="pgrp"><h3>🚗 Traslados terrestres</h3><p class="pw"><span class="pc">${tras} ${tras===1?'persona':'personas'}</span></p></div>`;
   grupos.forEach((g, key) => {
     h += `<div class="pgrp"><h3>${esc(key)}</h3><p class="pw"><span class="pc">${g.pax.length}</span>${g.sub ? ' · ' + esc(g.sub) : ''}</p>`
-      + tabla(g.pax.map(({r, det}) => `<tr><td class="kn">${esc(tcase(r.n))}${notaDe(r,'pe')?'<span class="ptag">🏨 Hotel NH</span>':''}${det?`<br><small style="font-weight:400;color:var(--muted)">${esc(det)}</small>`:''}</td>${accBtns(DATA.indexOf(r))}</tr>`)) + '</div>';
+      + tabla(g.pax.map(({r, det}) => `<tr><td class="kn">${esc(r.n)}${notaDe(r,'pe')?'<span class="ptag">🏨 Hotel NH</span>':''}${det?`<br><small style="font-weight:400;color:var(--muted)">${esc(det)}</small>`:''}</td>${accBtns(DATA.indexOf(r))}</tr>`)) + '</div>';
   });
   $('#pout').innerHTML = h;
 }
@@ -1854,7 +1864,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 191;
+const APP_V = 192;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

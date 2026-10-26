@@ -1030,15 +1030,36 @@ function mailHTML(r, enPDF){
   b += p('Le enviamos un cordial saludo deseándole un buen viaje y nos reiteramos a sus órdenes.') + p(`<b style="color:${G}"><i>Viajes El Corte Inglés</i></b>`, 'padding-top:6px;padding-bottom:10px');
   return `<table width="100%" cellpadding="0" cellspacing="0" style="max-width:640px;font-family:Arial,sans-serif">${b}</table>`;
 }
-document.addEventListener('click', e => { const a = e.target.closest('a[data-mail]'); if(!a) return;
-  const r = DATA[+a.dataset.mail]; if(!navigator.clipboard || !window.ClipboardItem) return; // sin portapapeles: correo en texto simple
-  e.preventDefault();
-  const html = mailHTML(r), txt = mailTxt(r);
-  navigator.clipboard.write([new ClipboardItem({'text/html': new Blob([html], {type:'text/html'}), 'text/plain': new Blob([txt], {type:'text/plain'})})])
-    .then(() => { $('#cmsg2').innerHTML = '<b>Itinerario copiado con formato.</b> En el correo que se abrió, toca el cuerpo del mensaje y <b>pega</b> (Ctrl+V / ⌘V o mantén presionado › Pegar).';
-      DLG = true; setTimeout(() => { DLG = false; awaySince = 0; }, 3000);
-      location.href = `mailto:${encodeURIComponent(MAIL[r.n])}?subject=${encodeURIComponent('Tu itinerario · Segunda Cumbre Universales')}`; })
-    .catch(() => { location.href = a.href; });
+/* Correo con formato:
+   - Computadora: se descarga un borrador de correo (.eml) con el diseño del PDF en el cuerpo, el PDF adjunto,
+     el destinatario y el asunto. Al abrirlo, Outlook lo muestra listo para Enviar.
+   - Celular: los enlaces de correo solo aceptan texto simple; el diseño se copia y se pega en el mensaje. */
+const b64u = str => { const by = new TextEncoder().encode(str); let s = ''; for(let i = 0; i < by.length; i += 8192) s += String.fromCharCode.apply(null, by.subarray(i, i + 8192)); return btoa(s); };
+const wrap76 = b => b.replace(/.{1,76}/g, '$&\r\n');
+async function emlFor(r){
+  const html = `<!doctype html><html><head><meta charset="utf-8"></head><body style="margin:0;padding:12px;background:#fff">${mailHTML(r)}</body></html>`;
+  const pdf = new Uint8Array(await (await itinPDF(r)).arrayBuffer()); let ps = ''; for(let i = 0; i < pdf.length; i += 8192) ps += String.fromCharCode.apply(null, pdf.subarray(i, i + 8192));
+  const B = 'veci' + Date.now(), name = 'Itinerario ' + tcase(r.n) + '.pdf';
+  return ['X-Unsent: 1', `To: ${MAIL[r.n] || ''}`, `Subject: =?UTF-8?B?${b64u('Tu itinerario · Segunda Cumbre Universales')}?=`, 'MIME-Version: 1.0',
+    `Content-Type: multipart/mixed; boundary="${B}"`, '', `--${B}`, 'Content-Type: text/html; charset="UTF-8"', 'Content-Transfer-Encoding: base64', '', wrap76(b64u(html)),
+    `--${B}`, `Content-Type: application/pdf; name="=?UTF-8?B?${b64u(name)}?="`, 'Content-Transfer-Encoding: base64', `Content-Disposition: attachment; filename="=?UTF-8?B?${b64u(name)}?="`, '', wrap76(btoa(ps)),
+    `--${B}--`, ''].join('\r\n');
+}
+document.addEventListener('click', async e => { const a = e.target.closest('a[data-mail]'); if(!a) return;
+  const r = DATA[+a.dataset.mail], msg = $('#cmsg2'), movil = /iPhone|iPad|Android/i.test(navigator.userAgent);
+  e.preventDefault(); DLG = true; setTimeout(() => { DLG = false; awaySince = 0; }, 4000);
+  if(!movil){
+    msg.textContent = 'Preparando el correo de ' + tcase(r.n) + '…';
+    try{ const eml = await emlFor(r), url = URL.createObjectURL(new Blob([eml], {type:'message/rfc822'})), d = document.createElement('a');
+      d.href = url; d.download = 'Correo itinerario ' + tcase(r.n) + '.eml'; document.body.appendChild(d); d.click(); d.remove(); setTimeout(() => URL.revokeObjectURL(url), 60000);
+      msg.innerHTML = `<b>Correo listo.</b> Abre el archivo descargado <b>“Correo itinerario ${esc(tcase(r.n))}.eml”</b>: se abrirá en Outlook con el diseño, el PDF adjunto, el destinatario y el asunto. Solo dale <b>Enviar</b>.`;
+      return; }catch(err){ /* si algo falla, se usa el método de copiar y pegar */ }
+  }
+  try{
+    await navigator.clipboard.write([new ClipboardItem({'text/html': new Blob([mailHTML(r)], {type:'text/html'}), 'text/plain': new Blob([mailTxt(r)], {type:'text/plain'})})]);
+    msg.innerHTML = '<b>Itinerario copiado con formato.</b> En el correo que se abrió, toca el cuerpo del mensaje y <b>pega</b> (mantén presionado › Pegar, o Ctrl+V).';
+    location.href = `mailto:${encodeURIComponent(MAIL[r.n])}?subject=${encodeURIComponent('Tu itinerario · Segunda Cumbre Universales')}`;
+  }catch(err){ location.href = a.href; }
 });
 function waTxt(r){
   const L = [], base = location.origin + location.pathname.replace(/[^\/]*$/, '');
@@ -1767,7 +1788,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 173;
+const APP_V = 174;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

@@ -1108,7 +1108,7 @@ async function itinPDF(r){
     // cortes posibles: al final de cada sección, pero nunca justo después de un título (el título baja con su contenido)
     const cuts = rows.filter((tr, i) => !tr.dataset.h).map(tr => tr.getBoundingClientRect().bottom - top);
     const total = box.offsetHeight;
-    if(total <= pageH * 1.4){ // cabe en una hoja reduciendo un poco: así queda todo junto
+    if(total <= pageH * 1.5){ // cabe en una hoja reduciendo un poco: así queda todo junto
       const kk = Math.min(k, (H - 2*M) / total), w = box.offsetWidth * kk;
       doc.addImage(canvas.toDataURL('image/jpeg', 0.92), 'JPEG', (W - w) / 2, M, w, total * kk);
       return doc.output('blob');
@@ -1788,7 +1788,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 176;
+const APP_V = 177;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

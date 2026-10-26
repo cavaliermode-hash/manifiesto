@@ -273,7 +273,7 @@ table.rep{font-size:13px}
 .abtn:hover{background:var(--green);color:#fff}
 .dactions{margin-top:12px}
 .th-plain{display:block;padding:9px 8px;font:600 11px/1.2 var(--body);letter-spacing:.06em;text-transform:uppercase;color:var(--green-dark,#0c4f23)}
-.cpdf{white-space:nowrap}.cpdf{display:flex;flex-direction:row;align-items:center;justify-content:flex-end;gap:3px}.cpdf button,.cpdf .cwa{margin:0;text-align:center;width:30px;height:30px;padding:0!important;display:inline-flex;align-items:center;justify-content:center;font-size:16px!important;line-height:1}.cpdf button{font:600 12px/1 var(--body);padding:6px 9px;margin:2px;border-radius:6px;border:1px solid var(--green);background:#fff;color:var(--green);cursor:pointer}.cpdf button{background:var(--green);color:#fff}
+.cpdf{white-space:nowrap}.cpdf{vertical-align:middle;width:1%}.cbx{display:flex;flex-direction:row;align-items:center;justify-content:flex-end;gap:3px}.cpdf button,.cpdf .cwa{margin:0;text-align:center;width:30px;height:30px;padding:0!important;display:inline-flex;align-items:center;justify-content:center;font-size:16px!important;line-height:1}.cpdf button{font:600 12px/1 var(--body);padding:6px 9px;margin:2px;border-radius:6px;border:1px solid var(--green);background:#fff;color:var(--green);cursor:pointer}.cpdf button{background:var(--green);color:#fff}
 .cwa{display:inline-block;font:600 12px/1 var(--body);padding:6px 9px;margin:2px;border-radius:6px;background:#1FA855;color:#fff;text-decoration:none}.cwa.na{background:#eee;color:var(--muted)}.cwa.cml{background:#1E5BA8}
 .pdf-msg{font-size:13px;color:var(--muted);margin-left:6px}
 .abtn2{font:700 14px var(--body);background:var(--green);color:#fff;border:0;border-radius:8px;padding:10px 14px;cursor:pointer}
@@ -1626,6 +1626,12 @@ function vFiltra(id){
 }
 document.addEventListener('input', e => { if(VQ[e.target.id]) vFiltra(e.target.id); });
 addEventListener('DOMContentLoaded', () => Object.entries(VQ).forEach(([id, sel]) => { const c = $(sel); if(c) new MutationObserver(() => vFiltra(id)).observe(c, {childList:true, subtree:true}); }));
+/* Botones 📄 PDF, 💬 WhatsApp y ✉️ correo de una persona (Claves y Traslados y pernoctas) */
+function accBtns(i){ const n = DATA[i].n; return `<td class="cpdf"><div class="cbx"><button data-pdfv="${i}" title="Abrir el itinerario de ${esc(tcase(n))} en PDF" aria-label="PDF de ${esc(tcase(n))}">📄</button>${TEL[n]
+      ? `<a class="cwa" href="https://wa.me/52${TEL[n]}?text=${encodeURIComponent(waTxt(DATA[i]))}" target="_blank" rel="noopener" title="Enviar por WhatsApp a ${esc(tcase(n))} (${TEL[n]})" aria-label="WhatsApp a ${esc(tcase(n))}">💬</a>`
+      : '<span class="cwa na" title="Sin teléfono registrado">—</span>'}${MAIL[n]
+      ? `<a class="cwa cml" data-mail="${i}" href="mailto:${encodeURIComponent(MAIL[n])}?subject=${encodeURIComponent('Tu itinerario · Segunda Cumbre Universales')}&body=${encodeURIComponent(mailTxt(DATA[i]))}" title="Enviar por correo a ${esc(tcase(n))} (${esc(MAIL[n])})" aria-label="Correo a ${esc(tcase(n))}">✉️</a>`
+      : '<span class="cwa na" title="Sin correo registrado">—</span>'}</div></td>`; }
 function claRender(){
   document.querySelectorAll('#cla .ktable th button').forEach(b => { if(b.dataset.sort === CLA.sort){ b.setAttribute('aria-sort', CLA.dir>0?'ascending':'descending'); b.querySelector('span').dataset.a = CLA.dir>0?'▲':'▼'; } else b.removeAttribute('aria-sort'); });
   const btn = c => `<button data-c="${esc(c)}" title="Copiar">${esc(c)}</button>`;
@@ -1633,11 +1639,7 @@ function claRender(){
     : `<span class="cl">Ida</span>${btn(x.ci)}<br><span class="cl">Regreso</span>${btn(x.cr)}`;
   const L = claRows(), qn = $('#cqn'); if(qn) qn.textContent = $('#cq').value.trim() ? `${L.length} de ${DATA.length}` : '';
   $('#cbody').innerHTML = (L.length ? '' : '<tr><td colspan="3" class="cnone">Sin resultados para esa búsqueda.</td></tr>') + L.map(x => `<tr><td class="kn">${esc(tcase(x.n))}</td><td class="cc">${cell(x)}</td>
-    <td class="cpdf"><button data-pdfv="${x.i}" title="Abrir el itinerario de ${esc(tcase(x.n))} en PDF" aria-label="PDF de ${esc(tcase(x.n))}">📄</button>${TEL[x.n]
-      ? `<a class="cwa" href="https://wa.me/52${TEL[x.n]}?text=${encodeURIComponent(waTxt(DATA[x.i]))}" target="_blank" rel="noopener" title="Enviar por WhatsApp a ${esc(tcase(x.n))} (${TEL[x.n]})" aria-label="WhatsApp a ${esc(tcase(x.n))}">💬</a>`
-      : '<span class="cwa na" title="Sin teléfono registrado">—</span>'}${MAIL[x.n]
-      ? `<a class="cwa cml" data-mail="${x.i}" href="mailto:${encodeURIComponent(MAIL[x.n])}?subject=${encodeURIComponent('Tu itinerario · Segunda Cumbre Universales')}&body=${encodeURIComponent(mailTxt(DATA[x.i]))}" title="Enviar por correo a ${esc(tcase(x.n))} (${esc(MAIL[x.n])})" aria-label="Correo a ${esc(tcase(x.n))}">✉️</a>`
-      : '<span class="cwa na" title="Sin correo registrado">—</span>'}</td></tr>`).join('');
+    ${accBtns(x.i)}</tr>`).join('');
 }
 /* ---------- Traslados y pernoctas ---------- */
 const notaDe = (r, k) => ((r.notas || []).find(n => n.k === k) || {}).t || '';
@@ -1664,11 +1666,11 @@ function pytRender(){
   const {pern, grupos} = pytData(), tras = [...grupos.values()].reduce((a, g) => a + g.pax.length, 0);
   const tabla = (filas, conDet) => `<div class="ktable-wrap"><table class="ktable"><tbody>${filas.join('')}</tbody></table></div>`;
   let h = `<div class="pgrp"><h3>🏨 Pernoctan en el Hotel NH Collection Mexico City Airport T2</h3><p class="pw"><span class="pc">${pern.length} ${pern.length===1?'persona':'personas'}</span> · check-in lunes 2 nov · check-out martes 3 nov</p>`
-    + tabla(pern.map(r => `<tr><td class="kn">${esc(tcase(r.n))}${notaDe(r,'tr')?'<span class="ptag">🚗 Traslado</span>':''}</td><td>${esc(r.rg||'')}</td></tr>`)) + '</div>';
+    + tabla(pern.map(r => `<tr><td class="kn">${esc(tcase(r.n))}${notaDe(r,'tr')?'<span class="ptag">🚗 Traslado</span>':''}</td>${accBtns(DATA.indexOf(r))}</tr>`)) + '</div>';
   h += `<div class="pgrp"><h3>🚗 Traslados terrestres</h3><p class="pw"><span class="pc">${tras} ${tras===1?'persona':'personas'}</span></p></div>`;
   grupos.forEach((g, key) => {
     h += `<div class="pgrp"><h3>${esc(key)}</h3><p class="pw"><span class="pc">${g.pax.length}</span>${g.sub ? ' · ' + esc(g.sub) : ''}</p>`
-      + tabla(g.pax.map(({r, det}) => `<tr><td class="kn">${esc(tcase(r.n))}${notaDe(r,'pe')?'<span class="ptag">🏨 Hotel NH</span>':''}${det?`<br><small style="font-weight:400;color:var(--muted)">${esc(det)}</small>`:''}</td><td>${esc(r.rg||'')}</td></tr>`)) + '</div>';
+      + tabla(g.pax.map(({r, det}) => `<tr><td class="kn">${esc(tcase(r.n))}${notaDe(r,'pe')?'<span class="ptag">🏨 Hotel NH</span>':''}${det?`<br><small style="font-weight:400;color:var(--muted)">${esc(det)}</small>`:''}</td>${accBtns(DATA.indexOf(r))}</tr>`)) + '</div>';
   });
   $('#pout').innerHTML = h;
 }
@@ -1852,7 +1854,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 190;
+const APP_V = 191;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

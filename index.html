@@ -994,9 +994,8 @@ function mailTxt(r){
 function mailHTML(r, enPDF){
   // Compatible con Outlook: colores y tamaños en cada texto (Outlook ignora "font:" abreviado y el color heredado de la celda).
   const MUT = '#5C6B80', INK = '#16301F', base = location.origin + location.pathname;
-  // PDF: verdes oscuros con texto blanco. Correo: verdes claros con texto verde oscuro, porque Outlook al pegar
-  // a veces quita el color blanco y el texto quedaría negro sobre verde oscuro, ilegible.
-  const G = '#136c34', G1 = enPDF ? '#14532D' : '#D7EBDD', G2 = enPDF ? '#15803D' : '#E6F3EA', HB = enPDF ? '#136c34' : '#D7EBDD', ON = enPDF ? '#ffffff' : '#0F3D22';
+  // Correo y PDF: verdes claros con texto verde oscuro (en Outlook se lee aunque quite los colores al pegar).
+  const G = '#136c34', G1 = '#D7EBDD', G2 = '#E6F3EA', HB = '#D7EBDD', ON = '#0F3D22';
   const tierra = soloTierra(r), dos = !!(r.ci && r.cr && r.ci !== r.cr);
   // Además del estilo, cada texto va dentro de <font color/face/size>: Outlook conserva esas etiquetas al pegar aunque quite los estilos.
   const fsz = px => px >= 20 ? 5 : px >= 17 ? 4 : px >= 14 ? 3 : px >= 12 ? 2 : 1;
@@ -1793,7 +1792,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 180;
+const APP_V = 181;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

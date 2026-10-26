@@ -87,7 +87,7 @@ main{padding-block:16px 48px}
 .verified{font:600 13px var(--body);color:var(--ok);align-self:center}
 .copy{border:0;background:rgba(255,255,255,.12);color:var(--board-ink);font:600 12px var(--body);border-radius:6px;padding:5px 8px;cursor:pointer}
 .legs{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--line)}
-.fc-key{margin:4px 0 -2px}
+.fc-key{margin:10px 0 0}.fc-key:first-child{margin-top:2px}
 .fcards{display:grid;gap:8px;padding:10px;border-top:1px solid var(--line)}
 .fcard{display:grid;grid-template-columns:158px 1fr;border:1.5px solid #CDE8D5;border-radius:12px;overflow:hidden;background:#fff}
 .fc-s{color:#fff;padding:2px 12px;display:flex;flex-direction:column;justify-content:center;gap:0}
@@ -590,7 +590,7 @@ body.locked>*:not(#gate){visibility:hidden}
 /* Contraste claro (igual que el correo y el PDF): fondos verde claro y texto verde oscuro en la reserva */
 .count-card{background:#D7EBDD!important;color:#0F3D22!important;border:1px solid #BFDDC8}
 .count-card .cc-big,.count-card .cc-small,.count-card b{color:#0F3D22!important}
-.detail .key,.fcards .key{background:#D7EBDD;color:#0F3D22;border:1px solid #BFDDC8}
+.detail .key,.fcards .key{background:#D7EBDD;color:#0F3D22;border:2px solid #136c34;border-radius:10px}.detail .key small,.fcards .key small{color:#0F3D22;font-weight:700}.detail .key .copy,.fcards .key .copy{background:#fff;color:#136c34;border:1px solid #136c34}
 .detail .key small,.fcards .key small{color:#2E5A3D}
 .detail .key b,.fcards .key b{color:#0F3D22}
 .detail .copy,.fcards .copy{background:#fff;color:#136c34;border:1px solid #BFDDC8}
@@ -989,10 +989,10 @@ function mailTxt(r){
   L.push(`Estimado(a) ${r.n.toUpperCase()}:`, '', 'Estos son los datos de tu viaje a la Segunda Cumbre Universales.', '');
   const dos = !!(r.ci && r.cr && r.ci !== r.cr);
   L.push('DATOS DE LA RESERVA'); if(dos) L.push('Tienes una clave para la ida y otra para el regreso (aparecen junto a sus vuelos).');
-  else if(r.ci || r.cr) L.push(`Clave de reserva: ${r.ci || r.cr}`); else if(tierra) L.push('Viaje por traslado terrestre.');
+  else if(r.ci || r.cr) L.push(`CLAVE DE RESERVA: [ ${r.ci || r.cr} ]`); else if(tierra) L.push('Viaje por traslado terrestre.');
   if(!tierra){ L.push('', 'VUELOS');
-    if(dos) L.push(`Clave de reserva de ida: ${r.ci}`); seg('Ida (conexión)', r.c1); seg('Ida', r.ida);
-    if(dos) L.push(`Clave de reserva de regreso: ${r.cr}`); seg('Regreso', r.reg); seg('Regreso (conexión)', r.c2); }
+    if(dos) L.push('', `CLAVE DE RESERVA DE IDA: [ ${r.ci} ]`); seg('Ida (conexión)', r.c1); seg('Ida', r.ida);
+    if(dos) L.push('', `CLAVE DE RESERVA DE REGRESO: [ ${r.cr} ]`); seg('Regreso', r.reg); seg('Regreso (conexión)', r.c2); }
   const tr = notaDe(r, 'tr'), pe = notaDe(r, 'pe');
   if(tr || pe || tierra){ L.push('', 'TRASLADOS Y PERNOCTAS'); if(tr) L.push('- ' + tr); else if(tierra) L.push('- Traslado terrestre.'); if(pe) L.push('- ' + pe); }
   L.push('', 'SEDE DEL EVENTO', 'Hotel Marinaterra · Blvd. Gabriel Estrada 12, San Carlos, Nuevo Guaymas, Sonora');
@@ -1022,7 +1022,7 @@ function mailHTML(r, enPDF){
   const M = (t, sz = 22) => T(t, sz, INK, 'bold', "'Courier New',monospace");
   const h2 = t => `<tr data-h="1"><td style="padding:${C ? '9px 0 2px' : '16px 0 6px'}"><table cellpadding="0" cellspacing="0"><tr><td width="4" bgcolor="${G}" style="background:${G};width:4px">&nbsp;</td><td style="padding-left:8px">${T(t.toUpperCase(), C ? 12 : 14, G, 'bold', 'Arial,sans-serif', 'letter-spacing:.5px')}</td></tr></table></td></tr>`;
   const p = (t, st = '') => `<tr><td style="font-family:Arial,sans-serif;font-size:${fs}px;line-height:${C ? 1.3 : 1.45};${C ? 'padding:1px 4px;' : ''}color:${INK};${st}">${t}</td></tr>`;
-  const key = (lab, v) => `<tr><td style="padding:${C ? '2px 0' : '6px 0'}"><table cellpadding="${C ? 3 : 6}" cellspacing="0"><tr><td bgcolor="${HB}" style="background:${HB};border-radius:8px;padding:${C ? '3px 10px' : '6px 12px'}">${W(lab.toUpperCase(), C ? 11 : 12, 'bold', 'letter-spacing:.5px')}&nbsp;&nbsp;${T(esc(v), C ? 15 : 18, ON, 'bold', "'Courier New',monospace", 'letter-spacing:2px')}</td></tr></table></td></tr>`;
+  const key = (lab, v) => `<tr><td style="padding:${C ? '2px 0' : '6px 0'}"><table cellpadding="${C ? 3 : 6}" cellspacing="0"><tr><td bgcolor="${HB}" style="background:${HB};border:2px solid ${G};border-radius:8px;padding:${C ? '3px 10px' : '6px 12px'}">${W(lab.toUpperCase(), C ? 11 : 12, 'bold', 'letter-spacing:.5px')}&nbsp;&nbsp;${T(esc(v), C ? 15 : 18, ON, 'bold', "'Courier New',monospace", 'letter-spacing:2px')}</td></tr></table></td></tr>`;
   const card = (title, legs, fill, sinTitulo) => { legs = legs.filter(Boolean); if(!legs.length) return '';
     let rows = `<tr><td bgcolor="${fill}" style="background:${fill};padding:${pv}px 12px" colspan="2">${W(esc(fmtDate(legs[0].f)), 13)}${sinTitulo ? '' : '&nbsp;&nbsp;' + W(title.toUpperCase(), 13, 'bold', 'letter-spacing:1px')}&nbsp;&nbsp;${W(esc(cityOf(legs[0].o)) + ' &rarr; ' + esc(cityOf(legs[legs.length-1].d)), 13)}</td></tr>`;
     legs.forEach((l, i) => {
@@ -1037,7 +1037,7 @@ function mailHTML(r, enPDF){
     return `<tr><td style="padding:${C ? '2px 0 3px' : '4px 0 8px'}"><table width="100%" cellpadding="${C ? 3 : 6}" cellspacing="0" style="border:2px solid #CDE8D5;border-collapse:separate">${rows}</table></td></tr>`; };
   // PDF: tarjeta de vuelo en una sola línea por tramo, con la clave dentro del encabezado
   const cardC = (title, legs, fill, clave) => { legs = legs.filter(Boolean); if(!legs.length) return '';
-    let rows = `<tr><td bgcolor="${fill}" style="background:${fill};padding:3px 10px" colspan="4">${W(esc(fmtDate(legs[0].f)), 12, 'bold')}&nbsp;&nbsp;${W(title.toUpperCase(), 11, 'bold', 'letter-spacing:1px')}&nbsp;&nbsp;${W(esc(cityOf(legs[0].o)) + ' &rarr; ' + esc(cityOf(legs[legs.length-1].d)), 12)}${clave ? `<span style="float:right">${W('CLAVE', 10, 'bold', 'letter-spacing:.5px')}&nbsp;${T(esc(clave), 13, ON, 'bold', "'Courier New',monospace", 'letter-spacing:1.5px')}</span>` : ''}</td></tr>`;
+    let rows = `<tr><td bgcolor="${fill}" style="background:${fill};padding:3px 10px" colspan="4">${W(esc(fmtDate(legs[0].f)), 12, 'bold')}&nbsp;&nbsp;${W(title.toUpperCase(), 11, 'bold', 'letter-spacing:1px')}&nbsp;&nbsp;${W(esc(cityOf(legs[0].o)) + ' &rarr; ' + esc(cityOf(legs[legs.length-1].d)), 12)}</td></tr>`;
     legs.forEach((l, i) => {
       if(i > 0){ const w = Math.round((when(l,'s') - when(legs[i-1],'l')) / 60000);
         rows += `<tr><td colspan="4" align="center" style="text-align:center;padding:0">${T('Conexión en ' + esc(cityOf(l.o)) + (w > 0 ? ' · ' + durTxt(w) : ''), 10, MUT)}</td></tr>`; }
@@ -1045,11 +1045,11 @@ function mailHTML(r, enPDF){
         <td style="padding:2px 6px">${M(esc(l.s || '-'), 15)} ${T(esc(l.o), 11, INK, 'bold')} ${T(esc(cityOf(l.o)), 11, MUT)}</td>
         <td align="center" style="text-align:center;padding:2px 6px">${T('&rarr; ' + durTxt(legMin(l)), 11, G, 'bold')}</td>
         <td align="right" style="text-align:right;padding:2px 10px">${M(esc(l.l || '-'), 15)} ${T(esc(l.d), 11, INK, 'bold')} ${T(esc(cityOf(l.d)), 11, MUT)}</td></tr>`; });
-    return `<tr><td style="padding:1px 0 3px"><table width="100%" cellpadding="0" cellspacing="0" style="border:1.5px solid #CDE8D5;border-collapse:separate">${rows}</table></td></tr>`; };
+    return (clave ? key(title === 'Ida' ? 'Clave de reserva de ida' : 'Clave de reserva de regreso', clave) : '') + `<tr><td style="padding:1px 0 3px"><table width="100%" cellpadding="0" cellspacing="0" style="border:1.5px solid #CDE8D5;border-collapse:separate">${rows}</table></td></tr>`; };
   let b = `<tr><td bgcolor="${HB}" style="background:${HB};padding:${C ? '6px 12px' : '14px 18px'}">${C ? W('SEGUNDA CUMBRE UNIVERSALES', 15, 'bold') + '&nbsp;&nbsp;' + W('· MANIFIESTO DE ITINERARIO', 10, 'bold', 'letter-spacing:1px') : W('MANIFIESTO DE ITINERARIO', 11, 'bold', 'letter-spacing:1.5px') + '<br>' + W('SEGUNDA CUMBRE UNIVERSALES', 20, 'bold')}</td></tr>`;
   b += p(`${T('Estimado(a)', C ? 13 : 15, MUT)} ${T(esc(r.n.toUpperCase()), C ? 15 : 17, INK, 'bold')}`, C ? 'padding-top:6px' : 'padding-top:12px');
   if(C){ // PDF compacto: la clave va junto al nombre o dentro de cada tarjeta de vuelo
-    if(!dos && (r.ci || r.cr)) b = b.replace(/<\/td><\/tr>$/, `<span style="float:right">${T('CLAVE DE RESERVA', 10, MUT, 'bold', 'Arial,sans-serif', 'letter-spacing:.5px')}&nbsp;${T(esc(r.ci || r.cr), 15, ON, 'bold', "'Courier New',monospace", 'letter-spacing:2px;background:${HB};padding:1px 8px;border-radius:6px')}</span></td></tr>`);
+    if(!dos && (r.ci || r.cr)) b += key('Clave de reserva', r.ci || r.cr);
     if(tierra) b += p(T('Viaje por traslado terrestre.', fs, INK, 'bold'));
     else { b += h2('Vuelos <span style="font-weight:normal;color:' + MUT + ';letter-spacing:0;font-size:10px">(hora local de cada aeropuerto)</span>');
       b += cardC('Ida', [r.c1, r.ida], G1, dos ? r.ci : '') + cardC('Regreso', [r.reg, r.c2], G2, dos ? r.cr : ''); }
@@ -1106,10 +1106,10 @@ function waTxt(r){
   const seg = (ic, lab, l) => l && L.push(`${ic} *${lab}:* ${l.v}`, `    📅 ${fmtDate(l.f)}`, `    ${l.o} ${l.s} → ${l.d} ${l.l}`);
   L.push(`👋 Estimado(a) *${r.n.toUpperCase()}*`, '', '✈️ *Tu viaje a la Segunda Cumbre Universales*', '');
   const dos = !!(r.ci && r.cr && r.ci !== r.cr);
-  if(!dos && (r.ci || r.cr)) L.push(`🔑 *Clave de reserva:* ${r.ci || r.cr}`, '');
+  if(!dos && (r.ci || r.cr)) L.push('🔑 *CLAVE DE RESERVA*', '```' + (r.ci || r.cr) + '```', '');
   if(soloTierra(r)) L.push('🚐 *Traslado terrestre*');
-  if(dos) L.push(`🔑 *Clave de reserva de ida:* ${r.ci}`); seg('🛫', 'Ida (conexión)', r.c1); seg('🛫', 'Ida', r.ida);
-  if(dos) L.push('', `🔑 *Clave de reserva de regreso:* ${r.cr}`); seg('🛬', 'Regreso', r.reg); seg('🛬', 'Regreso (conexión)', r.c2);
+  if(dos) L.push('🔑 *CLAVE DE RESERVA DE IDA*', '```' + r.ci + '```'); seg('🛫', 'Ida (conexión)', r.c1); seg('🛫', 'Ida', r.ida);
+  if(dos) L.push('', '🔑 *CLAVE DE RESERVA DE REGRESO*', '```' + r.cr + '```'); seg('🛬', 'Regreso', r.reg); seg('🛬', 'Regreso (conexión)', r.c2);
   if((r.notas||[]).length){ L.push('', '📌 *Indicaciones especiales para ti*'); r.notas.forEach(n => L.push('• ' + n.t.replace(/Hotel Marinaterra/g, '*Hotel Marinaterra*'))); }
   L.push('', '🏨 *Sede del evento:* Hotel Marinaterra, San Carlos, Sonora', '',
     '🗓️ *Agenda del evento:*', base + 'agenda-cumbre.jpg', '',
@@ -1852,7 +1852,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 189;
+const APP_V = 190;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

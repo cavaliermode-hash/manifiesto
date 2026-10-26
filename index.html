@@ -991,10 +991,10 @@ function mailTxt(r){
 }
 /* Correo con formato (colores, tarjetas de vuelo, negritas y puntos importantes sombreados), igual que el PDF.
    Un enlace de correo solo admite texto simple, así que el formato se copia al portapapeles y se pega en el mensaje. */
-function mailHTML(r){
+function mailHTML(r, enPDF){
   const G = '#136c34', G2 = '#15803D', G1 = '#14532D', MUT = '#5C6B80', INK = '#16301F', base = location.origin + location.pathname;
   const tierra = soloTierra(r), dos = !!(r.ci && r.cr && r.ci !== r.cr);
-  const h2 = t => `<tr><td style="padding:16px 0 6px"><div style="border-left:4px solid ${G};padding-left:8px;font:bold 14px Arial,sans-serif;color:${G};text-transform:uppercase;letter-spacing:.5px">${t}</div></td></tr>`;
+  const h2 = t => `<tr data-h="1"><td style="padding:16px 0 6px"><div style="border-left:4px solid ${G};padding-left:8px;font:bold 14px Arial,sans-serif;color:${G};text-transform:uppercase;letter-spacing:.5px">${t}</div></td></tr>`;
   const p = (t, st = '') => `<tr><td style="font:14px/1.45 Arial,sans-serif;color:${INK};${st}">${t}</td></tr>`;
   const key = (lab, v) => `<tr><td style="padding:6px 0"><span style="display:inline-block;background:${G};color:#fff;border-radius:8px;padding:6px 12px;font:bold 12px Arial,sans-serif;letter-spacing:.5px">${lab.toUpperCase()} &nbsp;<span style="font:bold 18px 'Courier New',monospace;letter-spacing:2px">${esc(v)}</span></span></td></tr>`;
   const card = (title, legs, fill, sinTitulo) => { legs = legs.filter(Boolean); if(!legs.length) return '';
@@ -1026,8 +1026,8 @@ function mailHTML(r){
   if(!tierra){ b += h2('Puntos importantes de su vuelo');
     b += `<tr><td style="background:#F0F8F2;border-left:4px solid ${G};border-radius:6px;padding:10px 14px"><ul style="margin:0;padding-left:18px;font:14px/1.5 Arial,sans-serif;color:${INK}">${[...document.querySelectorAll('section.important li')].map(li => `<li style="margin:3px 0">${li.innerHTML}</li>`).join('')}</ul></td></tr>`; }
   b += `<tr><td style="padding-top:12px"><div style="background:#FFF7E6;border-left:4px solid #E0A100;border-radius:6px;padding:10px 14px;font:bold 14px/1.45 Arial,sans-serif;color:${INK}">Importante.- Le recordamos que MetLife cubre únicamente las noches de hotel y traslados terrestres que estén dentro del evento o por ruta.</div></td></tr>`;
-  b += `<tr><td style="padding:16px 0"><a href="${base}?pdf=${encodeURIComponent(r.n)}" style="background:${G};color:#fff;text-decoration:none;font:bold 14px Arial,sans-serif;padding:10px 18px;border-radius:8px;display:inline-block">📄 Ver mi itinerario en PDF</a></td></tr>`;
-  b += p('Le enviamos un cordial saludo deseándole un buen viaje y nos reiteramos a sus órdenes.') + p(`<b style="color:${G}"><i>Viajes El Corte Inglés</i></b>`, 'padding-top:6px');
+  if(!enPDF) b += `<tr><td style="padding:16px 0"><a href="${base}?pdf=${encodeURIComponent(r.n)}" style="background:${G};color:#fff;text-decoration:none;font:bold 14px Arial,sans-serif;padding:10px 18px;border-radius:8px;display:inline-block">📄 Ver mi itinerario en PDF</a></td></tr>`;
+  b += p('Le enviamos un cordial saludo deseándole un buen viaje y nos reiteramos a sus órdenes.') + p(`<b style="color:${G}"><i>Viajes El Corte Inglés</i></b>`, 'padding-top:6px;padding-bottom:10px');
   return `<table width="100%" cellpadding="0" cellspacing="0" style="max-width:640px;font-family:Arial,sans-serif">${b}</table>`;
 }
 document.addEventListener('click', e => { const a = e.target.closest('a[data-mail]'); if(!a) return;
@@ -1065,7 +1065,47 @@ function loadJsPDF(){
     sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'; sc.onload = () => ok(window.jspdf); sc.onerror = ko; document.head.appendChild(sc); });
 }
 const pdfTxt = t => String(t || '').replace(/→/g, '>').replace(/[–—]/g, '-').replace(/[^\x20-\xFF\n]/g, '').replace(/\s+\n/g, '\n').trim();
+/* PDF con el mismo formato del correo: se dibuja el HTML del itinerario y se acomoda en hojas carta,
+   cortando solo entre secciones para que ninguna tarjeta quede partida. */
+let h2cP = null;
+function loadH2C(){
+  if(window.html2canvas) return Promise.resolve(window.html2canvas);
+  return h2cP = h2cP || new Promise((ok, ko) => { const sc = document.createElement('script');
+    sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js'; sc.onload = () => ok(window.html2canvas); sc.onerror = ko; document.head.appendChild(sc); });
+}
 async function itinPDF(r){
+  const [{ jsPDF }, h2c] = await Promise.all([loadJsPDF(), loadH2C()]);
+  const box = document.createElement('div');
+  box.style.cssText = 'position:fixed;left:-10000px;top:0;width:640px;background:#fff;padding:0';
+  box.innerHTML = mailHTML(r, true); document.body.appendChild(box);
+  try{
+    const tbl = box.firstElementChild, rows = [...((tbl.tBodies && tbl.tBodies[0]) || tbl).children];
+    const canvas = await h2c(box, {scale:2, backgroundColor:'#ffffff', useCORS:true, logging:false});
+    const doc = new jsPDF({unit:'pt', format:'letter'}), W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight(), M = 28;
+    const k = (W - 2*M) / box.offsetWidth, pageH = (H - 2*M) / k; // alto útil de la hoja, en px del HTML
+    const top = box.getBoundingClientRect().top;
+    // cortes posibles: al final de cada sección, pero nunca justo después de un título (el título baja con su contenido)
+    const cuts = rows.filter((tr, i) => !tr.dataset.h).map(tr => tr.getBoundingClientRect().bottom - top);
+    const total = box.offsetHeight;
+    if(total <= pageH * 1.4){ // cabe en una hoja reduciendo un poco: así queda todo junto
+      const kk = Math.min(k, (H - 2*M) / total), w = box.offsetWidth * kk;
+      doc.addImage(canvas.toDataURL('image/jpeg', 0.92), 'JPEG', (W - w) / 2, M, w, total * kk);
+      return doc.output('blob');
+    }
+    let start = 0, first = true;
+    while(start < box.offsetHeight - 1){
+      let end = start + pageH;
+      if(end < box.offsetHeight){ const ok = cuts.filter(c => c > start + 40 && c <= end); if(ok.length) end = ok[ok.length - 1]; } else end = box.offsetHeight;
+      const sh = Math.ceil((end - start) * 2), part = document.createElement('canvas'); part.width = canvas.width; part.height = sh;
+      part.getContext('2d').drawImage(canvas, 0, Math.floor(start * 2), canvas.width, sh, 0, 0, canvas.width, sh);
+      if(!first) doc.addPage(); first = false;
+      doc.addImage(part.toDataURL('image/jpeg', 0.92), 'JPEG', M, M, W - 2*M, (end - start) * k);
+      start = end;
+    }
+    return doc.output('blob');
+  } finally { box.remove(); }
+}
+async function itinPDFtexto(r){
   const { jsPDF } = await loadJsPDF();
   const doc = new jsPDF({unit:'pt', format:'letter'}), W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight(), M = 40;
   const G = [19,108,52], INK = [22,48,31], MUT = [92,107,128];
@@ -1727,7 +1767,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 171;
+const APP_V = 173;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

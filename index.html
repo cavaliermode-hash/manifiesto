@@ -992,43 +992,48 @@ function mailTxt(r){
 /* Correo con formato (colores, tarjetas de vuelo, negritas y puntos importantes sombreados), igual que el PDF.
    Un enlace de correo solo admite texto simple, así que el formato se copia al portapapeles y se pega en el mensaje. */
 function mailHTML(r, enPDF){
+  // Compatible con Outlook: colores y tamaños en cada texto (Outlook ignora "font:" abreviado y el color heredado de la celda).
   const G = '#136c34', G2 = '#15803D', G1 = '#14532D', MUT = '#5C6B80', INK = '#16301F', base = location.origin + location.pathname;
   const tierra = soloTierra(r), dos = !!(r.ci && r.cr && r.ci !== r.cr);
-  const h2 = t => `<tr data-h="1"><td style="padding:16px 0 6px"><div style="border-left:4px solid ${G};padding-left:8px;font:bold 14px Arial,sans-serif;color:${G};text-transform:uppercase;letter-spacing:.5px">${t}</div></td></tr>`;
-  const p = (t, st = '') => `<tr><td style="font:14px/1.45 Arial,sans-serif;color:${INK};${st}">${t}</td></tr>`;
-  const key = (lab, v) => `<tr><td style="padding:6px 0"><span style="display:inline-block;background:${G};color:#fff;border-radius:8px;padding:6px 12px;font:bold 12px Arial,sans-serif;letter-spacing:.5px">${lab.toUpperCase()} &nbsp;<span style="font:bold 18px 'Courier New',monospace;letter-spacing:2px">${esc(v)}</span></span></td></tr>`;
+  const T = (t, sz = 14, c = INK, w = 'normal', fam = 'Arial,sans-serif', extra = '') => `<span style="font-family:${fam};font-size:${sz}px;font-weight:${w};color:${c};${extra}">${t}</span>`;
+  const W = (t, sz = 13, w = 'normal', extra = '') => T(t, sz, '#ffffff', w, 'Arial,sans-serif', extra); // texto blanco sobre verde
+  const M = (t, sz = 22) => T(t, sz, INK, 'bold', "'Courier New',monospace");
+  const h2 = t => `<tr data-h="1"><td style="padding:16px 0 6px"><table cellpadding="0" cellspacing="0"><tr><td width="4" bgcolor="${G}" style="background:${G};width:4px">&nbsp;</td><td style="padding-left:8px">${T(t.toUpperCase(), 14, G, 'bold', 'Arial,sans-serif', 'letter-spacing:.5px')}</td></tr></table></td></tr>`;
+  const p = (t, st = '') => `<tr><td style="font-family:Arial,sans-serif;font-size:14px;line-height:1.45;color:${INK};${st}">${t}</td></tr>`;
+  const key = (lab, v) => `<tr><td style="padding:6px 0"><table cellpadding="0" cellspacing="0"><tr><td bgcolor="${G}" style="background:${G};border-radius:8px;padding:6px 12px">${W(lab.toUpperCase(), 12, 'bold', 'letter-spacing:.5px')}&nbsp;&nbsp;${T(esc(v), 18, '#ffffff', 'bold', "'Courier New',monospace", 'letter-spacing:2px')}</td></tr></table></td></tr>`;
   const card = (title, legs, fill, sinTitulo) => { legs = legs.filter(Boolean); if(!legs.length) return '';
-    let rows = `<tr><td style="background:${fill};color:#fff;padding:8px 12px;font:13px Arial,sans-serif" colspan="2">${esc(fmtDate(legs[0].f))}${sinTitulo ? '' : ` &nbsp;<b style="letter-spacing:1px">${title.toUpperCase()}</b>`} &nbsp;<span style="opacity:.85">${esc(cityOf(legs[0].o))} → ${esc(cityOf(legs[legs.length-1].d))}</span></td></tr>`;
+    let rows = `<tr><td bgcolor="${fill}" style="background:${fill};padding:8px 12px" colspan="2">${W(esc(fmtDate(legs[0].f)), 13)}${sinTitulo ? '' : '&nbsp;&nbsp;' + W(title.toUpperCase(), 13, 'bold', 'letter-spacing:1px')}&nbsp;&nbsp;${W(esc(cityOf(legs[0].o)) + ' &rarr; ' + esc(cityOf(legs[legs.length-1].d)), 13)}</td></tr>`;
     legs.forEach((l, i) => {
       if(i > 0){ const w = Math.round((when(l,'s') - when(legs[i-1],'l')) / 60000);
-        rows += `<tr><td colspan="2" style="text-align:center;padding:4px"><span style="background:#F0F8F2;border-radius:6px;padding:3px 10px;font:12px Arial,sans-serif;color:${MUT}">Conexión en ${esc(cityOf(l.o))}${w > 0 ? ' · ' + durTxt(w) : ''}</span></td></tr>`; }
-      rows += `<tr><td style="background:${fill};color:#fff;font:bold 13px Arial,sans-serif;padding:8px 12px;width:130px;vertical-align:middle">${esc(l.v)}</td>
+        rows += `<tr><td colspan="2" align="center" style="text-align:center;padding:4px">${T('Conexión en ' + esc(cityOf(l.o)) + (w > 0 ? ' · ' + durTxt(w) : ''), 12, MUT, 'normal', 'Arial,sans-serif', 'background:#F0F8F2;padding:3px 10px')}</td></tr>`; }
+      rows += `<tr><td bgcolor="${fill}" width="130" style="background:${fill};padding:8px 12px;width:130px;vertical-align:middle">${W(esc(l.v), 13, 'bold')}</td>
         <td style="padding:8px 14px"><table width="100%" cellpadding="0" cellspacing="0"><tr>
-          <td style="font:bold 22px 'Courier New',monospace;color:${INK}">${esc(l.s || '-')}<div style="font:12px Arial,sans-serif;color:${MUT}"><b style="color:${INK}">${esc(l.o)}</b> ${esc(cityOf(l.o))}</div></td>
-          <td style="text-align:center;font:bold 12px Arial,sans-serif;color:${G}">— — — —<br>${durTxt(legMin(l))}</td>
-          <td style="text-align:right;font:bold 22px 'Courier New',monospace;color:${INK}">${esc(l.l || '-')}<div style="font:12px Arial,sans-serif;color:${MUT}"><b style="color:${INK}">${esc(l.d)}</b> ${esc(cityOf(l.d))}</div></td>
+          <td>${M(esc(l.s || '-'))}<br>${T(esc(l.o), 12, INK, 'bold')} ${T(esc(cityOf(l.o)), 12, MUT)}</td>
+          <td align="center" style="text-align:center">${T('— — — —', 12, G, 'bold')}<br>${T(durTxt(legMin(l)), 12, G, 'bold')}</td>
+          <td align="right" style="text-align:right">${M(esc(l.l || '-'))}<br>${T(esc(l.d), 12, INK, 'bold')} ${T(esc(cityOf(l.d)), 12, MUT)}</td>
         </tr></table></td></tr>`; });
-    return `<tr><td style="padding:4px 0 8px"><table width="100%" cellpadding="0" cellspacing="0" style="border:2px solid #CDE8D5;border-radius:10px;border-collapse:separate;overflow:hidden">${rows}</table></td></tr>`; };
-  let b = `<tr><td style="background:${G};color:#fff;padding:14px 18px;border-radius:10px 10px 0 0"><div style="font:bold 11px Arial,sans-serif;letter-spacing:1.5px">MANIFIESTO DE ITINERARIO</div><div style="font:bold 20px Arial,sans-serif">SEGUNDA CUMBRE UNIVERSALES</div></td></tr>`;
-  b += p(`<b style="font-size:17px">${esc(r.n.toUpperCase())}</b>${r.rol ? `<br><span style="color:${MUT}">${esc(r.rol)}</span>` : ''}`, 'padding-top:12px');
+    return `<tr><td style="padding:4px 0 8px"><table width="100%" cellpadding="0" cellspacing="0" style="border:2px solid #CDE8D5;border-collapse:separate">${rows}</table></td></tr>`; };
+  let b = `<tr><td bgcolor="${G}" style="background:${G};padding:14px 18px">${W('MANIFIESTO DE ITINERARIO', 11, 'bold', 'letter-spacing:1.5px')}<br>${W('SEGUNDA CUMBRE UNIVERSALES', 20, 'bold')}</td></tr>`;
+  b += p(`${T(esc(r.n.toUpperCase()), 17, INK, 'bold')}${r.rol ? '<br>' + T(esc(r.rol), 14, MUT) : ''}`, 'padding-top:12px');
   b += h2('Datos de la reserva');
-  if(dos) b += p('Tienes una clave para la ida y otra para el regreso; cada una aparece junto a sus vuelos.');
-  else if(r.ci || r.cr) b += key('Clave de reserva', r.ci || r.cr); else if(tierra) b += p('<b>Viaje por traslado terrestre.</b>');
+  if(dos) b += p(T('Tienes una clave para la ida y otra para el regreso; cada una aparece junto a sus vuelos.'));
+  else if(r.ci || r.cr) b += key('Clave de reserva', r.ci || r.cr); else if(tierra) b += p(T('Viaje por traslado terrestre.', 14, INK, 'bold'));
   if(!tierra){ b += h2('Vuelos');
     if(dos) b += key('Clave de reserva de ida', r.ci); b += card('Ida', [r.c1, r.ida], G1, dos);
     if(dos) b += key('Clave de reserva de regreso', r.cr); b += card('Regreso', [r.reg, r.c2], G2, dos);
-    b += p('Horarios en hora local de cada aeropuerto.', `font-size:11px;color:${MUT}`); }
+    b += p(T('Horarios en hora local de cada aeropuerto.', 11, MUT)); }
   const tr = notaDe(r, 'tr'), pe = notaDe(r, 'pe');
-  if(tr || pe || tierra){ b += h2('Traslados y pernoctas'); if(tr) b += p('🚐 ' + esc(tr)); else if(tierra) b += p('🚐 Traslado terrestre.'); if(pe) b += p('🏨 ' + esc(pe)); }
-  b += h2('Sede del evento') + p('<b>Hotel Marinaterra</b> · Blvd. Gabriel Estrada 12, San Carlos, Nuevo Guaymas, Sonora');
+  if(tr || pe || tierra){ b += h2('Traslados y pernoctas'); if(tr) b += p(T('🚐 ' + esc(tr))); else if(tierra) b += p(T('🚐 Traslado terrestre.')); if(pe) b += p(T('🏨 ' + esc(pe))); }
+  b += h2('Sede del evento') + p(T('Hotel Marinaterra', 14, INK, 'bold') + T(' · Blvd. Gabriel Estrada 12, San Carlos, Nuevo Guaymas, Sonora'));
   const cards = [...document.querySelectorAll('#info .icard')].filter(c => !(tierra && c.classList.contains('solo-vuelo')) && !/clima|vestimenta|hotel sede/i.test((c.querySelector('.ik') || {}).textContent || ''));
-  if(cards.length){ b += h2('Información general'); cards.forEach(c => { const k = c.querySelector('.ik'), v = c.querySelector('.iv'); b += p(`<b>${esc(k ? k.textContent : '')}</b><br>${esc(v ? v.innerText : '')}`); }); }
+  if(cards.length){ b += h2('Información general'); cards.forEach(c => { const k = c.querySelector('.ik'), v = c.querySelector('.iv'); b += p(T(esc(k ? k.textContent : ''), 14, INK, 'bold') + '<br>' + T(esc(v ? v.innerText : ''))); }); }
   if(!tierra){ b += h2('Puntos importantes de su vuelo');
-    b += `<tr><td style="background:#F0F8F2;border-left:4px solid ${G};border-radius:6px;padding:10px 14px"><ul style="margin:0;padding-left:18px;font:14px/1.5 Arial,sans-serif;color:${INK}">${[...document.querySelectorAll('section.important li')].map(li => `<li style="margin:3px 0">${li.innerHTML}</li>`).join('')}</ul></td></tr>`; }
-  b += `<tr><td style="padding-top:12px"><div style="background:#FFF7E6;border-left:4px solid #E0A100;border-radius:6px;padding:10px 14px;font:bold 14px/1.45 Arial,sans-serif;color:${INK}">Importante.- Le recordamos que MetLife cubre únicamente las noches de hotel y traslados terrestres que estén dentro del evento o por ruta.</div></td></tr>`;
-  if(!enPDF) b += `<tr><td style="padding:16px 0"><a href="${base}?pdf=${encodeURIComponent(r.n)}" style="background:${G};color:#fff;text-decoration:none;font:bold 14px Arial,sans-serif;padding:10px 18px;border-radius:8px;display:inline-block">📄 Ver mi itinerario en PDF</a></td></tr>`;
-  b += p('Le enviamos un cordial saludo deseándole un buen viaje y nos reiteramos a sus órdenes.') + p(`<b style="color:${G}"><i>Viajes El Corte Inglés</i></b>`, 'padding-top:6px;padding-bottom:10px');
-  return `<table width="100%" cellpadding="0" cellspacing="0" style="max-width:640px;font-family:Arial,sans-serif">${b}</table>`;
+    const pts = [...document.querySelectorAll('section.important li')].map(li => `<tr><td valign="top" style="padding:3px 6px 3px 0">${T('•', 14, G, 'bold')}</td><td style="padding:3px 0">${T(li.innerHTML.replace(/<b>/g, `<b style="color:${INK}">`))}</td></tr>`).join('');
+    b += `<tr><td bgcolor="#F0F8F2" style="background:#F0F8F2;border-left:4px solid ${G};padding:10px 14px"><table cellpadding="0" cellspacing="0">${pts}</table></td></tr>`; }
+  b += `<tr><td style="padding-top:12px"><table width="100%" cellpadding="0" cellspacing="0"><tr><td bgcolor="#FFF7E6" style="background:#FFF7E6;border-left:4px solid #E0A100;padding:10px 14px">${T('Importante.- Le recordamos que MetLife cubre únicamente las noches de hotel y traslados terrestres que estén dentro del evento o por ruta.', 14, INK, 'bold')}</td></tr></table></td></tr>`;
+  if(!enPDF) b += `<tr><td style="padding:16px 0"><table cellpadding="0" cellspacing="0"><tr><td bgcolor="${G}" style="background:${G};border-radius:8px;padding:10px 18px"><a href="${base}?pdf=${encodeURIComponent(r.n)}" style="text-decoration:none">${W('📄 Ver mi itinerario en PDF', 14, 'bold')}</a></td></tr></table></td></tr>`;
+  b += p(T('Le enviamos un cordial saludo deseándole un buen viaje y nos reiteramos a sus órdenes.')) + p(T('Viajes El Corte Inglés', 14, G, 'bold', 'Arial,sans-serif', 'font-style:italic'), 'padding-top:6px;padding-bottom:10px');
+  return `<table width="640" cellpadding="0" cellspacing="0" style="width:640px;max-width:640px;font-family:Arial,sans-serif;background:#ffffff">${b}</table>`;
 }
 /* Correo con formato:
    - Computadora: se descarga un borrador de correo (.eml) con el diseño del PDF en el cuerpo, el PDF adjunto,
@@ -1783,7 +1788,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 175;
+const APP_V = 176;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

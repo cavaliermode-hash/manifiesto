@@ -1016,20 +1016,20 @@ function loadJsPDF(){
 const pdfTxt = t => String(t || '').replace(/→/g, '>').replace(/[–—]/g, '-').replace(/[^\x20-\xFF\n]/g, '').replace(/\s+\n/g, '\n').trim();
 async function itinPDF(r){
   const { jsPDF } = await loadJsPDF();
-  const doc = new jsPDF({unit:'pt', format:'letter'}), W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight(), M = 48;
+  const doc = new jsPDF({unit:'pt', format:'letter'}), W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight(), M = 40;
   const G = [19,108,52], INK = [22,48,31], MUT = [92,107,128];
   let y = M;
   const need = h => { if(y + h > H - M){ doc.addPage(); y = M; } };
-  const para = (t, o = {}) => { doc.setFont('helvetica', o.b ? 'bold' : 'normal'); doc.setFontSize(o.s || 10.5); doc.setTextColor(...(o.c || INK));
-    const lines = doc.splitTextToSize(pdfTxt(t), W - 2*M - (o.x || 0)); const lh = (o.s || 10.5) * 1.35;
+  const para = (t, o = {}) => { doc.setFont('helvetica', o.b ? 'bold' : 'normal'); doc.setFontSize(o.s || 9.5); doc.setTextColor(...(o.c || INK));
+    const lines = doc.splitTextToSize(pdfTxt(t), W - 2*M - (o.x || 0)); const lh = (o.s || 9.5) * 1.3;
     lines.forEach(l => { need(lh); doc.text(l, M + (o.x || 0), y); y += lh; }); y += (o.after ?? 2); };
-  const head = t => { need(40); y += 8; doc.setFillColor(...G); doc.rect(M, y - 11, 4, 15, 'F'); para(t.toUpperCase(), {b:1, s:12, c:G, x:10, after:6}); };
+  const head = t => { need(34); y += 5; doc.setFillColor(...G); doc.rect(M, y - 9, 3.5, 12, 'F'); para(t.toUpperCase(), {b:1, s:10.5, c:G, x:9, after:3}); };
   const bul = t => para('-  ' + t, {x:8});
   // Encabezado
-  doc.setFillColor(...G); doc.rect(0, 0, W, 70, 'F'); doc.setTextColor(255,255,255);
-  doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.text('MANIFIESTO DE ITINERARIO', M, 28);
-  doc.setFontSize(18); doc.text('SEGUNDA CUMBRE UNIVERSALES', M, 50); y = 98;
-  para(r.n.toUpperCase(), {b:1, s:15});
+  doc.setFillColor(...G); doc.rect(0, 0, W, 50, 'F'); doc.setTextColor(255,255,255);
+  doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.text('MANIFIESTO DE ITINERARIO', M, 20);
+  doc.setFontSize(15); doc.text('SEGUNDA CUMBRE UNIVERSALES', M, 38); y = 70;
+  para(r.n.toUpperCase(), {b:1, s:13, after:0});
   const sub = [r.rol, r.rg].filter(Boolean).join(' · '); if(sub) para(sub, {c:MUT});
   // Reserva
   head('Datos de la reserva');
@@ -1079,7 +1079,8 @@ async function itinPDF(r){
   // Sede y agenda
   head('Sede del evento'); para('Hotel Marinaterra · Blvd. Gabriel Estrada 12, San Carlos, Nuevo Guaymas, Sonora');
   const tierra = soloTierra(r);
-  const cards = [...document.querySelectorAll('#info .icard')].filter(c => !(tierra && c.classList.contains('solo-vuelo')));
+  // Sin clima, código de vestimenta ni hotel sede (ya va en Sede del evento): solo lo útil para el viaje.
+  const cards = [...document.querySelectorAll('#info .icard')].filter(c => !(tierra && c.classList.contains('solo-vuelo')) && !/clima|vestimenta|hotel sede/i.test((c.querySelector('.ik') || {}).textContent || ''));
   if(cards.length){ head('Información general');
     cards.forEach(c => { const k = c.querySelector('.ik'), lis = c.querySelectorAll('li'), v = c.querySelector('.iv');
       para(k ? k.textContent : '', {b:1, after:0});
@@ -1087,8 +1088,8 @@ async function itinPDF(r){
       y += 3; }); }
   if(!tierra){ head('Puntos importantes de su vuelo');
     document.querySelectorAll('section.important li').forEach(li => bul(li.innerText)); }
-  y += 6; para('Importante.- Le recordamos que MetLife cubre únicamente las noches de hotel y traslados terrestres que estén dentro del evento o por ruta.', {b:1});
-  y += 6; para('Le enviamos un cordial saludo deseándole un buen viaje y nos reiteramos a sus órdenes.');
+  y += 4; para('Importante.- Le recordamos que MetLife cubre únicamente las noches de hotel y traslados terrestres que estén dentro del evento o por ruta.', {b:1});
+  y += 2; para('Le enviamos un cordial saludo deseándole un buen viaje y nos reiteramos a sus órdenes.');
   para('Viajes El Corte Inglés', {b:1, c:G});
   return doc.output('blob');
 }
@@ -1675,7 +1676,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 169;
+const APP_V = 170;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

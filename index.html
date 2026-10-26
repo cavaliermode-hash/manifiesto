@@ -77,6 +77,7 @@ main{padding-block:16px 48px}
 .clave{padding:0 16px 12px}
 .clave h4{margin:0 0 6px;font:700 12px/1 var(--body);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
 .clave .keys{display:flex;flex-wrap:wrap;gap:8px}
+.est{font-weight:500;color:var(--muted);margin-right:4px;text-transform:none}
 .key.na b{color:var(--board-muted);font-weight:500}
 .key{display:inline-flex;align-items:center;gap:8px;background:var(--board);color:var(--board-ink);border-radius:8px;padding:6px 6px 6px 10px}
 .key small{font:600 10.5px var(--body);letter-spacing:.1em;text-transform:uppercase;color:var(--board-muted)}
@@ -854,8 +855,8 @@ function paxCard(r){
   const kIda = dos ? `<div class="keys fc-key">${kf('Clave de reserva de ida', r.ci)}</div>` : '';
   const kReg = dos ? `<div class="keys fc-key">${kf('Clave de reserva de regreso', r.cr)}</div>` : '';
   return `<article class="pax">
-    <div class="phead"><p class="name">${hl(r.n)}</p>
-      <div class="who">${[r.rol, r.rg].filter(Boolean).map(hl).join(' · ')}</div></div>
+    <div class="phead"><p class="name"><span class="est">Estimado(a)</span> ${hl(r.n)}</p>
+      ${r.rg ? `<div class="who">${hl(r.rg)}</div>` : ''}</div>
     ${keys.length?`<div class="clave"><h4>Datos de la reserva</h4><div class="keys">${keys.join('')}</div></div>`:''}
     ${soloTierra(r) ? `<div class="legs">${tierraBlock(r)}</div>` : `<div class="fcards">${kIda}${flightCard('ida','Ida',[r.c1, r.ida], dos)}${kReg}${flightCard('reg','Regreso',[r.reg, r.c2], dos)}</div>`}
   </article>`;
@@ -960,7 +961,7 @@ function tripSteps(r){
 /* ---------- Enviar a mi correo ---------- */
 function resumenTxt(r){
   const L = [], seg = (lab, l) => l && L.push(`${lab}: ${l.v} · ${fmtDate(l.f)} · ${l.o} ${l.s} → ${l.d} ${l.l}`);
-  L.push(`Hola, ${tcase(r.n)}:`, '', 'Estos son los datos de tu viaje a la Segunda Cumbre Universales.', '');
+  L.push(`Estimado(a) ${r.n.toUpperCase()}:`, '', 'Estos son los datos de tu viaje a la Segunda Cumbre Universales.', '');
   const dos = !!(r.ci && r.cr && r.ci !== r.cr);
   if(!dos && (r.ci || r.cr)) L.push(`Clave de reserva: ${r.ci || r.cr}`);
   if(soloTierra(r)) L.push('', 'TRASLADO TERRESTRE'); else L.push('', 'VUELOS');
@@ -980,7 +981,7 @@ function resumenTxt(r){
 function mailTxt(r){
   const L = [], base = location.origin + location.pathname, tierra = soloTierra(r);
   const seg = (lab, l) => l && L.push(`${lab}: ${l.v} · ${fmtDate(l.f)} · ${l.o} ${l.s} > ${l.d} ${l.l} (hora local)`);
-  L.push(`Hola, ${r.n.toUpperCase()}:`, '', 'Estos son los datos de tu viaje a la Segunda Cumbre Universales.', '');
+  L.push(`Estimado(a) ${r.n.toUpperCase()}:`, '', 'Estos son los datos de tu viaje a la Segunda Cumbre Universales.', '');
   const dos = !!(r.ci && r.cr && r.ci !== r.cr);
   L.push('DATOS DE LA RESERVA'); if(dos) L.push('Tienes una clave para la ida y otra para el regreso (aparecen junto a sus vuelos).');
   else if(r.ci || r.cr) L.push(`Clave de reserva: ${r.ci || r.cr}`); else if(tierra) L.push('Viaje por traslado terrestre.');
@@ -1029,7 +1030,7 @@ function mailHTML(r, enPDF){
         </tr></table></td></tr>`; });
     return `<tr><td style="padding:4px 0 8px"><table width="100%" cellpadding="6" cellspacing="0" style="border:2px solid #CDE8D5;border-collapse:separate">${rows}</table></td></tr>`; };
   let b = `<tr><td bgcolor="${HB}" style="background:${HB};padding:14px 18px">${W('MANIFIESTO DE ITINERARIO', 11, 'bold', 'letter-spacing:1.5px')}<br>${W('SEGUNDA CUMBRE UNIVERSALES', 20, 'bold')}</td></tr>`;
-  b += p(`${T(esc(r.n.toUpperCase()), 17, INK, 'bold')}${r.rol ? '<br>' + T(esc(r.rol), 14, MUT) : ''}`, 'padding-top:12px');
+  b += p(`${T('Estimado(a)', 15, MUT)} ${T(esc(r.n.toUpperCase()), 17, INK, 'bold')}`, 'padding-top:12px');
   b += h2('Datos de la reserva');
   if(dos) b += p(T('Tienes una clave para la ida y otra para el regreso; cada una aparece junto a sus vuelos.'));
   else if(r.ci || r.cr) b += key('Clave de reserva', r.ci || r.cr); else if(tierra) b += p(T('Viaje por traslado terrestre.', 14, INK, 'bold'));
@@ -1079,7 +1080,7 @@ document.addEventListener('click', e => { const a = e.target.closest('a[data-mai
 function waTxt(r){
   const L = [], base = location.origin + location.pathname.replace(/[^\/]*$/, '');
   const seg = (ic, lab, l) => l && L.push(`${ic} *${lab}:* ${l.v}`, `    📅 ${fmtDate(l.f)}`, `    ${l.o} ${l.s} → ${l.d} ${l.l}`);
-  L.push(`👋 Hola, *${r.n.toUpperCase()}*`, '', '✈️ *Tu viaje a la Segunda Cumbre Universales*', '');
+  L.push(`👋 Estimado(a) *${r.n.toUpperCase()}*`, '', '✈️ *Tu viaje a la Segunda Cumbre Universales*', '');
   const dos = !!(r.ci && r.cr && r.ci !== r.cr);
   if(!dos && (r.ci || r.cr)) L.push(`🔑 *Clave de reserva:* ${r.ci || r.cr}`, '');
   if(soloTierra(r)) L.push('🚐 *Traslado terrestre*');
@@ -1157,7 +1158,7 @@ async function itinPDFtexto(r){
   doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.text('MANIFIESTO DE ITINERARIO', M, 20);
   doc.setFontSize(15); doc.text('SEGUNDA CUMBRE UNIVERSALES', M, 38); y = 70;
   para(r.n.toUpperCase(), {b:1, s:13, after:0});
-  const sub = [r.rol, r.rg].filter(Boolean).join(' · '); if(sub) para(sub, {c:MUT});
+  const sub = r.rg || ''; if(sub) para(sub, {c:MUT});
   // Reserva
   head('Datos de la reserva');
   const dos = !!(r.ci && r.cr && r.ci !== r.cr);
@@ -1803,7 +1804,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 182;
+const APP_V = 183;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

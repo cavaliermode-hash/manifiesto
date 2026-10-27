@@ -902,7 +902,13 @@ const HOTEL = {n:'Hotel Marinaterra', dir:'Blvr. Gabriel Estrada, Sector La Herr
 const MESL = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'], DIAL = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
 const fLarga = iso => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || ''); if(!m) return iso || ''; const d = new Date(Date.UTC(+m[1], m[2]-1, +m[3])); return `${DIAL[d.getUTCDay()]} ${+m[3]} de ${MESL[m[2]-1]}`; };
 const MET = 'Le recordamos que MetLife cubre únicamente las noches de hotel y traslados terrestres que estén dentro del evento.';
+// Excepciones confirmadas por el equipo (noches adicionales pagadas por el invitado, etc.)
+const HOTEL_EXC = {
+  'VICTOR CESAREO DE LA O RIOS': {lines: ['Reservación por 3 noches en el Hotel Marinaterra (la noche del 2 de noviembre fue pagada por usted). Dirección: Blvr. Gabriel Estrada, Sector La Herradura, 85506 San Carlos, Son.', 'Check in: 02 noviembre, 15:00 hrs.', 'Check out: 05 noviembre, 12:00 hrs.'],
+    nota: 'Su llegada a Hermosillo es el lunes 2 de noviembre a las 10:31 h. A su llegada no aplica traslado del aeropuerto al hotel; su traslado aplica únicamente de regreso, del hotel al aeropuerto de Hermosillo, el jueves 5 de noviembre.'}
+};
 function hotelInfo(r){
+  if(HOTEL_EXC[r.n]) return HOTEL_EXC[r.n];
   const lines = [`Reservación por 2 noches en el ${HOTEL.n}. Dirección: ${HOTEL.dir}`, 'Check in: 03 noviembre, 15:00 hrs.', 'Check out: 05 noviembre, 12:00 hrs.'];
   const ida = [r.c1, r.ida].filter(Boolean), reg = [r.reg, r.c2].filter(Boolean);
   const lleg = ida.find(l => l.d === 'HMO') || ida[ida.length - 1], sal = reg.find(l => l.o === 'HMO') || reg[0];
@@ -1697,6 +1703,7 @@ function ciudadTr(r, t){ // ciudad de donde sale el traslado
   if(/Metepec/i.test(t)) return conEdo('Metepec');
   if(m) return conEdo(m[1].trim());
   const a = t.match(/aeropuerto de ([A-ZÁÉÍÓÚa-záéíóúñ ]+?) para/); if(a) return conEdo(a[1].trim());
+  if(/solo a tu regreso/i.test(t) && /aeropuerto de Hermosillo/i.test(t)) return conEdo('Hermosillo');
   const v = t.match(/al aterrizar en (?:la )?(.+?) en el vuelo/); if(v) return conEdo(v[1].trim());
   if(/domicilio/i.test(t)) return r.cd ? conEdo(r.cd) : r.zn ? (/conurbado/i.test(r.zn) ? 'Zona metropolitana (domicilio)' : 'Zona ' + r.zn) : 'Domicilio registrado';
   return 'Sin ciudad indicada';
@@ -1713,7 +1720,7 @@ function pytData(){
     if(m){ key = 'Punto de encuentro: ' + m[1].split(',')[0]; sub = [cuando, m[1].split(',').slice(1).join(',').trim()].filter(Boolean).join(' · '); }
     else if(/te recogemos en el aeropuerto/i.test(t)){ key = 'Desde el aeropuerto'; sub = 'Se recoge en el aeropuerto y regresa al mismo aeropuerto.'; det = [cuando, dest && '→ ' + dest].filter(Boolean).join(' '); }
     else if(/domicilio/i.test(t)){ key = 'Desde su domicilio'; sub = 'Se recoge en el domicilio registrado y regresa a la misma dirección.'; det = [cuando, dest && '→ ' + dest].filter(Boolean).join(' '); }
-    else if(/solo a tu regreso/i.test(t)){ key = 'Solo traslado de regreso'; sub = 'Se le recibe al aterrizar de regreso.'; det = ((t.match(/el (\S+ \d+ de \S+), al aterrizar en (.+?) en el vuelo (.+?) \(llegada ([\d:]+) h\)/) || []).slice(1).join(' · ')) || t; }
+    else if(/solo a tu regreso/i.test(t)){ key = 'Solo traslado de regreso'; sub = /del Hotel Marinaterra al aeropuerto/i.test(t) ? 'Del hotel sede al aeropuerto de Hermosillo para su vuelo de regreso (sin traslado a su llegada).' : 'Se le recibe al aterrizar de regreso.'; det = ((t.match(/el (\S+ \d+ de \S+), al aterrizar en (.+?) en el vuelo (.+?) \(llegada ([\d:]+) h\)/) || []).slice(1).join(' · ')) || t; }
     else { key = 'Otros traslados'; sub = ''; det = t; }
     key = '📍 ' + cd + ' — ' + key;
     if(!grupos.has(key)) grupos.set(key, {sub, cd, pax: []});
@@ -1735,7 +1742,8 @@ function rutaDe(r){
   if(pe) ev.push({k: '2026-11-02 23:00', t: '🏨 Pernocta Hotel NH · check-in 2 nov, check-out 3 nov'});
   [r.c1, r.ida, r.reg, r.c2].filter(Boolean).forEach(l => ev.push({k: l.f + ' ' + String(l.s || '').padStart(5,'0'), t: `✈️ ${corto(l.f)} · ${l.v} · ${l.o} ${l.s} → ${l.d} ${l.l}`}));
   if(tr){
-    if(/solo a tu regreso/i.test(tr)){ const v = tr.match(/al aterrizar en (?:la )?(.+?) en el vuelo (.+?) \(llegada ([\d:]+) h\)/); ev.push({k: '2026-11-05 99', t: `🚗 Regreso · traslado al aterrizar${v ? ' en ' + v[1] + ' (' + v[2] + ', ' + v[3] + ' h)' : ''}`}); }
+    if(/solo a tu regreso/i.test(tr) && /del Hotel Marinaterra al aeropuerto/i.test(tr)) ev.push({k: '2026-11-05 00', t: '🚗 Jue 5 nov · traslado del Hotel Marinaterra al aeropuerto de Hermosillo'});
+    else if(/solo a tu regreso/i.test(tr)){ const v = tr.match(/al aterrizar en (?:la )?(.+?) en el vuelo (.+?) \(llegada ([\d:]+) h\)/); ev.push({k: '2026-11-05 99', t: `🚗 Regreso · traslado al aterrizar${v ? ' en ' + v[1] + ' (' + v[2] + ', ' + v[3] + ' h)' : ''}`}); }
     else ev.push({k: '2026-11-09 99', t: `🚗 Regreso · traslado ${/mismo punto de encuentro/i.test(tr) ? 'al mismo punto de encuentro' : /misma dirección/i.test(tr) ? 'a su domicilio' : /mismo aeropuerto/i.test(tr) ? 'al mismo aeropuerto' : 'de regreso'}`});
   }
   return ev.sort((a, b) => a.k.localeCompare(b.k)).map(e => e.t);
@@ -1995,7 +2003,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 210;
+const APP_V = 211;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

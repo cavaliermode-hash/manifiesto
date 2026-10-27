@@ -1817,14 +1817,35 @@ function askPw(msg){
     m.onclick = e => { if(e.target === m) done(null); };
   });
 }
-async function conGate(){
-  const pw = await askPw('Para abrir esta sección escribe la contraseña:'); if(pw === null) return false;
+/* Sesión VECI: con la contraseña correcta se queda abierta mientras haya actividad o la ausencia sea menor a 10 minutos
+   (cambiar de pestaña, abrir otra app o recargar). Si pasan 10 minutos sin actividad o fuera de la página, o se cierra
+   la pestaña, se vuelve a pedir la contraseña. Se guarda solo en esta pestaña (sessionStorage), no en el dispositivo. */
+const VECI_MIN = 10, VECI_MS = VECI_MIN * 60000;
+const veciSes = () => { try{ const v = JSON.parse(sessionStorage.getItem('veci') || 'null'); return v && Date.now() - v.t < VECI_MS ? v : null; }catch(e){ return null; } };
+const veciSave = pw => { try{ sessionStorage.setItem('veci', JSON.stringify({pw: pw || (veciSes() || {}).pw || '', t: Date.now()})); }catch(e){} };
+const veciEnd = () => { try{ sessionStorage.removeItem('veci'); }catch(e){} TEL = {}; MAIL = {}; };
+async function veciTel(pw){ if(PACK && PACK.tel && !Object.keys(TEL).length){ try{ const c = await Cifra.descifrar(PACK.tel, pw); TEL = c.tel || {}; MAIL = c.mail || {}; }catch(e){ TEL = {}; MAIL = {}; } } }
+async function conGate(msg){
+  const ses = veciSes(); if(ses && ses.pw){ await veciTel(ses.pw); veciSave(ses.pw); return true; }
+  const pw = await askPw(msg || 'Para abrir esta sección escribe la contraseña:'); if(pw === null) return false;
   if(await sha256(pw.trim().toLowerCase()) !== RESET_H){ alert('Contraseña incorrecta.'); return false; }
+  veciSave(pw);
   // Teléfonos de los invitados: van cifrados con la contraseña del equipo y solo se abren aquí.
   if(PACK && PACK.tel && !Object.keys(TEL).length){ try{ const c = await Cifra.descifrar(PACK.tel, pw); TEL = c.tel || {}; MAIL = c.mail || {}; }catch(e){ TEL = {}; MAIL = {}; } }
   return true;
 }
 let TEL = {}, MAIL = {};
+// actividad dentro de VECI: renueva los 10 minutos (como mucho una vez cada 15 s)
+let veciTick = 0;
+['pointerdown','keydown','scroll','touchstart'].forEach(ev => addEventListener(ev, () => {
+  if(CTL.tab === 'man' || document.hidden || Date.now() - veciTick < 15000) return; if(!veciSes()) return; veciTick = Date.now(); veciSave(); }, {passive:true}));
+// si se cumplen los 10 minutos sin actividad estando en VECI, se vuelve a pedir la contraseña
+async function veciVence(){
+  if(CTL.tab === 'man' || DLG || veciSes()) return;
+  const tab = CTL.tab; veciEnd();
+  if(await conGate(`Pasaron ${VECI_MIN} minutos sin actividad. Escribe la contraseña para seguir en VECI:`)) ctlTab(tab); else ctlTab('man');
+}
+setInterval(() => { if(!document.hidden) veciVence(); }, 20000);
 document.querySelectorAll('.tabs button[data-tab]').forEach(b => b.addEventListener('click', async () => {
   // dentro de VECI se cambia de sección sin volver a pedir contraseña
   if(b.dataset.tab !== 'man' && CTL.tab === 'man' && !(await conGate())) return; ctlTab(b.dataset.tab); }));
@@ -1895,7 +1916,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 201;
+const APP_V = 202;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');
@@ -1951,10 +1972,13 @@ function restoreView(){
   let r = null; try{ r = JSON.parse(sessionStorage.getItem('restore') || 'null'); sessionStorage.removeItem('restore'); }catch(e){}
   if(!r) return;
   if(r.ag && AGENDA[r.ag]) renderAgenda(r.ag);
-  // las pestañas del equipo vuelven a pedir contraseña al recargar // Concentrado y Claves vuelven a pedir su contraseña
+  // VECI: se restaura abajo según la sesión de 10 minutos
   if(r.q){ const q = document.getElementById('q'); if(q){ q.value = r.q; state.q = r.q; render(); } }
   const i = r.n ? DATA.findIndex(x => x.n === r.n) : -1;
   if(i >= 0 && (!r.tab || r.tab === 'man')) openPax(i);
+  // estaba en VECI: sigue ahí si no han pasado 10 minutos; si pasaron, pide la contraseña para volver a entrar
+  if(r.tab && r.tab !== 'man') (async () => { const vencio = !veciSes(); if(vencio) veciEnd();
+    if(await conGate(vencio ? `Pasaron ${VECI_MIN} minutos fuera de VECI. Escribe la contraseña para continuar:` : '')) { ctlTab(r.tab); setTimeout(() => window.scrollTo({top: r.y || 0}), 80); } })();
   setTimeout(() => window.scrollTo({top: r.y || 0}), 60);
 }
 fetch('data.json?v='+Date.now(), {cache:'no-store'}).then(r=>r.json()).then(j=>{

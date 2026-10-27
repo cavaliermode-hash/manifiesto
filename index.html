@@ -609,6 +609,8 @@ body.locked>*:not(#gate){visibility:hidden}
 #cla .ktable th button{padding-top:6px;padding-bottom:6px}
 .ptiles{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin:8px 0 0}.ptile{background:var(--green-soft);border:1.5px solid #BFDDC8;border-radius:10px;padding:7px 6px;text-align:center;display:flex;flex-direction:column;gap:1px}.ptile b{font:700 24px/1 var(--display);color:var(--green-dark)}.ptile span{font:700 11.5px/1.2 var(--body);color:var(--green-dark)}.ptile small{font-size:10px;color:var(--muted);line-height:1.2}.ptile.su{background:#FFF7E6;border-color:#F0D58A}
 @media (max-width:560px){.ptiles{grid-template-columns:repeat(3,1fr)}}
+.pruta{margin:3px 0 1px;padding:0 0 0 16px;font:400 10.5px/1.35 var(--body);color:var(--ink,#16301F);text-transform:none;letter-spacing:0}.pruta li{margin:1px 0}
+.pdesg{display:flex;flex-wrap:wrap;gap:4px 8px;margin:8px 0 4px;padding:8px 10px;background:#F0F8F2;border:1px solid #CDE8D5;border-radius:10px;font-size:12px;color:var(--green-dark)}.pdesg>b{flex-basis:100%}.pdesg span{background:#fff;border:1px solid #CDE8D5;border-radius:999px;padding:2px 8px}.pdesg span.tot{background:var(--green-dark);color:#fff;border-color:var(--green-dark)}.ptile.tres{background:#E3F1FF;border-color:#B7D5F3}
 </style>
 </head>
 <body>
@@ -1692,23 +1694,59 @@ function pytData(){
   });
   return {pern, grupos, locales};
 }
+/* Recorrido completo de una persona en orden de fecha y hora: traslado de ida, vuelos, pernocta en el Hotel NH y traslado de regreso. */
+function rutaDe(r){
+  const ev = [], MESN = {noviembre:11, octubre:10, diciembre:12};
+  const tr = conTraslado(r) ? notaDe(r, 'tr') : '', pe = notaDe(r, 'pe');
+  const corto = iso => fmtDate(iso);
+  if(tr && !/solo a tu regreso/i.test(tr)){
+    const m = tr.match(/el \S+ (\d+) de (\S+) a las ([\d:]+) h/), pt = tr.match(/punto de encuentro (.+?),/), dest = /Hotel NH/i.test(tr) ? 'Hotel NH' : /sede del evento/i.test(tr) ? 'sede del evento' : '';
+    const desde = pt ? pt[1] : /domicilio/i.test(tr) ? 'su domicilio' : /aeropuerto de ([A-ZÁÉÍÓÚa-záéíóúñ ]+?) para/.test(tr) ? 'aeropuerto de ' + tr.match(/aeropuerto de ([A-ZÁÉÍÓÚa-záéíóúñ ]+?) para/)[1] : 'origen';
+    const iso = m ? `2026-${String(MESN[m[2]] || 11).padStart(2,'0')}-${m[1].padStart(2,'0')}` : '';
+    ev.push({k: iso + ' ' + (m ? m[3].padStart(5,'0') : '00:00'), t: `🚗 ${iso ? corto(iso) + ' ' : ''}${m ? m[3] + ' h' : ''} · traslado desde ${desde}${dest ? ' → ' + dest : ''}`});
+  }
+  if(pe) ev.push({k: '2026-11-02 23:00', t: '🏨 Pernocta Hotel NH · check-in 2 nov, check-out 3 nov'});
+  [r.c1, r.ida, r.reg, r.c2].filter(Boolean).forEach(l => ev.push({k: l.f + ' ' + String(l.s || '').padStart(5,'0'), t: `✈️ ${corto(l.f)} · ${l.v} · ${l.o} ${l.s} → ${l.d} ${l.l}`}));
+  if(tr){
+    if(/solo a tu regreso/i.test(tr)){ const v = tr.match(/al aterrizar en (?:la )?(.+?) en el vuelo (.+?) \(llegada ([\d:]+) h\)/); ev.push({k: '2026-11-05 99', t: `🚗 Regreso · traslado al aterrizar${v ? ' en ' + v[1] + ' (' + v[2] + ', ' + v[3] + ' h)' : ''}`}); }
+    else ev.push({k: '2026-11-09 99', t: `🚗 Regreso · traslado ${/mismo punto de encuentro/i.test(tr) ? 'al mismo punto de encuentro' : /misma dirección/i.test(tr) ? 'a su domicilio' : /mismo aeropuerto/i.test(tr) ? 'al mismo aeropuerto' : 'de regreso'}`});
+  }
+  return ev.sort((a, b) => a.k.localeCompare(b.k)).map(e => e.t);
+}
+const rutaHTML = r => { const L = rutaDe(r); return L.length ? `<ol class="pruta">${L.map(t => `<li>${esc(t)}</li>`).join('')}</ol>` : ''; };
 function pytRender(){
   const {pern, grupos, locales} = pytData(), tras = [...grupos.values()].reduce((a, g) => a + g.pax.length, 0);
   const tabla = filas => `<div class="ktable-wrap"><table class="ktable"><tbody>${filas.join('')}</tbody></table></div>`;
   // Conteo exacto por persona (cada invitado se cuenta una sola vez)
+  const tres = DATA.filter(r => conTraslado(r) && notaDe(r,'pe') && tieneVuelo(r)).sort((a, b) => a.n.localeCompare(b.n, 'es'));
   const cTr = DATA.filter(conTraslado).length, cPe = pern.length, cAm = DATA.filter(r => conTraslado(r) && notaDe(r,'pe')).length;
+  const trVuelo = DATA.filter(r => conTraslado(r) && !notaDe(r,'pe') && tieneVuelo(r)).length, trSolo = DATA.filter(r => conTraslado(r) && !notaDe(r,'pe') && !tieneVuelo(r)).length;
+  const peVuelo = DATA.filter(r => notaDe(r,'pe') && !conTraslado(r)).length;
   const soloVuelo = DATA.filter(r => tieneVuelo(r) && !conTraslado(r) && !notaDe(r,'pe') && !esPorCuenta(r)).length;
   const porCd = new Map(); grupos.forEach(g => porCd.set(g.cd, (porCd.get(g.cd) || 0) + g.pax.length));
   const tile = (n, t, sub, cls = '') => `<div class="ptile ${cls}"><b>${n}</b><span>${t}</span>${sub ? `<small>${sub}</small>` : ''}</div>`;
-  let h = `<div class="ptiles">${tile(DATA.length, 'Invitados', 'total')}${tile(cTr, '🚗 Con traslado', `${cTr - cAm} solo traslado`)}${tile(cPe, '🏨 Con pernocta', `${cPe - cAm} solo pernocta`)}${tile(cAm, '🚗+🏨 Ambos', 'traslado y pernocta')}${tile(locales.length, '🚙 Locales', 'llegan por su cuenta', 'su')}</div>
-  <p class="pw" style="margin-top:6px"><b>Traslados por ciudad:</b> ${[...porCd].sort((a, b) => b[1] - a[1]).map(([c, n]) => `${esc(c)} <b>${n}</b>`).join(' · ')}</p>
-  <p class="pw">Comprobación: ${cTr - cAm} solo traslado + ${cPe - cAm} solo pernocta + ${cAm} ambos + ${locales.length} locales por su cuenta + ${soloVuelo} solo en vuelo (sin traslado ni pernocta, no se listan) = <b>${(cTr - cAm) + (cPe - cAm) + cAm + locales.length + soloVuelo}</b> invitados.</p>`;
+  const suma = tres.length + (cAm - tres.length) + trVuelo + trSolo + peVuelo + locales.length + soloVuelo;
+  let h = `<div class="ptiles">${tile(DATA.length, 'Invitados', 'total')}${tile(cTr, '🚗 Con traslado', 'terrestre')}${tile(cPe, '🏨 Con pernocta', 'Hotel NH, 2–3 nov')}${tile(tres.length, '🚗+🏨+✈️', 'traslado, pernocta y vuelo', 'tres')}${tile(locales.length, '🚙 Locales', 'llegan por su cuenta', 'su')}</div>
+  <div class="pdesg"><b>Desglose exacto (cada persona una sola vez):</b>
+    <span>🚗+🏨+✈️ Traslado + pernocta + vuelo <b>${tres.length}</b></span>
+    <span>🏨+✈️ Pernocta + vuelo, sin traslado <b>${peVuelo}</b></span>
+    <span>🚗+✈️ Traslado + vuelo, sin pernocta <b>${trVuelo}</b></span>
+    <span>🚗 Solo traslado terrestre (sin vuelo) <b>${trSolo}</b></span>
+    <span>🚙 Locales por su cuenta <b>${locales.length}</b></span>
+    <span>✈️ Solo vuelo (no se listan) <b>${soloVuelo}</b></span>
+    <span class="tot">Total <b>${suma}</b>${suma === DATA.length ? ' ✔' : ' ⚠ no cuadra con ' + DATA.length}</span></div>
+  <p class="pw"><b>Traslados por ciudad:</b> ${[...porCd].sort((a, b) => b[1] - a[1]).map(([c, n]) => `${esc(c)} <b>${n}</b>`).join(' · ')}</p>`;
+  h += `<div class="pgrp"><h3>🚗+🏨+✈️ Traslado + pernocta + vuelo</h3><p class="pw"><span class="pc">${tres.length} ${tres.length===1?'persona':'personas'}</span> · recorrido completo en orden</p>`
+    + tabla(tres.map(r => `<tr><td class="kn">${esc(r.n)}<span class="ptag">📍 ${esc(ciudadTr(r, notaDe(r,'tr')))}</span>${rutaHTML(r)}</td>${accBtns(DATA.indexOf(r))}</tr>`)) + '</div>';
+  const peSolo = pern.filter(r => !conTraslado(r));
+  h += `<div class="pgrp"><h3>🏨+✈️ Pernocta + vuelo (sin traslado)</h3><p class="pw"><span class="pc">${peSolo.length} ${peSolo.length===1?'persona':'personas'}</span> · llegan en vuelo a CDMX, duermen en el Hotel NH y vuelan a Hermosillo al día siguiente</p>`
+    + tabla(peSolo.map(r => `<tr><td class="kn">${esc(r.n)}${rutaHTML(r)}</td>${accBtns(DATA.indexOf(r))}</tr>`)) + '</div>';
   h += `<div class="pgrp"><h3>🏨 Pernoctan en el Hotel NH Collection Mexico City Airport T2</h3><p class="pw"><span class="pc">${pern.length} ${pern.length===1?'persona':'personas'}</span> · a su llegada · check-in lunes 2 nov · check-out martes 3 nov</p>`
     + tabla(pern.map(r => { const c = conTraslado(r) ? ciudadTr(r, notaDe(r,'tr')) : ''; return `<tr><td class="kn">${esc(r.n)}${c ? `<span class="ptag">🚗 ${esc(c)}</span>` : '<span class="ptag" style="background:#FFF7E6">✈️ llega en vuelo</span>'}</td>${accBtns(DATA.indexOf(r))}</tr>`; })) + '</div>';
   h += `<div class="pgrp"><h3>🚗 Traslados terrestres por ciudad</h3><p class="pw"><span class="pc">${tras} ${tras===1?'persona':'personas'}</span></p></div>`;
   [...grupos].sort((a, b) => a[1].cd.localeCompare(b[1].cd, 'es')).forEach(([key, g]) => {
     h += `<div class="pgrp"><h3>${esc(key)}</h3><p class="pw"><span class="pc">${g.pax.length}</span>${g.sub ? ' · ' + esc(g.sub) : ''}</p>`
-      + tabla(g.pax.map(({r, det}) => `<tr><td class="kn">${esc(r.n)}${notaDe(r,'pe')?'<span class="ptag">🏨 Hotel NH</span>':''}${det?`<br><small style="font-weight:400;color:var(--muted)">${esc(det)}</small>`:''}</td>${accBtns(DATA.indexOf(r))}</tr>`)) + '</div>';
+      + tabla(g.pax.map(({r, det}) => `<tr><td class="kn">${esc(r.n)}${notaDe(r,'pe')?'<span class="ptag">🏨 Hotel NH</span>':''}${tieneVuelo(r) ? '<span class="ptag">✈️ vuelo</span>' : ''}${det?`<br><small style="font-weight:400;color:var(--muted)">${esc(det)}</small>`:''}</td>${accBtns(DATA.indexOf(r))}</tr>`)) + '</div>';
   });
   h += `<div class="pgrp"><h3>🚙 Locales que llegan por su cuenta</h3><p class="pw"><span class="pc">${locales.length} ${locales.length===1?'persona':'personas'}</span> · sin vuelo ni traslado; llegan directo a la sede del evento.</p>`
     + tabla(locales.map(r => { const t = notaDe(r,'tr'); return `<tr><td class="kn">${esc(r.n)}${r.cd ? `<span class="ptag">📍 ${esc(conEdo(r.cd))}</span>` : ''}${/estacionamiento/i.test(t) ? '<br><small style="font-weight:400;color:var(--muted)">Considerar estacionamiento</small>' : ''}</td>${accBtns(DATA.indexOf(r))}</tr>`; })) + '</div>';
@@ -1716,7 +1754,7 @@ function pytRender(){
 }
 function pytTxt(){
   const {pern, grupos, locales} = pytData(), L = ['*Traslados y pernoctas · Cumbre Universales*', '', `🏨 *Pernoctan en Hotel NH CDMX T2* (${pern.length}) · check-in 2 nov, check-out 3 nov`];
-  pern.forEach(r => L.push('• ' + tcase(r.n) + (conTraslado(r) ? ' (traslado desde ' + ciudadTr(r, notaDe(r,'tr')) + ')' : ' (llega en vuelo)')));
+  pern.forEach(r => { L.push('• ' + tcase(r.n) + (conTraslado(r) ? ' (traslado desde ' + ciudadTr(r, notaDe(r,'tr')) + ')' : ' (llega en vuelo)')); rutaDe(r).forEach(t => L.push('   ' + t)); });
   [...grupos].sort((a, b) => a[1].cd.localeCompare(b[1].cd, 'es')).forEach(([key, g]) => { L.push('', `🚗 *${key.replace(/^📍 /, '')}* (${g.pax.length})` + (g.sub ? '\n' + g.sub : '')); g.pax.forEach(({r, det}) => L.push('• ' + tcase(r.n) + (det ? ' — ' + det : ''))); });
   L.push('', `🚙 *Locales que llegan por su cuenta* (${locales.length})`); locales.forEach(r => L.push('• ' + tcase(r.n) + (r.cd ? ' — ' + conEdo(r.cd) : '')));
   return L.join('\n');
@@ -1916,7 +1954,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 204;
+const APP_V = 205;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

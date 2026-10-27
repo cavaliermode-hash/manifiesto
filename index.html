@@ -1743,8 +1743,7 @@ function pytRender(){
   const tile = (k, t, sub, cls = '') => `<button type="button" class="ptile ${cls}${on(k)}" data-pf="${k}" aria-pressed="${PYT_F === k}"><b>${N(k)}</b><span>${t}</span>${sub ? `<small>${sub}</small>` : ''}</button>`;
   const chip = (k, t) => `<button type="button" class="pchip${on(k)}" data-pf="${k}" aria-pressed="${PYT_F === k}">${t} <b>${N(k)}</b></button>`;
   const ex = ['tres','pev','trv','trs','loc','sv'], suma = ex.reduce((a, k) => a + N(k), 0);
-  let h = `<div class="ptiles">${tile('all', 'Invitados', 'total')}${tile('tr', '🚗 Con traslado', 'terrestre')}${tile('pe', '🏨 Con pernocta', 'Hotel NH, 2–3 nov')}${tile('tres', '🚗+🏨+✈️', 'traslado, pernocta y vuelo', 'tres')}${tile('loc', '🚙 Locales', 'llegan por su cuenta', 'su')}</div>
-  <div class="pdesg"><b>Desglose exacto (cada persona una sola vez) · toca para ver la lista:</b>
+  let h = `<div class="pdesg"><b>Desglose exacto (cada persona una sola vez) · toca para ver la lista:</b>
     ${ex.map(k => chip(k, PYT_FIL[k][0])).join('')}
     <span class="tot">Total <b>${suma}</b>${suma === DATA.length ? ' ✔' : ' ⚠ no cuadra con ' + DATA.length}</span></div>
   <p class="pw"><b>Traslados por ciudad:</b> ${[...porCd].sort((a, b) => b[1] - a[1]).map(([c, n]) => `${esc(c)} <b>${n}</b>`).join(' · ')}</p>`;
@@ -1972,7 +1971,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 207;
+const APP_V = 208;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

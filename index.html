@@ -1714,6 +1714,8 @@ function rutaDe(r){
   return ev.sort((a, b) => a.k.localeCompare(b.k)).map(e => e.t);
 }
 const rutaHTML = r => { const L = rutaDe(r); return L.length ? `<ol class="pruta">${L.map(t => `<li>${esc(t)}</li>`).join('')}</ol>` : ''; };
+/* Etiquetas por servicio que aplica a cada persona (sin más detalle) */
+const svcTags = r => (conTraslado(r) ? '<span class="ptag">🚗 Traslado</span>' : '') + (notaDe(r,'pe') ? '<span class="ptag">🏨 Hotel NH</span>' : '') + (tieneVuelo(r) ? '<span class="ptag">✈️ Vuelo</span>' : '') + (esPorCuenta(r) || (!tieneVuelo(r) && !conTraslado(r)) ? '<span class="ptag" style="background:#FFF7E6">🚙 Llega por su cuenta</span>' : '');
 function pytRender(){
   const {pern, grupos, locales} = pytData(), tras = [...grupos.values()].reduce((a, g) => a + g.pax.length, 0);
   const tabla = filas => `<div class="ktable-wrap"><table class="ktable"><tbody>${filas.join('')}</tbody></table></div>`;
@@ -1736,25 +1738,25 @@ function pytRender(){
     <span>✈️ Solo vuelo (no se listan) <b>${soloVuelo}</b></span>
     <span class="tot">Total <b>${suma}</b>${suma === DATA.length ? ' ✔' : ' ⚠ no cuadra con ' + DATA.length}</span></div>
   <p class="pw"><b>Traslados por ciudad:</b> ${[...porCd].sort((a, b) => b[1] - a[1]).map(([c, n]) => `${esc(c)} <b>${n}</b>`).join(' · ')}</p>`;
-  h += `<div class="pgrp"><h3>🚗+🏨+✈️ Traslado + pernocta + vuelo</h3><p class="pw"><span class="pc">${tres.length} ${tres.length===1?'persona':'personas'}</span> · recorrido completo en orden</p>`
-    + tabla(tres.map(r => `<tr><td class="kn">${esc(r.n)}<span class="ptag">📍 ${esc(ciudadTr(r, notaDe(r,'tr')))}</span>${rutaHTML(r)}</td>${accBtns(DATA.indexOf(r))}</tr>`)) + '</div>';
+  h += `<div class="pgrp"><h3>🚗+🏨+✈️ Traslado + pernocta + vuelo</h3><p class="pw"><span class="pc">${tres.length} ${tres.length===1?'persona':'personas'}</span></p>`
+    + tabla(tres.map(r => `<tr><td class="kn">${esc(r.n)}${svcTags(r)}</td>${accBtns(DATA.indexOf(r))}</tr>`)) + '</div>';
   const peSolo = pern.filter(r => !conTraslado(r));
   h += `<div class="pgrp"><h3>🏨+✈️ Pernocta + vuelo (sin traslado)</h3><p class="pw"><span class="pc">${peSolo.length} ${peSolo.length===1?'persona':'personas'}</span> · llegan en vuelo a CDMX, duermen en el Hotel NH y vuelan a Hermosillo al día siguiente</p>`
-    + tabla(peSolo.map(r => `<tr><td class="kn">${esc(r.n)}${rutaHTML(r)}</td>${accBtns(DATA.indexOf(r))}</tr>`)) + '</div>';
+    + tabla(peSolo.map(r => `<tr><td class="kn">${esc(r.n)}${svcTags(r)}</td>${accBtns(DATA.indexOf(r))}</tr>`)) + '</div>';
   h += `<div class="pgrp"><h3>🏨 Pernoctan en el Hotel NH Collection Mexico City Airport T2</h3><p class="pw"><span class="pc">${pern.length} ${pern.length===1?'persona':'personas'}</span> · a su llegada · check-in lunes 2 nov · check-out martes 3 nov</p>`
-    + tabla(pern.map(r => { const c = conTraslado(r) ? ciudadTr(r, notaDe(r,'tr')) : ''; return `<tr><td class="kn">${esc(r.n)}${c ? `<span class="ptag">🚗 ${esc(c)}</span>` : '<span class="ptag" style="background:#FFF7E6">✈️ llega en vuelo</span>'}</td>${accBtns(DATA.indexOf(r))}</tr>`; })) + '</div>';
+    + tabla(pern.map(r => { return `<tr><td class="kn">${esc(r.n)}${svcTags(r)}</td>${accBtns(DATA.indexOf(r))}</tr>`; })) + '</div>';
   h += `<div class="pgrp"><h3>🚗 Traslados terrestres por ciudad</h3><p class="pw"><span class="pc">${tras} ${tras===1?'persona':'personas'}</span></p></div>`;
   [...grupos].sort((a, b) => a[1].cd.localeCompare(b[1].cd, 'es')).forEach(([key, g]) => {
     h += `<div class="pgrp"><h3>${esc(key)}</h3><p class="pw"><span class="pc">${g.pax.length}</span>${g.sub ? ' · ' + esc(g.sub) : ''}</p>`
-      + tabla(g.pax.map(({r, det}) => `<tr><td class="kn">${esc(r.n)}${notaDe(r,'pe')?'<span class="ptag">🏨 Hotel NH</span>':''}${tieneVuelo(r) ? '<span class="ptag">✈️ vuelo</span>' : ''}${det?`<br><small style="font-weight:400;color:var(--muted)">${esc(det)}</small>`:''}</td>${accBtns(DATA.indexOf(r))}</tr>`)) + '</div>';
+      + tabla(g.pax.map(({r, det}) => `<tr><td class="kn">${esc(r.n)}${svcTags(r)}</td>${accBtns(DATA.indexOf(r))}</tr>`)) + '</div>';
   });
   h += `<div class="pgrp"><h3>🚙 Locales que llegan por su cuenta</h3><p class="pw"><span class="pc">${locales.length} ${locales.length===1?'persona':'personas'}</span> · sin vuelo ni traslado; llegan directo a la sede del evento.</p>`
-    + tabla(locales.map(r => { const t = notaDe(r,'tr'); return `<tr><td class="kn">${esc(r.n)}${r.cd ? `<span class="ptag">📍 ${esc(conEdo(r.cd))}</span>` : ''}${/estacionamiento/i.test(t) ? '<br><small style="font-weight:400;color:var(--muted)">Considerar estacionamiento</small>' : ''}</td>${accBtns(DATA.indexOf(r))}</tr>`; })) + '</div>';
+    + tabla(locales.map(r => { return `<tr><td class="kn">${esc(r.n)}${svcTags(r)}</td>${accBtns(DATA.indexOf(r))}</tr>`; })) + '</div>';
   $('#pout').innerHTML = h;
 }
 function pytTxt(){
   const {pern, grupos, locales} = pytData(), L = ['*Traslados y pernoctas · Cumbre Universales*', '', `🏨 *Pernoctan en Hotel NH CDMX T2* (${pern.length}) · check-in 2 nov, check-out 3 nov`];
-  pern.forEach(r => { L.push('• ' + tcase(r.n) + (conTraslado(r) ? ' (traslado desde ' + ciudadTr(r, notaDe(r,'tr')) + ')' : ' (llega en vuelo)')); rutaDe(r).forEach(t => L.push('   ' + t)); });
+  pern.forEach(r => L.push('• ' + tcase(r.n) + (conTraslado(r) ? ' (traslado)' : ' (vuelo)')));
   [...grupos].sort((a, b) => a[1].cd.localeCompare(b[1].cd, 'es')).forEach(([key, g]) => { L.push('', `🚗 *${key.replace(/^📍 /, '')}* (${g.pax.length})` + (g.sub ? '\n' + g.sub : '')); g.pax.forEach(({r, det}) => L.push('• ' + tcase(r.n) + (det ? ' — ' + det : ''))); });
   L.push('', `🚙 *Locales que llegan por su cuenta* (${locales.length})`); locales.forEach(r => L.push('• ' + tcase(r.n) + (r.cd ? ' — ' + conEdo(r.cd) : '')));
   return L.join('\n');
@@ -1954,7 +1956,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 205;
+const APP_V = 206;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

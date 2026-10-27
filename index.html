@@ -1181,7 +1181,8 @@ function mailHTML(r, enPDF){
 const b64u = str => { const by = new TextEncoder().encode(str); let s = ''; for(let i = 0; i < by.length; i += 8192) s += String.fromCharCode.apply(null, by.subarray(i, i + 8192)); return btoa(s); };
 const wrap76 = b => b.replace(/.{1,76}/g, '$&\r\n');
 async function emlFor(r){
-  const html = `<!doctype html><html><head><meta charset="utf-8"></head><body style="margin:0;padding:12px;background:#fff">${mailHTML(r)}</body></html>`;
+  const html = `<!doctype html><html><head><meta charset="utf-8"></head><body style="margin:0;padding:12px;background:#fff">${mailHTML(r)}<p id="verv" style="text-align:center;font-size:11px;color:#8A97A8;margin:18px 0 14px"></p>
+</body></html>`;
   const pdf = new Uint8Array(await (await itinPDF(r)).arrayBuffer()); let ps = ''; for(let i = 0; i < pdf.length; i += 8192) ps += String.fromCharCode.apply(null, pdf.subarray(i, i + 8192));
   const B = 'veci' + Date.now(), name = 'Itinerario ' + tcase(r.n) + '.pdf';
   return ['X-Unsent: 1', `To: ${MAIL[r.n] || ''}`, `Subject: =?UTF-8?B?${b64u('Tu itinerario · Segunda Cumbre Universales')}?=`, 'MIME-Version: 1.0',
@@ -2054,7 +2055,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 225;
+const APP_V = 226;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');
@@ -2074,7 +2075,7 @@ window.addEventListener('pagehide', e => { if(e.persisted) lockNow(); });
 async function unlock(pin, fromSaved){
   try{ const d = await Cifra.descifrar(PACK.enc, pin);
     if(UNLOCKED){ gate.hidden = true; document.body.classList.remove('locked'); return; } // re-entrada tras salir de la app
-    UNLOCKED = true; DATA = d.filas; gate.hidden = true; $('#upd').textContent = 'Actualizado: ' + PACK.actualizado + ' · v' + APP_V; init(); syncStart(pin); if(!pdfDirecto()) restoreView(); }
+    UNLOCKED = true; DATA = d.filas; gate.hidden = true; $('#upd').textContent = 'Actualizado: ' + PACK.actualizado + ' · v' + APP_V; { const vv = document.getElementById('verv'); if(vv) vv.textContent = 'Versión ' + APP_V + ' · datos actualizados ' + PACK.actualizado; } init(); syncStart(pin); if(!pdfDirecto()) restoreView(); }
   catch(e){ showGate('PIN incorrecto. Revísalo e intenta de nuevo.'); }
 }
 $('#gate-form').addEventListener('submit', e => { e.preventDefault(); const v = gin.value.trim();

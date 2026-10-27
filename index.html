@@ -1047,7 +1047,7 @@ function mailTxt(r){
     if(dos) L.push('', `CLAVE DE RESERVA DE IDA: [ ${r.ci} ]`); seg('Ida (conexión)', r.c1); seg('Ida', r.ida);
     if(dos) L.push('', `CLAVE DE RESERVA DE REGRESO: [ ${r.cr} ]`); seg('Regreso', r.reg); seg('Regreso (conexión)', r.c2); }
   const tr = notaDe(r, 'tr'), pe = notaDe(r, 'pe');
-  if(tr || pe || tierra){ L.push('', 'TRASLADOS Y PERNOCTAS'); if(tr) L.push('- ' + tr); else if(tierra) L.push('- Traslado terrestre.'); if(pe) L.push('- ' + pe); }
+  if((r.notas || []).length || tierra){ L.push('', 'INDICACIONES ESPECIALES PARA TI'); (r.notas || []).forEach(n => L.push('- ' + n.t)); if(!(r.notas || []).length) L.push('- Traslado terrestre.'); }
   { const h = hotelInfo(r); L.push('', 'HOSPEDAJE EN EL HOTEL SEDE'); h.lines.forEach(t => L.push('- ' + t)); if(!soloTierra(r) && aplicaLlegada(r)) L.push('', '📍 RECEPCIÓN EN EL AEROPUERTO DE HERMOSILLO', LLEGA_TXT); if(!soloTierra(r) && aplicaRegreso(r)) L.push('', '🚐 TRASLADO DE REGRESO AL AEROPUERTO DE HERMOSILLO', REGRESO_TXT); if(h.nota) L.push('', 'IMPORTANTE: ' + h.nota); }
   const cards = [...document.querySelectorAll('#info .icard')].filter(c => !c.classList.contains('solo-vuelo') && !/hotel sede/i.test((c.querySelector('.ik') || {}).textContent || ''));
   if(cards.length){ L.push('', 'INFORMACIÓN GENERAL');
@@ -1115,7 +1115,11 @@ function mailHTML(r, enPDF){
     if(dos) b += key('Clave de reserva de regreso', r.cr); b += card('Regreso', [r.reg, r.c2], G2, dos);
     b += p(T('Horarios en hora local de cada aeropuerto.', 11, MUT)); }
   const tr = notaDe(r, 'tr'), pe = notaDe(r, 'pe');
-  if(tr || pe || tierra){ b += h2('Traslados y pernoctas'); if(tr) b += p(T((porCuentaR(r) ? '🚙 ' : '🚐 ') + esc(tr))); else if(tierra) b += p(T('🚐 Traslado terrestre.')); if(pe) b += p(T('🏨 ' + esc(pe))); }
+  // Indicaciones especiales: mismo contenido, íconos y orden que en la página (recuadro amarillo claro)
+  { const items = (r.notas || []).map(n => [porCuentaR(r) && n.k === 'tr' ? '🚙' : (NOTA[n.k] || {}).i || '•', n.t]);
+    if(!items.length && tierra) items.push(['🚐', 'Traslado terrestre.']);
+    if(items.length){ b += h2('Indicaciones especiales para ti');
+      b += `<tr><td style="padding:${C ? '1px 0' : '2px 0'}"><table width="100%" cellpadding="0" cellspacing="0"><tr><td bgcolor="#FFF9EC" style="background:#FFF9EC;border:1px solid #F0D58A;border-radius:8px;padding:${C ? '4px 10px' : '8px 12px'}"><table cellpadding="0" cellspacing="0">${items.map(([ic, t]) => `<tr><td valign="top" style="padding:${C ? '2px 8px 2px 0' : '4px 8px 4px 0'}">${T(ic, fs)}</td><td style="padding:${C ? '2px 0;line-height:1.3' : '4px 0;line-height:1.45'}">${T(esc(t).replace(/Hotel Marinaterra|Hotel NH Collection Mexico City Airport T2/g, m => `<b style="color:${INK}">${m}</b>`))}</td></tr>`).join('')}</table></td></tr></table></td></tr>`; } }
   { const hi = hotelInfo(r); b += h2('Hospedaje en el hotel sede');
     b += `<tr><td style="padding:${C ? '1px 4px' : '2px 4px'}"><table cellpadding="0" cellspacing="0">${hi.lines.map(t => `<tr><td valign="top" style="padding:${C ? '1px 6px 1px 0' : '2px 6px 2px 0'}">${T('•', fs, G, 'bold')}</td><td style="padding:${C ? '1px 0' : '2px 0'}">${T(esc(t).replace(HOTEL.n, `<b style="color:${INK}">${HOTEL.n}</b>`))}</td></tr>`).join('')}</table></td></tr>`;
     if(!tierra && aplicaLlegada(r)) b += `<tr><td style="padding-top:${C ? 4 : 8}px"><table width="100%" cellpadding="0" cellspacing="0"><tr><td bgcolor="#E3F1E7" style="background:#E3F1E7;border:2px solid ${G};border-radius:8px;padding:${C ? '5px 10px;line-height:1.3' : '9px 12px'}">${T('📍 RECEPCIÓN EN EL AEROPUERTO DE HERMOSILLO', C ? 11 : 12, G, 'bold', 'Arial,sans-serif', 'letter-spacing:.5px')}<br>${T('A tu llegada al aeropuerto de Hermosillo te pedimos localizar el logo de <b>MetLife</b> para trasladarte al hotel sede Marinaterra.', C ? 12 : fs, INK)}</td></tr></table></td></tr>`;
@@ -2012,7 +2016,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 216;
+const APP_V = 217;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

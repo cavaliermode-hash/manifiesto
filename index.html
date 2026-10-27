@@ -616,6 +616,8 @@ button.ptile{font:inherit;cursor:pointer;width:100%;transition:transform .08s,bo
 .pres h3{font-size:16px}.pver{font:inherit;font-size:12px;cursor:pointer;background:#fff;border:1px solid var(--green-dark);color:var(--green-dark);border-radius:999px;padding:2px 9px}
 .hotelbox ul{margin:4px 0 0;padding-left:18px}.hotelbox li{margin:2px 0}.hnota{margin:8px 0 0;padding:8px 10px;background:#FFF7E6;border-left:4px solid #E0A100;border-radius:6px;font-weight:600}
 .hpin{margin:8px 0 0;padding:8px 10px;background:#E3F1E7;border:2px solid #136c34;border-radius:8px}.hpin b:first-child{color:#136c34}
+.dname{margin:2px 0 6px;font:700 clamp(18px,4.5vw,22px)/1.2 var(--display);color:var(--ink,#16301F);text-transform:uppercase}.dname .est{font-weight:500;text-transform:none;color:var(--muted)}.dintro{font-size:15px;color:var(--ink,#16301F);line-height:1.45}
+.detail .phead .name{display:none}
 </style>
 </head>
 <body>
@@ -909,6 +911,7 @@ const HOTEL_EXC = {
     nota: 'Su llegada a Hermosillo es el lunes 2 de noviembre a las 10:31 h. A su llegada no aplica traslado del aeropuerto al hotel; su traslado aplica únicamente de regreso, del hotel al aeropuerto de Hermosillo, el jueves 5 de noviembre.'}
 };
 /* Recepción en el aeropuerto de Hermosillo (logo de MetLife): solo si su vuelo llega a Hermosillo dentro de las fechas del evento (3 al 5 nov). */
+const INTRO_TXT = 'En seguimiento a su confirmación de asistencia a la Segunda Cumbre Universales, nos complace compartirle los detalles de su itinerario de viaje.';
 const LLEGA_TXT = 'A tu llegada al aeropuerto de Hermosillo te pedimos localizar el logo de MetLife para trasladarte al hotel sede Marinaterra.';
 const REGRESO_TXT = 'Los traslados de regreso al aeropuerto serán publicados una vez terminen las sesiones en sitio.';
 /* Traslado de regreso al aeropuerto de Hermosillo: aplica si su vuelo de regreso sale de Hermosillo dentro de las fechas del evento (3 al 5 de noviembre). */
@@ -946,7 +949,7 @@ function detailView(r){
   return `<div class="detail">
     <button class="back" id="back"><span aria-hidden="true">‹</span> Volver a la búsqueda</button>
     <div class="dhello">
-      <p class="dsub">Estos son los datos de tu viaje. Guarda tu clave de reserva: la necesitarás para hacer check-in.</p>
+      <p class="dname"><span class="est">Estimado(a)</span> <b>${esc(r.n)}</b></p><p class="dsub dintro">${esc(INTRO_TXT)}</p>
     </div>
     ${countdownHTML(r)}
     ${notasHTML(r)}
@@ -1018,7 +1021,7 @@ function tripSteps(r){
 /* ---------- Enviar a mi correo ---------- */
 function resumenTxt(r){
   const L = [], seg = (lab, l) => l && L.push(`${lab}: ${l.v} · ${fmtDate(l.f)} · ${l.o} ${l.s} → ${l.d} ${l.l}`);
-  L.push(`Estimado(a) ${r.n.toUpperCase()}:`, '', 'Estos son los datos de tu viaje a la Segunda Cumbre Universales.', '');
+  L.push(`Estimado(a) ${r.n.toUpperCase()}:`, '', INTRO_TXT, '');
   const dos = !!(r.ci && r.cr && r.ci !== r.cr);
   if(!dos && (r.ci || r.cr)) L.push(`Clave de reserva: ${r.ci || r.cr}`);
   if(soloTierra(r)) L.push('', 'TRASLADO TERRESTRE'); else L.push('', 'VUELOS');
@@ -1039,7 +1042,7 @@ function resumenTxt(r){
 function mailTxt(r){
   const L = [], base = location.origin + location.pathname, tierra = soloTierra(r);
   const seg = (lab, l) => l && L.push(`${lab}: ${l.v} · ${fmtDate(l.f)} · ${l.o} ${l.s} > ${l.d} ${l.l} (hora local)`);
-  L.push(`Estimado(a) ${r.n.toUpperCase()}:`, '', 'Estos son los datos de tu viaje a la Segunda Cumbre Universales.', '');
+  L.push(`Estimado(a) ${r.n.toUpperCase()}:`, '', INTRO_TXT, '');
   if((r.notas || []).length || tierra){ L.push('INDICACIONES ESPECIALES PARA TI'); (r.notas || []).forEach(n => L.push('- ' + n.t)); if(!(r.notas || []).length) L.push('- Traslado terrestre.'); L.push(''); }
   const dos = !!(r.ci && r.cr && r.ci !== r.cr);
   L.push('DATOS DE LA RESERVA'); if(dos) L.push('Tienes una clave para la ida y otra para el regreso (aparecen junto a sus vuelos).');
@@ -1101,6 +1104,7 @@ function mailHTML(r, enPDF){
     return (clave ? key(title === 'Ida' ? 'Clave de reserva de ida' : 'Clave de reserva de regreso', clave) : '') + `<tr><td style="padding:1px 0 3px"><table width="100%" cellpadding="0" cellspacing="0" style="border:1.5px solid #CDE8D5;border-collapse:separate">${rows}</table></td></tr>`; };
   let b = `<tr><td bgcolor="${HB}" style="background:${HB};padding:${C ? '6px 12px' : '14px 18px'}">${C ? W('SEGUNDA CUMBRE UNIVERSALES', 15, 'bold') + '&nbsp;&nbsp;' + W('· MANIFIESTO DE ITINERARIO', 10, 'bold', 'letter-spacing:1px') : W('MANIFIESTO DE ITINERARIO', 11, 'bold', 'letter-spacing:1.5px') + '<br>' + W('SEGUNDA CUMBRE UNIVERSALES', 20, 'bold')}</td></tr>`;
   b += p(`${T('Estimado(a)', C ? 13 : 15, MUT)} ${T(esc(r.n.toUpperCase()), C ? 15 : 17, INK, 'bold')}`, C ? 'padding-top:6px' : 'padding-top:12px');
+  b += p(T(esc(INTRO_TXT), C ? 12 : fs, INK), C ? 'padding-top:2px;padding-bottom:2px' : 'padding-top:4px;padding-bottom:4px');
   // Indicaciones especiales (van primero): mismo contenido, íconos y orden que en la página (recuadro amarillo claro)
   { const items = (r.notas || []).map(n => [porCuentaR(r) && n.k === 'tr' ? '🚙' : (NOTA[n.k] || {}).i || '•', n.t]);
     if(!items.length && tierra) items.push(['🚐', 'Traslado terrestre.']);
@@ -1165,7 +1169,7 @@ document.addEventListener('click', e => { const a = e.target.closest('a[data-mai
 function waTxt(r){
   const L = [], base = location.origin + location.pathname.replace(/[^\/]*$/, '');
   const seg = (ic, lab, l) => l && L.push(`${ic} *${lab}:* ${l.v}`, `    📅 ${fmtDate(l.f)}`, `    ${l.o} ${l.s} → ${l.d} ${l.l}`);
-  L.push(`👋 Estimado(a) *${r.n.toUpperCase()}*`, '', '✈️ *Tu viaje a la Segunda Cumbre Universales*', '');
+  L.push(`👋 Estimado(a) *${r.n.toUpperCase()}*`, '', INTRO_TXT, '');
   if((r.notas||[]).length){ L.push('📌 *Indicaciones especiales para ti*'); r.notas.forEach(n => L.push('• ' + n.t.replace(/Hotel Marinaterra/g, '*Hotel Marinaterra*'))); L.push(''); }
   const dos = !!(r.ci && r.cr && r.ci !== r.cr);
   if(!dos && (r.ci || r.cr)) L.push('🔑 *CLAVE DE RESERVA*', '```' + (r.ci || r.cr) + '```', '');
@@ -1244,7 +1248,7 @@ async function itinPDFtexto(r){
   doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.text('MANIFIESTO DE ITINERARIO', M, 20);
   doc.setFontSize(15); doc.text('SEGUNDA CUMBRE UNIVERSALES', M, 38); y = 70;
   para(r.n.toUpperCase(), {b:1, s:13, after:0});
-  const sub = r.rg || ''; if(sub) para(sub, {c:MUT});
+  const sub = r.rg || ''; if(sub) para(sub, {c:MUT}); para(INTRO_TXT, {after:4});
   // Reserva
   head('Datos de la reserva');
   const dos = !!(r.ci && r.cr && r.ci !== r.cr);
@@ -2016,7 +2020,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 218;
+const APP_V = 220;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

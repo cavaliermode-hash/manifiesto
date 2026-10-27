@@ -836,10 +836,12 @@ function legBlock(cls, title, main, conn, connFirst){
   return `<div class="leg ${cls}"><h4>${title}</h4>${parts.join('')}</div>`;
 }
 /* Invitados que viajan solo por tierra (sin vuelos): se muestran como traslado, sin "Sin vuelo asignado". */
+const porCuentaR = r => (r.notas || []).some(n => n.k === 'tr' && /por tu cuenta/i.test(n.t));
+const viajeTxt = r => porCuentaR(r) ? 'Llega por su cuenta a la sede del evento.' : 'Viaje por traslado terrestre.';
 const soloTierra = r => !r.ida && !r.reg && !r.c1 && !r.c2 && (/TERRESTRE/.test(r.st || '') || (r.notas || []).some(n => n.k === 'tr'));
 function tierraBlock(r){
-  const det = (r.notas || []).some(n => n.k === 'tr') ? 'Revisa los detalles en tus indicaciones especiales.' : 'Tu viaje al evento es por traslado terrestre.';
-  return `<div class="leg ida"><h4>Traslado terrestre</h4><div class="none">${det}</div></div>`;
+  const det = porCuentaR(r) ? 'Llegas por tu cuenta a la sede del evento; revisa tus indicaciones especiales.' : (r.notas || []).some(n => n.k === 'tr') ? 'Revisa los detalles en tus indicaciones especiales.' : 'Tu viaje al evento es por traslado terrestre.';
+  return `<div class="leg ida"><h4>${porCuentaR(r) ? 'Llega por su cuenta' : 'Traslado terrestre'}</h4><div class="none">${det}</div></div>`;
 }
 /* Tarjetas de vuelo: Ida / Regreso con horas grandes, duración y conexión. */
 const durTxt = m => m > 0 ? `${Math.floor(m/60)} h ${String(m%60).padStart(2,'0')} min` : '';
@@ -1001,7 +1003,7 @@ function mailTxt(r){
   L.push(`Estimado(a) ${r.n.toUpperCase()}:`, '', 'Estos son los datos de tu viaje a la Segunda Cumbre Universales.', '');
   const dos = !!(r.ci && r.cr && r.ci !== r.cr);
   L.push('DATOS DE LA RESERVA'); if(dos) L.push('Tienes una clave para la ida y otra para el regreso (aparecen junto a sus vuelos).');
-  else if(r.ci || r.cr) L.push(`CLAVE DE RESERVA: [ ${r.ci || r.cr} ]`); else if(tierra) L.push('Viaje por traslado terrestre.');
+  else if(r.ci || r.cr) L.push(`CLAVE DE RESERVA: [ ${r.ci || r.cr} ]`); else if(tierra) L.push(viajeTxt(r));
   if(!tierra){ L.push('', 'VUELOS');
     if(dos) L.push('', `CLAVE DE RESERVA DE IDA: [ ${r.ci} ]`); seg('Ida (conexión)', r.c1); seg('Ida', r.ida);
     if(dos) L.push('', `CLAVE DE RESERVA DE REGRESO: [ ${r.cr} ]`); seg('Regreso', r.reg); seg('Regreso (conexión)', r.c2); }
@@ -1062,19 +1064,19 @@ function mailHTML(r, enPDF){
   b += p(`${T('Estimado(a)', C ? 13 : 15, MUT)} ${T(esc(r.n.toUpperCase()), C ? 15 : 17, INK, 'bold')}`, C ? 'padding-top:6px' : 'padding-top:12px');
   if(C){ // PDF compacto: la clave va junto al nombre o dentro de cada tarjeta de vuelo
     if(!dos && (r.ci || r.cr)) b += key('Clave de reserva', r.ci || r.cr);
-    if(tierra) b += p(T('Viaje por traslado terrestre.', fs, INK, 'bold'));
+    if(tierra) b += p(T(viajeTxt(r), fs, INK, 'bold'));
     else { b += h2('Vuelos <span style="font-weight:normal;color:' + MUT + ';letter-spacing:0;font-size:10px">(hora local de cada aeropuerto)</span>');
       b += cardC('Ida', [r.c1, r.ida], G1, dos ? r.ci : '') + cardC('Regreso', [r.reg, r.c2], G2, dos ? r.cr : ''); }
   }
   if(!C) b += h2('Datos de la reserva');
   if(C){} else if(dos){ b += p(T('Tienes una clave para la ida y otra para el regreso; cada una aparece junto a sus vuelos.')); }
-  else if(r.ci || r.cr) b += key('Clave de reserva', r.ci || r.cr); else if(tierra) b += p(T('Viaje por traslado terrestre.', fs, INK, 'bold'));
+  else if(r.ci || r.cr) b += key('Clave de reserva', r.ci || r.cr); else if(tierra) b += p(T(viajeTxt(r), fs, INK, 'bold'));
   if(!tierra && !C){ b += h2('Vuelos');
     if(dos) b += key('Clave de reserva de ida', r.ci); b += card('Ida', [r.c1, r.ida], G1, dos);
     if(dos) b += key('Clave de reserva de regreso', r.cr); b += card('Regreso', [r.reg, r.c2], G2, dos);
     b += p(T('Horarios en hora local de cada aeropuerto.', 11, MUT)); }
   const tr = notaDe(r, 'tr'), pe = notaDe(r, 'pe');
-  if(tr || pe || tierra){ b += h2('Traslados y pernoctas'); if(tr) b += p(T('🚐 ' + esc(tr))); else if(tierra) b += p(T('🚐 Traslado terrestre.')); if(pe) b += p(T('🏨 ' + esc(pe))); }
+  if(tr || pe || tierra){ b += h2('Traslados y pernoctas'); if(tr) b += p(T((porCuentaR(r) ? '🚙 ' : '🚐 ') + esc(tr))); else if(tierra) b += p(T('🚐 Traslado terrestre.')); if(pe) b += p(T('🏨 ' + esc(pe))); }
   b += h2(C ? 'Sede del evento y llegada' : 'Sede del evento') + p(T('Hotel Marinaterra', fs, INK, 'bold') + T(' · Blvd. Gabriel Estrada 12, San Carlos, Nuevo Guaymas, Sonora'));
   const cards = [...document.querySelectorAll('#info .icard')].filter(c => !(tierra && c.classList.contains('solo-vuelo')) && !/clima|vestimenta|hotel sede/i.test((c.querySelector('.ik') || {}).textContent || ''));
   if(cards.length){ if(!C) b += h2('Información general'); cards.forEach(c => { const k = c.querySelector('.ik'), v = c.querySelector('.iv'); b += p(T(esc(k ? k.textContent : ''), fs, INK, 'bold') + '<br>' + T(esc(v ? v.innerText : ''))); }); }
@@ -1119,7 +1121,7 @@ function waTxt(r){
   L.push(`👋 Estimado(a) *${r.n.toUpperCase()}*`, '', '✈️ *Tu viaje a la Segunda Cumbre Universales*', '');
   const dos = !!(r.ci && r.cr && r.ci !== r.cr);
   if(!dos && (r.ci || r.cr)) L.push('🔑 *CLAVE DE RESERVA*', '```' + (r.ci || r.cr) + '```', '');
-  if(soloTierra(r)) L.push('🚐 *Traslado terrestre*');
+  if(soloTierra(r)) L.push(porCuentaR(r) ? '🚙 *Llega por su cuenta*' : '🚐 *Traslado terrestre*');
   if(dos) L.push('🔑 *CLAVE DE RESERVA DE IDA*', '```' + r.ci + '```'); seg('🛫', 'Ida (conexión)', r.c1); seg('🛫', 'Ida', r.ida);
   if(dos) L.push('', '🔑 *CLAVE DE RESERVA DE REGRESO*', '```' + r.cr + '```'); seg('🛬', 'Regreso', r.reg); seg('🛬', 'Regreso (conexión)', r.c2);
   if((r.notas||[]).length){ L.push('', '📌 *Indicaciones especiales para ti*'); r.notas.forEach(n => L.push('• ' + n.t.replace(/Hotel Marinaterra/g, '*Hotel Marinaterra*'))); }
@@ -1200,7 +1202,7 @@ async function itinPDFtexto(r){
   const dos = !!(r.ci && r.cr && r.ci !== r.cr);
   if(dos) para('Tiene una clave para la ida y otra para el regreso; cada una aparece junto a sus vuelos.');
   else if(r.ci || r.cr) para('Clave de reserva: ' + (r.ci || r.cr), {b:1});
-  else if(soloTierra(r)) para('Viaje por traslado terrestre.');
+  else if(soloTierra(r)) para(viajeTxt(r));
   else para('Clave de reserva: pendiente');
   // Vuelos
   // Tarjetas de vuelo como en la página: Ida / Regreso con horas grandes, duración y conexión.
@@ -1893,7 +1895,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 200;
+const APP_V = 201;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

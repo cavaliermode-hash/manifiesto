@@ -1817,7 +1817,7 @@ function askPw(msg){
     m.onclick = e => { if(e.target === m) done(null); };
   });
 }
-/* Sesión VECI: con la contraseña correcta se queda abierta mientras haya actividad o la ausencia sea menor a 10 minutos
+/* Sesión VECI: con la contraseña correcta se queda abierta mientras haya actividad o la ausencia sea menor a 15 minutos
    (cambiar de pestaña, abrir otra app o recargar). Si pasan 15 minutos sin actividad o fuera de la página, o se cierra
    la pestaña, se vuelve a pedir la contraseña. Se guarda solo en esta pestaña (sessionStorage), no en el dispositivo. */
 const VECI_MIN = 15, VECI_MS = VECI_MIN * 60000;
@@ -1972,7 +1972,7 @@ function restoreView(){
   let r = null; try{ r = JSON.parse(sessionStorage.getItem('restore') || 'null'); sessionStorage.removeItem('restore'); }catch(e){}
   if(!r) return;
   if(r.ag && AGENDA[r.ag]) renderAgenda(r.ag);
-  // VECI: se restaura abajo según la sesión de 10 minutos
+  // VECI: se restaura abajo según la sesión de 15 minutos
   if(r.q){ const q = document.getElementById('q'); if(q){ q.value = r.q; state.q = r.q; render(); } }
   const i = r.n ? DATA.findIndex(x => x.n === r.n) : -1;
   if(i >= 0 && (!r.tab || r.tab === 'man')) openPax(i);

@@ -911,8 +911,8 @@ const HOTEL_EXC = {
 /* Recepción en el aeropuerto de Hermosillo (logo de MetLife): solo si su vuelo llega a Hermosillo dentro de las fechas del evento (3 al 5 nov). */
 const LLEGA_TXT = 'A tu llegada al aeropuerto de Hermosillo te pedimos localizar el logo de MetLife para trasladarte al hotel sede Marinaterra.';
 const REGRESO_TXT = 'Los traslados de regreso al aeropuerto serán publicados una vez terminen las sesiones en sitio.';
-/* Traslado de regreso al aeropuerto de Hermosillo: solo si su vuelo de regreso sale de Hermosillo el 5 de noviembre (fecha de regreso del evento). */
-function aplicaRegreso(r){ const reg = [r.reg, r.c2].filter(Boolean), l = reg.find(x => x.o === 'HMO'); return !!l && l.f === HOTEL.co; }
+/* Traslado de regreso al aeropuerto de Hermosillo: aplica si su vuelo de regreso sale de Hermosillo dentro de las fechas del evento (3 al 5 de noviembre). */
+function aplicaRegreso(r){ const reg = [r.reg, r.c2].filter(Boolean), l = reg.find(x => x.o === 'HMO'); return !!l && l.f >= HOTEL.ci && l.f <= HOTEL.co; }
 function aplicaLlegada(r){ const ida = [r.c1, r.ida].filter(Boolean), l = ida.find(x => x.d === 'HMO'); return !!l && l.f >= HOTEL.ci && l.f <= HOTEL.co; }
 function hotelInfo(r){
   if(HOTEL_EXC[r.n]) return HOTEL_EXC[r.n];
@@ -922,7 +922,7 @@ function hotelInfo(r){
   const notas = [];
   if(lleg && lleg.f < HOTEL.ci) notas.push(`Su vuelo llega a Hermosillo el ${fLarga(lleg.f)} a las ${lleg.l} h, antes del check in del hotel (03 de noviembre).`);
   if(sal && sal.f > HOTEL.co) notas.push(`Su vuelo de regreso sale de Hermosillo el ${fLarga(sal.f)} a las ${sal.s} h, después del check out del hotel (05 de noviembre).`);
-  if(sal && sal.f < HOTEL.co) notas.push(`Su vuelo de regreso sale de Hermosillo el ${fLarga(sal.f)} a las ${sal.s} h, antes de la fecha de check out (05 de noviembre); considere su salida del hotel con anticipación.`);
+  // dentro de las fechas del evento (3 al 5 nov) todo aplica: solo se avisa si llega antes del 3 o regresa después del 5
   return {lines, nota: notas.length ? notas.join(' ') + ' ' + MET : ''};
 }
 function hotelHTML(r){ const h = hotelInfo(r);
@@ -2012,7 +2012,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 215;
+const APP_V = 216;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

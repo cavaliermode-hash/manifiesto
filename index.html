@@ -907,6 +907,8 @@ const HOTEL_EXC = {
   'VICTOR CESAREO DE LA O RIOS': {lines: ['Reservación por 3 noches en el Hotel Marinaterra (la noche del 2 de noviembre fue pagada por usted). Dirección: Blvr. Gabriel Estrada, Sector La Herradura, 85506 San Carlos, Son.', 'Check in: 02 noviembre, 15:00 hrs.', 'Check out: 05 noviembre, 12:00 hrs.'],
     nota: 'Su llegada a Hermosillo es el lunes 2 de noviembre a las 10:31 h. A su llegada no aplica traslado del aeropuerto al hotel; su traslado aplica únicamente de regreso, del hotel al aeropuerto de Hermosillo, el jueves 5 de noviembre.'}
 };
+/* Recepción en el aeropuerto de Hermosillo (logo de MetLife): solo si su vuelo llega a Hermosillo dentro de las fechas del evento (3 al 5 nov). */
+function aplicaLlegada(r){ const ida = [r.c1, r.ida].filter(Boolean), l = ida.find(x => x.d === 'HMO'); return !!l && l.f >= HOTEL.ci && l.f <= HOTEL.co; }
 function hotelInfo(r){
   if(HOTEL_EXC[r.n]) return HOTEL_EXC[r.n];
   const lines = [`Reservación por 2 noches en el ${HOTEL.n}. Dirección: ${HOTEL.dir}`, 'Check in: 03 noviembre, 15:00 hrs.', 'Check out: 05 noviembre, 12:00 hrs.'];
@@ -1042,7 +1044,7 @@ function mailTxt(r){
   const tr = notaDe(r, 'tr'), pe = notaDe(r, 'pe');
   if(tr || pe || tierra){ L.push('', 'TRASLADOS Y PERNOCTAS'); if(tr) L.push('- ' + tr); else if(tierra) L.push('- Traslado terrestre.'); if(pe) L.push('- ' + pe); }
   { const h = hotelInfo(r); L.push('', 'HOSPEDAJE EN EL HOTEL SEDE'); h.lines.forEach(t => L.push('- ' + t)); if(h.nota) L.push('', 'IMPORTANTE: ' + h.nota); }
-  const cards = [...document.querySelectorAll('#info .icard')].filter(c => !(tierra && c.classList.contains('solo-vuelo')) && !/hotel sede/i.test((c.querySelector('.ik') || {}).textContent || ''));
+  const cards = [...document.querySelectorAll('#info .icard')].filter(c => !((tierra || !aplicaLlegada(r)) && c.classList.contains('solo-vuelo')) && !/hotel sede/i.test((c.querySelector('.ik') || {}).textContent || ''));
   if(cards.length){ L.push('', 'INFORMACIÓN GENERAL');
     cards.forEach(c => { const k = c.querySelector('.ik'), lis = c.querySelectorAll('li'), v = c.querySelector('.iv');
       L.push((k ? k.textContent.trim() : '') + ':'); if(lis.length) lis.forEach(li => L.push('- ' + li.innerText.trim())); else L.push(v ? v.innerText.trim() : ''); }); }
@@ -1112,7 +1114,7 @@ function mailHTML(r, enPDF){
   { const hi = hotelInfo(r); b += h2('Hospedaje en el hotel sede');
     b += `<tr><td style="padding:${C ? '1px 4px' : '2px 4px'}"><table cellpadding="0" cellspacing="0">${hi.lines.map(t => `<tr><td valign="top" style="padding:${C ? '1px 6px 1px 0' : '2px 6px 2px 0'}">${T('•', fs, G, 'bold')}</td><td style="padding:${C ? '1px 0' : '2px 0'}">${T(esc(t).replace(HOTEL.n, `<b style="color:${INK}">${HOTEL.n}</b>`))}</td></tr>`).join('')}</table></td></tr>`;
     if(hi.nota) b += `<tr><td style="padding-top:${C ? 3 : 6}px"><table width="100%" cellpadding="0" cellspacing="0"><tr><td bgcolor="#FFF7E6" style="background:#FFF7E6;border-left:4px solid #E0A100;padding:${C ? '4px 10px;line-height:1.25' : '8px 12px'}">${T('⚠️ ' + esc(hi.nota), C ? 11 : fs, INK, 'bold')}</td></tr></table></td></tr>`; }
-  const cards = [...document.querySelectorAll('#info .icard')].filter(c => !(tierra && c.classList.contains('solo-vuelo')) && !/clima|vestimenta|hotel sede/i.test((c.querySelector('.ik') || {}).textContent || ''));
+  const cards = [...document.querySelectorAll('#info .icard')].filter(c => !((tierra || !aplicaLlegada(r)) && c.classList.contains('solo-vuelo')) && !/clima|vestimenta|hotel sede/i.test((c.querySelector('.ik') || {}).textContent || ''));
   if(cards.length){ b += h2(C ? 'Llegada' : 'Información general'); cards.forEach(c => { const k = c.querySelector('.ik'), v = c.querySelector('.iv'); b += p(T(esc(k ? k.textContent : ''), fs, INK, 'bold') + '<br>' + T(esc(v ? v.innerText : ''))); }); }
   if(!tierra){ b += h2('Puntos importantes de su vuelo');
     const pts = [...document.querySelectorAll('section.important li')].map(li => `<tr><td valign="top" style="padding:${C ? '1px 6px 1px 0' : '3px 6px 3px 0'}">${T('•', C ? 11 : fs, G, 'bold')}</td><td style="padding:${C ? '1px 0;line-height:1.25' : '3px 0'}">${T(li.innerHTML.replace(/<b>/g, `<b style="color:${INK}">`), C ? 11 : fs)}</td></tr>`).join('');
@@ -1281,7 +1283,7 @@ async function itinPDFtexto(r){
   head('Hospedaje en el hotel sede'); { const h = hotelInfo(r); h.lines.forEach(t => bul(t)); if(h.nota) para(h.nota, {b:1}); }
   const tierra = soloTierra(r);
   // Sin clima, código de vestimenta ni hotel sede (ya va en Sede del evento): solo lo útil para el viaje.
-  const cards = [...document.querySelectorAll('#info .icard')].filter(c => !(tierra && c.classList.contains('solo-vuelo')) && !/clima|vestimenta|hotel sede/i.test((c.querySelector('.ik') || {}).textContent || ''));
+  const cards = [...document.querySelectorAll('#info .icard')].filter(c => !((tierra || !aplicaLlegada(r)) && c.classList.contains('solo-vuelo')) && !/clima|vestimenta|hotel sede/i.test((c.querySelector('.ik') || {}).textContent || ''));
   if(cards.length){ head('Información general');
     cards.forEach(c => { const k = c.querySelector('.ik'), lis = c.querySelectorAll('li'), v = c.querySelector('.iv');
       para(k ? k.textContent : '', {b:1, after:0});
@@ -2003,7 +2005,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 211;
+const APP_V = 212;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

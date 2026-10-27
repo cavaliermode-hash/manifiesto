@@ -614,6 +614,7 @@ body.locked>*:not(#gate){visibility:hidden}
 button.ptile{font:inherit;cursor:pointer;width:100%;transition:transform .08s,box-shadow .15s}button.ptile:hover{box-shadow:0 2px 8px rgba(15,61,34,.15)}button.ptile:active{transform:scale(.97)}button.ptile.on{background:var(--green-dark)!important;border-color:var(--green-dark)!important}button.ptile.on b,button.ptile.on span,button.ptile.on small{color:#fff!important}
 .pdesg button.pchip{font:inherit;font-size:12px;cursor:pointer;background:#fff;border:1px solid #CDE8D5;border-radius:999px;padding:3px 9px;color:var(--green-dark)}.pdesg button.pchip:hover{border-color:var(--green-dark)}.pdesg button.pchip.on{background:var(--green-dark);color:#fff;border-color:var(--green-dark)}
 .pres h3{font-size:16px}.pver{font:inherit;font-size:12px;cursor:pointer;background:#fff;border:1px solid var(--green-dark);color:var(--green-dark);border-radius:999px;padding:2px 9px}
+.hotelbox ul{margin:4px 0 0;padding-left:18px}.hotelbox li{margin:2px 0}.hnota{margin:8px 0 0;padding:8px 10px;background:#FFF7E6;border-left:4px solid #E0A100;border-radius:6px;font-weight:600}
 </style>
 </head>
 <body>
@@ -764,7 +765,7 @@ button.ptile{font:inherit;cursor:pointer;width:100%;transition:transform .08s,bo
   <section class="info" id="info" aria-labelledby="inf-t" hidden>
     <h2 id="inf-t">Información general</h2>
     <div class="info-grid">
-      <div class="icard"><span class="ii" aria-hidden="true">🏨</span><div><p class="ik">Hotel sede</p><p class="iv">Hotel Marinaterra · Blvd. Gabriel Estrada 12, San Carlos, Nuevo Guaymas, Sonora</p></div></div>
+      <div class="icard"><span class="ii" aria-hidden="true">🏨</span><div><p class="ik">Hotel sede</p><p class="iv">Hotel Marinaterra · Blvr. Gabriel Estrada, Sector La Herradura, 85506 San Carlos, Son. · Check in 03 nov 15:00 hrs · Check out 05 nov 12:00 hrs</p></div></div>
       <div class="icard solo-vuelo"><span class="ii" aria-hidden="true">✈️</span><div><p class="ik">Vuelos desde tu ciudad de origen</p><p class="iv">A tu llegada al aeropuerto de Hermosillo te pedimos localizar el logo de MetLife para trasladarte al hotel sede Marinaterra.</p></div></div>
       <div class="icard"><span class="ii" aria-hidden="true">☀️</span><div><p class="ik">Clima</p><p class="iv"><b class="tmax">31°</b> máxima · <b class="tmin">23°</b> mínima</p></div></div>
       <div class="icard dress"><span class="ii" aria-hidden="true">👔</span><div><p class="ik">Código de vestimenta</p>
@@ -895,6 +896,24 @@ const NOTA = {
   pe:{i:'🏨', s:'Noche de hotel a tu llegada', t:'Hospedaje a tu llegada'},
   seg:{i:'🚐', s:'Traslado a la sede del evento', t:'Traslado a tu llegada'},
   tr:{i:'🚗', s:'Traslado a tu regreso', t:'Traslado a tu regreso'} };
+/* Hospedaje en el hotel sede (Hotel Marinaterra) del 3 al 5 de noviembre. Si su llegada a Hermosillo es antes del 3
+   o su regreso después del 5 (o antes del check out), se agrega una nota específica con el recordatorio de MetLife. */
+const HOTEL = {n:'Hotel Marinaterra', dir:'Blvr. Gabriel Estrada, Sector La Herradura, 85506 San Carlos, Son.', ci:'2026-11-03', co:'2026-11-05'};
+const MESL = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'], DIAL = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+const fLarga = iso => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || ''); if(!m) return iso || ''; const d = new Date(Date.UTC(+m[1], m[2]-1, +m[3])); return `${DIAL[d.getUTCDay()]} ${+m[3]} de ${MESL[m[2]-1]}`; };
+const MET = 'Le recordamos que MetLife cubre únicamente las noches de hotel y traslados terrestres que estén dentro del evento.';
+function hotelInfo(r){
+  const lines = [`Reservación por 2 noches en el ${HOTEL.n}. Dirección: ${HOTEL.dir}`, 'Check in: 03 noviembre, 15:00 hrs.', 'Check out: 05 noviembre, 12:00 hrs.'];
+  const ida = [r.c1, r.ida].filter(Boolean), reg = [r.reg, r.c2].filter(Boolean);
+  const lleg = ida.find(l => l.d === 'HMO') || ida[ida.length - 1], sal = reg.find(l => l.o === 'HMO') || reg[0];
+  const notas = [];
+  if(lleg && lleg.f < HOTEL.ci) notas.push(`Su vuelo llega a Hermosillo el ${fLarga(lleg.f)} a las ${lleg.l} h, antes del check in del hotel (03 de noviembre).`);
+  if(sal && sal.f > HOTEL.co) notas.push(`Su vuelo de regreso sale de Hermosillo el ${fLarga(sal.f)} a las ${sal.s} h, después del check out del hotel (05 de noviembre).`);
+  if(sal && sal.f < HOTEL.co) notas.push(`Su vuelo de regreso sale de Hermosillo el ${fLarga(sal.f)} a las ${sal.s} h, antes de la fecha de check out (05 de noviembre); considere su salida del hotel con anticipación.`);
+  return {lines, nota: notas.length ? notas.join(' ') + ' ' + MET : ''};
+}
+function hotelHTML(r){ const h = hotelInfo(r);
+  return `<section class="notas hotelbox" aria-label="Hospedaje"><h3>🏨 Hospedaje en el hotel sede</h3><ul>${h.lines.map(t => `<li>${esc(t).replace(HOTEL.n, `<b class="sede">${HOTEL.n}</b>`)}</li>`).join('')}</ul>${h.nota ? `<p class="hnota">⚠️ ${esc(h.nota)}</p>` : ''}</section>`; }
 function notasHTML(r){
   if(!(r.notas||[]).length) return '';
   return `<section class="notas" aria-label="Indicaciones especiales"><h3>Indicaciones especiales para ti</h3>${r.notas.map(n=>`<div class="nota"><span class="nota-i" aria-hidden="true">${NOTA[n.k].i}</span><div><p>${esc(n.t).replace(/Hotel Torre Lucerna(?: Hotel)? Ensenada|Hotel Marinaterra/gi, m=>`<b class="sede">${m}</b>`)}</p></div></div>`).join('')}</section>`;
@@ -918,6 +937,7 @@ function detailView(r){
     </div>
     ${countdownHTML(r)}
     ${notasHTML(r)}
+    ${hotelHTML(r)}
     ${card}
     ${tripSteps(r)}
   </div>`;
@@ -994,7 +1014,8 @@ function resumenTxt(r){
   const first = r.c1 || r.ida;
   if(first){ const d = when(first,'s'); L.push('', `Check-in en línea: abre ${fmtAt(new Date(d-24*36e5), first.o)} (24 h antes).`, `Llega al aeropuerto a más tardar: ${fmtAt(new Date(d-2*36e5), first.o)}.`); }
   if((r.notas||[]).length){ L.push('', 'INDICACIONES ESPECIALES PARA TI'); r.notas.forEach(n => L.push('- ' + n.t)); }
-  L.push('', 'SEDE DEL EVENTO', 'Hotel Marinaterra, San Carlos, Sonora', '', 'PUNTOS IMPORTANTES',
+  { const h = hotelInfo(r); L.push('', 'HOSPEDAJE EN EL HOTEL SEDE'); h.lines.forEach(t => L.push('- ' + t)); if(h.nota) L.push('', 'IMPORTANTE: ' + h.nota); }
+  L.push('', 'PUNTOS IMPORTANTES',
     '- El check-in podrá realizarse 24 horas antes de la salida, si la aerolínea lo permite. De lo contrario, preséntate 2 horas antes en los mostradores.',
     '- Para administrar tu reserva usa únicamente las 6 letras de la clave en la página de la aerolínea.',
     '', 'Consulta tu itinerario y la agenda del evento: ' + location.origin + location.pathname, '', 'Viajes El Corte Inglés');
@@ -1014,8 +1035,8 @@ function mailTxt(r){
     if(dos) L.push('', `CLAVE DE RESERVA DE REGRESO: [ ${r.cr} ]`); seg('Regreso', r.reg); seg('Regreso (conexión)', r.c2); }
   const tr = notaDe(r, 'tr'), pe = notaDe(r, 'pe');
   if(tr || pe || tierra){ L.push('', 'TRASLADOS Y PERNOCTAS'); if(tr) L.push('- ' + tr); else if(tierra) L.push('- Traslado terrestre.'); if(pe) L.push('- ' + pe); }
-  L.push('', 'SEDE DEL EVENTO', 'Hotel Marinaterra · Blvd. Gabriel Estrada 12, San Carlos, Nuevo Guaymas, Sonora');
-  const cards = [...document.querySelectorAll('#info .icard')].filter(c => !(tierra && c.classList.contains('solo-vuelo')));
+  { const h = hotelInfo(r); L.push('', 'HOSPEDAJE EN EL HOTEL SEDE'); h.lines.forEach(t => L.push('- ' + t)); if(h.nota) L.push('', 'IMPORTANTE: ' + h.nota); }
+  const cards = [...document.querySelectorAll('#info .icard')].filter(c => !(tierra && c.classList.contains('solo-vuelo')) && !/hotel sede/i.test((c.querySelector('.ik') || {}).textContent || ''));
   if(cards.length){ L.push('', 'INFORMACIÓN GENERAL');
     cards.forEach(c => { const k = c.querySelector('.ik'), lis = c.querySelectorAll('li'), v = c.querySelector('.iv');
       L.push((k ? k.textContent.trim() : '') + ':'); if(lis.length) lis.forEach(li => L.push('- ' + li.innerText.trim())); else L.push(v ? v.innerText.trim() : ''); }); }
@@ -1082,9 +1103,11 @@ function mailHTML(r, enPDF){
     b += p(T('Horarios en hora local de cada aeropuerto.', 11, MUT)); }
   const tr = notaDe(r, 'tr'), pe = notaDe(r, 'pe');
   if(tr || pe || tierra){ b += h2('Traslados y pernoctas'); if(tr) b += p(T((porCuentaR(r) ? '🚙 ' : '🚐 ') + esc(tr))); else if(tierra) b += p(T('🚐 Traslado terrestre.')); if(pe) b += p(T('🏨 ' + esc(pe))); }
-  b += h2(C ? 'Sede del evento y llegada' : 'Sede del evento') + p(T('Hotel Marinaterra', fs, INK, 'bold') + T(' · Blvd. Gabriel Estrada 12, San Carlos, Nuevo Guaymas, Sonora'));
+  { const hi = hotelInfo(r); b += h2('Hospedaje en el hotel sede');
+    b += `<tr><td style="padding:${C ? '1px 4px' : '2px 4px'}"><table cellpadding="0" cellspacing="0">${hi.lines.map(t => `<tr><td valign="top" style="padding:${C ? '1px 6px 1px 0' : '2px 6px 2px 0'}">${T('•', fs, G, 'bold')}</td><td style="padding:${C ? '1px 0' : '2px 0'}">${T(esc(t).replace(HOTEL.n, `<b style="color:${INK}">${HOTEL.n}</b>`))}</td></tr>`).join('')}</table></td></tr>`;
+    if(hi.nota) b += `<tr><td style="padding-top:${C ? 3 : 6}px"><table width="100%" cellpadding="0" cellspacing="0"><tr><td bgcolor="#FFF7E6" style="background:#FFF7E6;border-left:4px solid #E0A100;padding:${C ? '4px 10px;line-height:1.25' : '8px 12px'}">${T('⚠️ ' + esc(hi.nota), C ? 11 : fs, INK, 'bold')}</td></tr></table></td></tr>`; }
   const cards = [...document.querySelectorAll('#info .icard')].filter(c => !(tierra && c.classList.contains('solo-vuelo')) && !/clima|vestimenta|hotel sede/i.test((c.querySelector('.ik') || {}).textContent || ''));
-  if(cards.length){ if(!C) b += h2('Información general'); cards.forEach(c => { const k = c.querySelector('.ik'), v = c.querySelector('.iv'); b += p(T(esc(k ? k.textContent : ''), fs, INK, 'bold') + '<br>' + T(esc(v ? v.innerText : ''))); }); }
+  if(cards.length){ b += h2(C ? 'Llegada' : 'Información general'); cards.forEach(c => { const k = c.querySelector('.ik'), v = c.querySelector('.iv'); b += p(T(esc(k ? k.textContent : ''), fs, INK, 'bold') + '<br>' + T(esc(v ? v.innerText : ''))); }); }
   if(!tierra){ b += h2('Puntos importantes de su vuelo');
     const pts = [...document.querySelectorAll('section.important li')].map(li => `<tr><td valign="top" style="padding:${C ? '1px 6px 1px 0' : '3px 6px 3px 0'}">${T('•', C ? 11 : fs, G, 'bold')}</td><td style="padding:${C ? '1px 0;line-height:1.25' : '3px 0'}">${T(li.innerHTML.replace(/<b>/g, `<b style="color:${INK}">`), C ? 11 : fs)}</td></tr>`).join('');
     b += `<tr><td bgcolor="#F0F8F2" style="background:#F0F8F2;border-left:4px solid ${G};padding:${C ? '5px 12px' : '10px 14px'}"><table cellpadding="0" cellspacing="0">${pts}</table></td></tr>`; }
@@ -1130,7 +1153,8 @@ function waTxt(r){
   if(dos) L.push('🔑 *CLAVE DE RESERVA DE IDA*', '```' + r.ci + '```'); seg('🛫', 'Ida (conexión)', r.c1); seg('🛫', 'Ida', r.ida);
   if(dos) L.push('', '🔑 *CLAVE DE RESERVA DE REGRESO*', '```' + r.cr + '```'); seg('🛬', 'Regreso', r.reg); seg('🛬', 'Regreso (conexión)', r.c2);
   if((r.notas||[]).length){ L.push('', '📌 *Indicaciones especiales para ti*'); r.notas.forEach(n => L.push('• ' + n.t.replace(/Hotel Marinaterra/g, '*Hotel Marinaterra*'))); }
-  L.push('', '🏨 *Sede del evento:* Hotel Marinaterra, San Carlos, Sonora', '',
+  { const h = hotelInfo(r); L.push('', '🏨 *Hospedaje · Hotel Marinaterra*'); h.lines.forEach(t => L.push('• ' + t.replace('Hotel Marinaterra', '*Hotel Marinaterra*'))); if(h.nota) L.push('', '⚠️ ' + h.nota.replace('MetLife', '*MetLife*')); }
+  L.push('',
     '🗓️ *Agenda del evento:*', base + 'agenda-cumbre.jpg', '',
     '🔎 *Consulta tu reserva cuando quieras:*', base, '',
     '*Importante.-* Le recordamos que *MetLife* cubre únicamente las noches de hotel y traslados terrestres que estén dentro del evento o por ruta.', '',
@@ -1248,7 +1272,7 @@ async function itinPDFtexto(r){
     if(tr) bul(tr); else if(soloTierra(r)) bul('Traslado terrestre.');
     if(pe) bul(pe); }
   // Sede y agenda
-  head('Sede del evento'); para('Hotel Marinaterra · Blvd. Gabriel Estrada 12, San Carlos, Nuevo Guaymas, Sonora');
+  head('Hospedaje en el hotel sede'); { const h = hotelInfo(r); h.lines.forEach(t => bul(t)); if(h.nota) para(h.nota, {b:1}); }
   const tierra = soloTierra(r);
   // Sin clima, código de vestimenta ni hotel sede (ya va en Sede del evento): solo lo útil para el viaje.
   const cards = [...document.querySelectorAll('#info .icard')].filter(c => !(tierra && c.classList.contains('solo-vuelo')) && !/clima|vestimenta|hotel sede/i.test((c.querySelector('.ik') || {}).textContent || ''));
@@ -1971,7 +1995,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 209;
+const APP_V = 210;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

@@ -19,7 +19,7 @@
   }
   const GROUPS = [['c1', 'CONEXION I'], ['ida', 'DESTINO IDA'], ['reg', 'DESTINO REGRESO'], ['c2', 'CONEXION II'], ['res', 'DATOS DE LA RESERVA'], ['end', 'CARGOS']];
 
-  function parse(grid) {
+  function parse(grid, opt) { opt = opt || {};
     const hi = grid.findIndex(r => r && r.some(c => up(c) === 'NOMBRE'));
     if (hi < 1) throw new Error('No encontré la columna "Nombre" en la hoja de vuelos.');
     const H = grid[hi].map(up), G = grid[hi - 1].map(up);
@@ -129,7 +129,7 @@
       x.cl = x.ci || x.cr; // compatibilidad con páginas guardadas en el navegador
       if (x.c1 && x.ida && !x.ida.o) x.ida.o = x.c1.d;
       if (x.c2 && x.reg && !x.c2.o) x.c2.o = x.reg.d;
-      if (/^STAFF/i.test(x.rol)) continue; // el staff (STAFF, STAFF VECI, STAFF METLIFE) no aparece en el manifiesto
+      if (/^STAFF/i.test(x.rol)) { if (!opt.staff) continue; x.staff = true; } // staff: solo si se pide (va aparte, protegido con la contraseña VECI)
       rows.push(x);
     }
     return rows;

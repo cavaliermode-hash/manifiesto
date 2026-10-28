@@ -624,6 +624,7 @@ button.ptile{font:inherit;cursor:pointer;width:100%;transition:transform .08s,bo
 @media (max-width:480px){.nblk dl{font-size:13px;gap:1px 8px}.nblk dt{font-size:12px}}
 .knb{display:inline-flex;gap:3px;margin-left:6px;vertical-align:middle}.knb button{font-size:12px;line-height:1;padding:3px 5px;border:1px solid var(--line);border-radius:6px;background:#fff;cursor:pointer}.knb button:hover{border-color:var(--green);background:var(--green-soft)}
 .aerobox{margin:0 0 12px}.aerobox .hpin{margin:8px 0 0}
+.stag{display:inline-block;margin-left:6px;font:700 9.5px/1 var(--body);letter-spacing:.06em;padding:3px 5px;border-radius:4px;background:#1E5BA8;color:#fff;vertical-align:middle}
 </style>
 </head>
 <body>
@@ -1393,6 +1394,7 @@ document.addEventListener('click', e => { const b = e.target.closest('[data-pdf]
 /* ---------- PDF solo de vuelos (formato Viajes El Corte Inglés · "Su viaje") ---------- */
 const AERO_N = {MEX:'Mexico City, (Benito Juarez Intl)', HMO:'Hermosillo, (I.Pesqueira Garcia)', GDL:'Guadalajara, (Miguel Hidalgo y Costilla Intl)', MTY:'Monterrey, (Gral. Mariano Escobedo Intl)', MID:'Merida, (Manuel Crescencio Rejon Intl)', QRO:'Queretaro, (Queretaro Intl)', CUL:'Culiacan, (Fedl. de Bachigualato Intl)', ACA:'Acapulco, (Juan N. Alvarez Intl)', TIJ:'Tijuana, (Gral. Abelardo L. Rodriguez Intl)', PBC:'Puebla, (Hermanos Serdan Intl)', TLC:'Toluca, (Lic. Adolfo Lopez Mateos Intl)', NLU:'Santa Lucia, (Felipe Angeles Intl)', LMM:'Los Mochis, (Valle del Fuerte Intl)'};
 const LINEA = v => { const m = String(v || '').match(/^(.*?)\s*(\d+)$/); if(!m) return v; const al = m[1].toUpperCase(), c = {AEROMEXICO:['Aeromexico','AM'], VOLARIS:['Volaris','Y4'], 'VIVA AEROBUS':['Viva Aerobus','VB']}[al]; return c ? `${c[0]} ${c[1]} ${m[2]}` : v; };
+const LOGO_AL = v => ({AEROMEXICO:'logo-am.png', VOLARIS:'logo-y4.png', 'VIVA AEROBUS':'logo-vb.png'})[String(v || '').toUpperCase().replace(/\s*\d+$/, '')] || '';
 const DIAV = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'], MESV = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 const fV = (iso, conDia) => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || ''); if(!m) return iso || ''; const d = new Date(Date.UTC(+m[1], m[2]-1, +m[3])); return (conDia ? DIAV[d.getUTCDay()] + ' ' : '') + m[3] + ' ' + MESV[m[2]-1] + (conDia ? ' ' + m[1] : ''); };
 function vueloHTML(r){
@@ -1400,7 +1402,7 @@ function vueloHTML(r){
   const dur = l => { const m = legMin(l); return m > 0 ? `${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')} (Sin paradas)` : ''; };
   const leg = (l, clave) => `<div style="font:15px Arial,sans-serif;color:#222;margin:14px 0 4px 2px">${fV(l.f, true)}</div>
     <table style="width:100%;border-collapse:collapse;background:#EFEFEF"><tr>
-      <td style="width:64px;vertical-align:top;padding:10px 6px 10px 12px"><div style="width:40px;height:40px;border:1px solid #c9c9c9;background:#e2e2e2;display:flex;align-items:center;justify-content:center;font-size:22px;color:#9a9a9a">✈</div></td>
+      <td style="width:96px;vertical-align:top;padding:12px 6px 10px 12px">${LOGO_AL(l.v) ? `<div style="width:84px;height:30px;background:#fff;border-radius:4px;display:flex;align-items:center;justify-content:center;padding:3px"><img src="${LOGO_AL(l.v)}" style="max-width:78px;max-height:24px;display:block" alt=""></div>` : `<div style="width:40px;height:40px;border:1px solid #c9c9c9;background:#e2e2e2;display:flex;align-items:center;justify-content:center;font-size:22px;color:#9a9a9a">✈</div>`}</td>
       <td style="padding:10px 12px 10px 4px">
         <table style="width:100%;border-collapse:collapse;font:12px Arial,sans-serif;color:#222">
           <tr><td colspan="2" style="font:bold 15px Arial,sans-serif;padding:2px 0 8px">${esc(LINEA(l.v))}</td><td colspan="2" style="text-align:right;padding:2px 0 8px">${clave && !misma ? `<span style="font:bold 11px Arial,sans-serif;color:${G};letter-spacing:.4px">CLAVE DE RESERVA</span> <span style="font:bold 15px 'Courier New',monospace;color:#111;letter-spacing:2px;border:2px solid ${G};border-radius:5px;padding:2px 7px">${esc(clave)}</span>` : ''}</td></tr>
@@ -1510,7 +1512,7 @@ function tableTSV(rows){
 }
 function filtered(){
   const terms = qTerms();
-  return DATA.filter(r =>
+  return DATA.filter(r => !r.staff &&
     (!state.st || (state.st==='CONF') === confirmed(r)) &&
     (!state.ida || (r.ida&&r.ida.v===state.ida) || (r.c1&&r.c1.v===state.ida)) &&
     (!state.reg || (r.reg&&r.reg.v===state.reg) || (r.c2&&r.c2.v===state.reg)) &&
@@ -1713,7 +1715,7 @@ function ctlRender(){
         const con = cx ? ` · conexión ${esc(cx.v)} ${lle ? 'desde ' + esc(cx.o) : 'a ' + esc(cx.d)}` : '';
         const clave = lle ? (r.ci || r.cr) : (r.cr || r.ci);
         const pern = lle && (r.notas||[]).some(n => n.k === 'pe') ? '<span class="ctag">Hotel NH</span>' : '';
-        return `<li>${esc(r.n)}${kBtns(r.n)}</li>`; }).join('') + '</ul></section>';
+        return `<li>${esc(r.n)}${r.staff ? '<span class="stag">STAFF</span>' : ''}${kBtns(r.n)}</li>`; }).join('') + '</ul></section>';
   });
   $('#cout').innerHTML = html || '<p class="cnote">No hay invitados en este filtro.</p>';
 }
@@ -1811,7 +1813,7 @@ function claRender(){
   const cell = x => !x.ci && !x.cr ? '—' : (!x.cr || x.cr === x.ci) ? btn(x.ci) : !x.ci ? `<span class="cl">Regreso</span>${btn(x.cr)}`
     : `<span class="cl">Ida</span>${btn(x.ci)}<br><span class="cl">Regreso</span>${btn(x.cr)}`;
   const L = claRows(), qn = $('#cqn'); if(qn) qn.textContent = $('#cq').value.trim() ? `${L.length} de ${DATA.length}` : '';
-  $('#cbody').innerHTML = (L.length ? '' : '<tr><td colspan="3" class="cnone">Sin resultados para esa búsqueda.</td></tr>') + L.map(x => `<tr><td class="kn">${esc(x.n)}</td><td class="cc">${cell(x)}</td>
+  $('#cbody').innerHTML = (L.length ? '' : '<tr><td colspan="3" class="cnone">Sin resultados para esa búsqueda.</td></tr>') + L.map(x => `<tr><td class="kn">${esc(x.n)}${stTag(x.n)}</td><td class="cc">${cell(x)}</td>
     ${accBtns(x.i, true)}</tr>`).join('');
 }
 /* ---------- Traslados y pernoctas ---------- */
@@ -1832,11 +1834,12 @@ function ciudadTr(r, t){ // ciudad de donde sale el traslado
   if(/domicilio/i.test(t)) return r.cd ? conEdo(r.cd) : r.zn ? (/conurbado/i.test(r.zn) ? 'Zona metropolitana (domicilio)' : 'Zona ' + r.zn) : 'Domicilio registrado';
   return 'Sin ciudad indicada';
 }
+const INV = () => DATA.filter(r => !r.staff); // invitados sin staff (Traslados y pernoctas no incluye staff)
 function pytData(){
   const by = (a, b) => a.n.localeCompare(b.n, 'es');
-  const pern = DATA.filter(r => notaDe(r, 'pe')).sort(by), grupos = new Map();
-  const locales = DATA.filter(r => esPorCuenta(r) || (!tieneVuelo(r) && !conTraslado(r))).sort(by);
-  DATA.filter(conTraslado).sort(by).forEach(r => {
+  const pern = INV().filter(r => notaDe(r, 'pe')).sort(by), grupos = new Map();
+  const locales = INV().filter(r => esPorCuenta(r) || (!tieneVuelo(r) && !conTraslado(r))).sort(by);
+  INV().filter(conTraslado).sort(by).forEach(r => {
     const t = notaDe(r, 'tr'), m = t.match(/punto de encuentro (.+?)(?:, para llevarte|\. A tu regreso)/i), cd = ciudadTr(r, t);
     const cuando = (t.match(/el (\S+ \d+ de \S+) a las ([\d:]+ h)/) || []).slice(1).join(' · ') || (t.match(/a las ([\d:]+ h)/) || [])[1] || '';
     const dest = (t.match(/para llevarte (?:al|a la|a) (.+?)(?:,|\.)/) || [])[1] || '';
@@ -1892,19 +1895,19 @@ document.addEventListener('click', e => { const b = e.target.closest('#pout [dat
 function pytRender(){
   const {pern, grupos, locales} = pytData(), tras = [...grupos.values()].reduce((a, g) => a + g.pax.length, 0);
   const tabla = filas => `<div class="ktable-wrap"><table class="ktable"><tbody>${filas.join('')}</tbody></table></div>`;
-  const N = k => DATA.filter(PYT_FIL[k][1]).length, on = k => PYT_F === k ? ' on' : '';
+  const N = k => INV().filter(PYT_FIL[k][1]).length, on = k => PYT_F === k ? ' on' : '';
   // Conteo exacto por persona (cada invitado se cuenta una sola vez)
-  const tres = DATA.filter(PYT_FIL.tres[1]).sort((a, b) => a.n.localeCompare(b.n, 'es'));
+  const tres = INV().filter(PYT_FIL.tres[1]).sort((a, b) => a.n.localeCompare(b.n, 'es'));
   const porCd = new Map(); grupos.forEach(g => porCd.set(g.cd, (porCd.get(g.cd) || 0) + g.pax.length));
   const tile = (k, t, sub, cls = '') => `<button type="button" class="ptile ${cls}${on(k)}" data-pf="${k}" aria-pressed="${PYT_F === k}"><b>${N(k)}</b><span>${t}</span>${sub ? `<small>${sub}</small>` : ''}</button>`;
   const chip = (k, t) => `<button type="button" class="pchip${on(k)}" data-pf="${k}" aria-pressed="${PYT_F === k}">${t} <b>${N(k)}</b></button>`;
   const ex = ['tres','pev','trv','trs','loc','sv'], suma = ex.reduce((a, k) => a + N(k), 0);
   let h = `<div class="pdesg"><b>Desglose exacto (cada persona una sola vez) · toca para ver la lista:</b>
     ${ex.map(k => chip(k, PYT_FIL[k][0])).join('')}
-    <span class="tot">Total <b>${suma}</b>${suma === DATA.length ? ' ✔' : ' ⚠ no cuadra con ' + DATA.length}</span></div>
+    <span class="tot">Total <b>${suma}</b>${suma === INV().length ? ' ✔' : ' ⚠ no cuadra con ' + INV().length}</span></div>
   <p class="pw"><b>Traslados por ciudad:</b> ${[...porCd].sort((a, b) => b[1] - a[1]).map(([c, n]) => `${esc(c)} <b>${n}</b>`).join(' · ')}</p>`;
   if(PYT_F){ // resultado del cuadrito seleccionado
-    const L = DATA.filter(PYT_FIL[PYT_F][1]).sort((a, b) => a.n.localeCompare(b.n, 'es'));
+    const L = INV().filter(PYT_FIL[PYT_F][1]).sort((a, b) => a.n.localeCompare(b.n, 'es'));
     h += `<div class="pgrp pres"><h3>${PYT_FIL[PYT_F][0]}</h3><p class="pw"><span class="pc">${L.length} ${L.length===1?'persona':'personas'}</span> · <button type="button" class="pver" data-pf="${PYT_F}">✕ Ver todo</button></p>`
       + tabla(L.map(r => `<tr><td class="kn">${esc(r.n)}${svcTags(r)}</td>${accBtns(DATA.indexOf(r))}</tr>`)) + '</div>';
     $('#pout').innerHTML = h; return;
@@ -1987,7 +1990,7 @@ function konRender(){
   document.querySelectorAll('#con .ktable th button').forEach(b => { if(b.dataset.sort === KON.sort){ b.setAttribute('aria-sort', KON.dir>0?'ascending':'descending'); b.querySelector('span').dataset.a = KON.dir>0?'▲':'▼'; } else b.removeAttribute('aria-sort'); });
   const rows = all.filter(x => KON.filter === 'all' || x.s === KON.filter);
   $('#kbody').innerHTML = rows.map(x => { const l = x.l;
-    return `<tr class="st-${x.s}"><td class="kn">${esc(x.n)}<span class="knb"><button type="button" data-kver="${esc(x.n)}" title="Ver su reserva como en la búsqueda" aria-label="Ver reserva de ${esc(x.n)}">🔍</button><button type="button" data-kcopy="${esc(x.n)}" title="Copiar nombre" aria-label="Copiar nombre de ${esc(x.n)}">📋</button></span></td>${l ? `<td class="kf">${esc(fmtDate(l.f))}<small>${esc(lle ? l.l : l.s)} · ${esc(l.o)}→${esc(l.d)}</small></td>
+    return `<tr class="st-${x.s}"><td class="kn">${esc(x.n)}${stTag(x.n)}<span class="knb"><button type="button" data-kver="${esc(x.n)}" title="Ver su reserva como en la búsqueda" aria-label="Ver reserva de ${esc(x.n)}">🔍</button><button type="button" data-kcopy="${esc(x.n)}" title="Copiar nombre" aria-label="Copiar nombre de ${esc(x.n)}">📋</button></span></td>${l ? `<td class="kf">${esc(fmtDate(l.f))}<small>${esc(lle ? l.l : l.s)} · ${esc(l.o)}→${esc(l.d)}</small></td>
       <td class="kv">${esc(l.v)}</td>` : `<td class="kf">${esc(x.lab)}<small>${x.v === 'Por su cuenta' ? '🚗' : '🚐'} ${esc(x.det)}</small></td><td class="kv">${esc(x.v)}</td>`}<td><div class="kb"><button class="bok" data-n="${esc(x.n)}" data-s="ok" aria-pressed="${x.s==='ok'}">✓ Check-in</button>
       <button class="bns" data-n="${esc(x.n)}" data-s="ns" aria-pressed="${x.s==='ns'}">✗ No show</button></div></td></tr>`; }).join('')
     || '<tr><td colspan="4" class="cnote">No hay invitados en este filtro.</td></tr>';
@@ -2045,15 +2048,18 @@ function askPw(msg){
 const VECI_MIN = 15, VECI_MS = VECI_MIN * 60000;
 const veciSes = () => { try{ const v = JSON.parse(sessionStorage.getItem('veci') || 'null'); return v && Date.now() - v.t < VECI_MS ? v : null; }catch(e){ return null; } };
 const veciSave = pw => { try{ sessionStorage.setItem('veci', JSON.stringify({pw: pw || (veciSes() || {}).pw || '', t: Date.now()})); }catch(e){} };
-const veciEnd = () => { try{ sessionStorage.removeItem('veci'); }catch(e){} TEL = {}; MAIL = {}; };
-async function veciTel(pw){ if(PACK && PACK.tel && !Object.keys(TEL).length){ try{ const c = await Cifra.descifrar(PACK.tel, pw); TEL = c.tel || {}; MAIL = c.mail || {}; }catch(e){ TEL = {}; MAIL = {}; } } }
+const veciEnd = () => { try{ sessionStorage.removeItem('veci'); }catch(e){} TEL = {}; MAIL = {}; DATA = DATA.filter(r => !r.staff); };
+async function veciTel(pw){ if(PACK && PACK.tel && !Object.keys(TEL).length){ try{ const c = await Cifra.descifrar(PACK.tel, pw); TEL = c.tel || {}; MAIL = c.mail || {}; staffAdd(c.staff || []); }catch(e){ TEL = {}; MAIL = {}; } } }
+/* Staff: viene protegido con la contraseña VECI y solo se agrega a las pestañas de VECI (no al buscador público ni a Traslados y pernoctas) */
+const stTag = n => DATA.some(r => r.staff && r.n === n) ? '<span class="stag">STAFF</span>' : '';
+function staffAdd(L){ DATA = DATA.filter(r => !r.staff); L.forEach(r => { r.staff = true; r._w = new Set(norm(r.n).split(/\s+/).filter(Boolean)); r._n = norm(r.n); DATA.push(r); }); }
 async function conGate(msg){
   const ses = veciSes(); if(ses && ses.pw){ await veciTel(ses.pw); veciSave(ses.pw); return true; }
   const pw = await askPw(msg || 'Para abrir esta sección escribe la contraseña:'); if(pw === null) return false;
   if(await sha256(pw.trim().toLowerCase()) !== RESET_H){ alert('Contraseña incorrecta.'); return false; }
   veciSave(pw);
   // Teléfonos de los invitados: van cifrados con la contraseña del equipo y solo se abren aquí.
-  if(PACK && PACK.tel && !Object.keys(TEL).length){ try{ const c = await Cifra.descifrar(PACK.tel, pw); TEL = c.tel || {}; MAIL = c.mail || {}; }catch(e){ TEL = {}; MAIL = {}; } }
+  await veciTel(pw);
   return true;
 }
 let TEL = {}, MAIL = {};
@@ -2138,7 +2144,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 241;
+const APP_V = 244;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

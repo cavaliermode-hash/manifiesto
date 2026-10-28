@@ -1861,7 +1861,7 @@ function rolBar(){ const el = document.getElementById('rolbar'); if(!el) return;
   const orden = Object.keys(c).sort((a, b) => (/^STAFF/.test(a) - /^STAFF/.test(b)) || c[b] - c[a] || a.localeCompare(b, 'es'));
   const nSt = DATA.filter(r => /^staff/i.test(r.rol || '')).length;
   const chip = (k, t, n) => `<button type="button" data-rol="${esc(k)}" class="${CLA.rol === k ? 'on' : ''}${/^STAFF/.test(k) ? ' st' : ''}" aria-pressed="${CLA.rol === k}">${esc(t)} <b>${n}</b></button>`;
-  el.innerHTML = chip('', 'Todos', DATA.length) + orden.map(k => chip(k, k, c[k])).join('') + (nSt ? chip('STAFF*', 'Todo el staff', nSt) : ''); }
+  el.innerHTML = chip('', 'Todos', DATA.length) + orden.filter(k => !/^STAFF/.test(k)).map(k => chip(k, k, c[k])).join('') + (nSt ? chip('STAFF*', 'STAFF', nSt) : ''); }
 document.addEventListener('click', e => { const b = e.target.closest('#rolbar [data-rol]'); if(!b) return; CLA.rol = CLA.rol === b.dataset.rol ? '' : b.dataset.rol; claRender(); });
 function claRender(){ rolBar();
   document.querySelectorAll('#cla .ktable th button').forEach(b => { if(b.dataset.sort === CLA.sort){ b.setAttribute('aria-sort', CLA.dir>0?'ascending':'descending'); b.querySelector('span').dataset.a = CLA.dir>0?'▲':'▼'; } else b.removeAttribute('aria-sort'); });
@@ -2200,7 +2200,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 253;
+const APP_V = 254;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

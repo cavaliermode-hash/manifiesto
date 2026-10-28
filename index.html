@@ -1456,9 +1456,9 @@ async function pdfDirecto2(sp, solo, nn){
   document.title = r ? (solo ? 'Vuelos ' : 'Itinerario ') + tcase(r.n) : 'Itinerario';
   document.body.insertAdjacentHTML('beforeend', `<div style="position:fixed;inset:0;z-index:2000;background:#fff;font:600 17px/1.5 system-ui,sans-serif;color:#136c34;padding:40px 20px;text-align:center" id="pdfst">${r ? 'Generando itinerario de ' + esc(tcase(r.n)) + '…' : 'No se encontró la reserva.'}</div>`);
   if(!r) return;
-  (solo ? vueloPDF(r) : itinPDF(r)).then(blob => { const url = URL.createObjectURL(new File([blob], (solo ? 'Vuelos ' : 'Itinerario ') + tcase(r.n) + '.pdf', {type:'application/pdf'}));
+  (solo ? vueloPDF(r) : itinPDF(r)).then(blob => { const url = URL.createObjectURL(new File([blob], (solo ? '' : 'Itinerario ') + tcase(r.n) + '.pdf', {type:'application/pdf'}));
     $('#pdfst').innerHTML = `<a href="${url}" style="color:#136c34">Abrir itinerario de ${esc(tcase(r.n))} (PDF)</a>`; if(solo){ // PDF de vuelos: se descarga automáticamente y además se abre para verlo
-      const nombre = 'Vuelos ' + tcase(r.n) + '.pdf', dl = document.createElement('a'); dl.href = url; dl.download = nombre; document.body.appendChild(dl); dl.click(); dl.remove();
+      const nombre = tcase(r.n) + '.pdf', dl = document.createElement('a'); dl.href = url; dl.download = nombre; document.body.appendChild(dl); dl.click(); dl.remove();
       $('#pdfst').innerHTML = `✓ Se descargó <b>${esc(nombre)}</b><br><a href="${url}" style="color:#136c34">Abrir PDF</a>`; setTimeout(() => location.replace(url), 900); }
     else location.replace(url); })
     .catch(() => { $('#pdfst').textContent = 'No se pudo generar el PDF. Revisa tu conexión y recarga.'; });
@@ -2163,7 +2163,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 248;
+const APP_V = 249;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

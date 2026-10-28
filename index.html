@@ -942,7 +942,7 @@ const claveUna = r => { const i = !!(r.ida || r.c1), g = !!(r.reg || r.c2); retu
 const VUELO_TXT_R = r => dosClaves(r)
   ? 'A continuación le compartimos los datos de su reservación aérea. Importante: su viaje tiene dos claves de reserva distintas, una para el vuelo de ida y otra para el vuelo de regreso. Le sugerimos conservar ambas, ya que las necesitará para realizar su check-in y consultar su itinerario directamente con la aerolínea.'
   : 'A continuación le compartimos los datos de su reservación aérea. Le sugerimos conservar su clave de reserva, ya que la necesitará para realizar su check-in y consultar su itinerario directamente con la aerolínea.';
-const REGRESO_TXT = 'Los traslados de regreso al aeropuerto serán publicados una vez terminen las sesiones en sitio.';
+const REGRESO_TXT = '* Los traslados de regreso al Aeropuerto serán publicados una vez terminen las sesiones en sitio.';
 /* Traslado de regreso al aeropuerto de Hermosillo: aplica si su vuelo de regreso sale de Hermosillo dentro de las fechas del evento (3 al 5 de noviembre). */
 function aplicaRegreso(r){ const reg = [r.reg, r.c2].filter(Boolean), l = reg.find(x => x.o === 'HMO'); return !!l && l.f >= HOTEL.ci && l.f <= HOTEL.co; }
 function aplicaLlegada(r){ const ida = [r.c1, r.ida].filter(Boolean), l = ida.find(x => x.d === 'HMO'); return !!l && l.f >= HOTEL.ci && l.f <= HOTEL.co; }
@@ -1015,7 +1015,7 @@ function lineaTiempo(r){
     if(b.t === 'Pernocta a su llegada'){ add(isoDe(val(R, 'Check-in')), '23:00', {tipo: 'blk', i: b.i, t: b.t, rows: R}); return; }
     if(b.t === 'A su llegada'){ const f = isoDe(val(R, 'Fecha')), l = legsI.find(x => x.f === f && x.d === 'HMO'); add(f, l ? minDe(l.l) + 1 : '12:00', {tipo: 'blk', i: b.i, t: b.t, rows: R}); return; }
     if(/^Traslado de regreso/.test(b.t)){ const f = isoDe(val(R, 'Fecha')) || HOTEL.co, vu = val(R, 'Vuelo'), dest = val(R, 'Destino');
-      if(/salida/.test(vu) && /aeropuerto de Hermosillo/i.test(dest)){ regHMO = true; add(f, minDe(vu.split('salida')[1]) - 1, {tipo: 'blk', i: b.i, t: 'Traslado del hotel al aeropuerto de Hermosillo', rows: R}); return; }
+      if(/salida/.test(vu) && /aeropuerto de Hermosillo/i.test(dest)){ regHMO = true; add(f, minDe(vu.split('salida')[1]) - 1, {tipo: 'blk', i: b.i, t: 'Traslado del hotel al aeropuerto de Hermosillo', rows: R.concat([['Horario', REGRESO_TXT]])}); return; }
       if(/llegada/.test(vu)){ add(f, minDe(vu.split('llegada')[1]) + 1, {tipo: 'blk', i: b.i, t: b.t === 'Traslado de regreso' ? 'Traslado de regreso a su ciudad' : b.t, rows: R}); return; }
       add(f, '12:30', {tipo: 'blk', i: b.i, t: b.t, rows: R}); return; }
     add('', 0, {tipo: 'blk', i: b.i, t: b.t, rows: b.rows, text: b.text});
@@ -2251,7 +2251,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 283;
+const APP_V = 284;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

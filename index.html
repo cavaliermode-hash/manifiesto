@@ -1451,7 +1451,7 @@ async function vueloPDF(r){
 }
 document.addEventListener('click', e => { const b = e.target.closest('[data-vpdf]'); if(!b) return; e.preventDefault();
   const r = DATA[+b.dataset.vpdf]; DLG = true; setTimeout(() => { DLG = false; awaySince = 0; }, 3000);
-  window.open(location.pathname + '?vpdf=' + encodeURIComponent(r.n) + '&v=' + APP_V + '.' + Date.now(), '_blank'); });
+  window.open(location.pathname + '?vpdf=' + encodeURIComponent(r.n) + (b.dataset.solover ? '&ver=1' : '') + '&v=' + APP_V + '.' + Date.now(), '_blank'); });
 /* ---------- Descargar todos los PDF en un ZIP (un PDF por persona, con su nombre). Respeta el buscador de Claves. ---------- */
 let zipP; function loadZip(){ if(window.JSZip) return Promise.resolve(window.JSZip);
   return zipP = zipP || new Promise((ok, ko) => { const sc = document.createElement('script'); sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js'; sc.onload = () => ok(window.JSZip); sc.onerror = ko; document.head.appendChild(sc); }); }
@@ -1501,7 +1501,7 @@ async function pdfDirecto2(sp, solo, nn){
   document.body.insertAdjacentHTML('beforeend', `<div style="position:fixed;inset:0;z-index:2000;background:#fff;font:600 17px/1.5 system-ui,sans-serif;color:#136c34;padding:40px 20px;text-align:center" id="pdfst">${r ? 'Generando itinerario de ' + esc(tcase(r.n)) + '…' : 'No se encontró la reserva.'}</div>`);
   if(!r) return;
   (solo ? vueloPDF(r) : itinPDF(r)).then(blob => { const url = URL.createObjectURL(new File([blob], (solo ? '' : 'Itinerario ') + tcase(r.n) + '.pdf', {type:'application/pdf'}));
-    $('#pdfst').innerHTML = `<a href="${url}" style="color:#136c34">Abrir itinerario de ${esc(tcase(r.n))} (PDF)</a>`; if(solo){ // PDF de vuelos: se descarga automáticamente y además se abre para verlo
+    $('#pdfst').innerHTML = `<a href="${url}" style="color:#136c34">Abrir itinerario de ${esc(tcase(r.n))} (PDF)</a>`; if(solo && !sp.get('ver')){ // PDF de vuelos (VECI): se descarga automáticamente y además se abre para verlo
       const nombre = tcase(r.n) + '.pdf', dl = document.createElement('a'); dl.href = url; dl.download = nombre; document.body.appendChild(dl); dl.click(); dl.remove();
       $('#pdfst').innerHTML = `✓ Se descargó <b>${esc(nombre)}</b><br><a href="${url}" style="color:#136c34">Abrir PDF</a>`; setTimeout(() => location.replace(url), 900); }
     else location.replace(url); })
@@ -1521,8 +1521,8 @@ function mailBox(r){
   </section>
   ${[r.c1, r.ida, r.reg, r.c2].some(Boolean) ? `<section class="mailbox pdfbox" aria-labelledby="pdf-t">
     <h3 id="pdf-t">✈️ Ver mis vuelos en PDF</h3>
-    <p>Abre y descarga el PDF con <b>tus vuelos</b>: tus claves de reserva, aerolínea, número de vuelo, horarios de salida y llegada, y los puntos importantes de tu vuelo. Desde ahí lo puedes guardar, imprimir o compartir.</p>
-    <button class="abtn2" type="button" data-vpdf="${i}">Ver en PDF</button>
+    <p>Abre en otra pestaña el PDF con <b>tus vuelos</b>: tus claves de reserva, aerolínea, número de vuelo, horarios de salida y llegada, y los puntos importantes de tu vuelo. Desde ahí lo puedes guardar, imprimir o compartir.</p>
+    <button class="abtn2" type="button" data-vpdf="${i}" data-solover="1">Ver en PDF</button>
   </section>` : ''}`;
 }
 function icsFor(r){
@@ -2215,7 +2215,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 258;
+const APP_V = 259;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

@@ -623,6 +623,7 @@ button.ptile{font:inherit;cursor:pointer;width:100%;transition:transform .08s,bo
 .nblk dl{display:grid;grid-template-columns:max-content 1fr;gap:1px 10px;margin:0;font-size:13.5px;line-height:1.3}.nblk dt{font-weight:700;color:var(--muted)}.nblk dd{margin:0;color:var(--ink,#16301F)}.nbx{margin:0;font-size:14px}
 @media (max-width:480px){.nblk dl{font-size:13px;gap:1px 8px}.nblk dt{font-size:12px}}
 .knb{display:inline-flex;gap:3px;margin-left:6px;vertical-align:middle}.knb button{font-size:12px;line-height:1;padding:3px 5px;border:1px solid var(--line);border-radius:6px;background:#fff;cursor:pointer}.knb button:hover{border-color:var(--green);background:var(--green-soft)}
+.aerobox{margin:0 0 12px}.aerobox .hpin{margin:8px 0 0}
 </style>
 </head>
 <body>
@@ -934,7 +935,12 @@ function hotelInfo(r){
   return {lines, nota: notas.length ? notas.join(' ') + ' ' + MET : ''};
 }
 function hotelHTML(r){ const h = hotelInfo(r);
-  return `<section class="notas hotelbox" aria-label="Hospedaje"><h3>🏨 Hospedaje en el hotel sede</h3><ul>${h.lines.map(t => `<li>${esc(t).replace(HOTEL.n, `<b class="sede">${HOTEL.n}</b>`)}</li>`).join('')}</ul>${!soloTierra(r) && aplicaLlegada(r) ? `<p class="hpin"><b>📍 Recepción en el aeropuerto de Hermosillo</b><br>${esc(LLEGA_TXT).replace('MetLife', '<b>MetLife</b>')}</p>` : ''}${!soloTierra(r) && aplicaRegreso(r) ? `<p class="hpin"><b>🚐 Traslado de regreso al aeropuerto de Hermosillo</b><br>${esc(REGRESO_TXT)}</p>` : ''}${h.nota ? `<p class="hnota">⚠️ ${esc(h.nota)}</p>` : ''}</section>`; }
+  return `<section class="notas hotelbox" aria-label="Hospedaje"><h3>🏨 Hospedaje en el hotel sede</h3><ul>${h.lines.map(t => `<li>${esc(t).replace(HOTEL.n, `<b class="sede">${HOTEL.n}</b>`)}</li>`).join('')}</ul>${h.nota ? `<p class="hnota">⚠️ ${esc(h.nota)}</p>` : ''}</section>`; }
+// Recepción y traslado de regreso al aeropuerto: van debajo de los vuelos
+function aeroHTML(r){ if(soloTierra(r)) return ''; let x = '';
+  if(aplicaLlegada(r)) x += `<p class="hpin"><b>📍 Recepción en el aeropuerto de Hermosillo</b><br>${esc(LLEGA_TXT).replace('MetLife', '<b>MetLife</b>')}</p>`;
+  if(aplicaRegreso(r)) x += `<p class="hpin"><b>🚐 Traslado de regreso al aeropuerto de Hermosillo</b><br>${esc(REGRESO_TXT)}</p>`;
+  return x ? `<section class="aerobox" aria-label="Aeropuerto">${x}</section>` : ''; }
 /* Indicaciones especiales en bloques claros: cada traslado o pernocta se separa en un recuadro con sus datos clave
    (fecha y hora, dónde le recogen, dirección, destino, vuelo). Si un texto no coincide con ningún formato, se muestra tal cual. */
 function notaBloques(r){
@@ -990,6 +996,7 @@ function detailView(r){
     ${notasHTML(r)}
     ${hotelHTML(r)}
     ${card}
+    ${aeroHTML(r)}
     ${tripSteps(r)}
   </div>`;
 }
@@ -1079,6 +1086,7 @@ function mailTxt(r){
   const seg = (lab, l) => l && L.push(`${lab}: ${l.v} · ${fmtDate(l.f)} · ${l.o} ${l.s} > ${l.d} ${l.l} (hora local)`);
   L.push(`Estimado(a) ${r.n.toUpperCase()}:`, '', INTRO_TXT, '');
   { const B = notaBloques(r); if(B.length || tierra){ L.push('INDICACIONES ESPECIALES PARA TI'); B.forEach(bl => { L.push('', `${bl.i} ${bl.t.toUpperCase()}`); if(bl.rows) bl.rows.forEach(([k, v]) => L.push(`- ${k}: ${v}`)); else L.push(bl.text); }); if(!B.length) L.push('- Traslado terrestre.'); L.push(''); } }
+  { const h = hotelInfo(r); L.push('HOSPEDAJE EN EL HOTEL SEDE'); h.lines.forEach(t => L.push('- ' + t)); if(h.nota) L.push('IMPORTANTE: ' + h.nota); L.push(''); }
   const dos = !!(r.ci && r.cr && r.ci !== r.cr);
   L.push('DATOS DE LA RESERVA'); if(dos) L.push('Tienes una clave para la ida y otra para el regreso (aparecen junto a sus vuelos).');
   else if(r.ci || r.cr) L.push(`CLAVE DE RESERVA: [ ${r.ci || r.cr} ]`); else if(tierra) L.push(viajeTxt(r));
@@ -1086,7 +1094,8 @@ function mailTxt(r){
     if(dos) L.push('', `CLAVE DE RESERVA DE IDA: [ ${r.ci} ]`); seg('Ida (conexión)', r.c1); seg('Ida', r.ida);
     if(dos) L.push('', `CLAVE DE RESERVA DE REGRESO: [ ${r.cr} ]`); seg('Regreso', r.reg); seg('Regreso (conexión)', r.c2); }
   const tr = notaDe(r, 'tr'), pe = notaDe(r, 'pe');
-  { const h = hotelInfo(r); L.push('', 'HOSPEDAJE EN EL HOTEL SEDE'); h.lines.forEach(t => L.push('- ' + t)); if(!soloTierra(r) && aplicaLlegada(r)) L.push('', '📍 RECEPCIÓN EN EL AEROPUERTO DE HERMOSILLO', LLEGA_TXT); if(!soloTierra(r) && aplicaRegreso(r)) L.push('', '🚐 TRASLADO DE REGRESO AL AEROPUERTO DE HERMOSILLO', REGRESO_TXT); if(h.nota) L.push('', 'IMPORTANTE: ' + h.nota); }
+  if(!tierra && aplicaLlegada(r)) L.push('', '📍 RECEPCIÓN EN EL AEROPUERTO DE HERMOSILLO', LLEGA_TXT);
+  if(!tierra && aplicaRegreso(r)) L.push('', '🚐 TRASLADO DE REGRESO AL AEROPUERTO DE HERMOSILLO', REGRESO_TXT);
   const cards = [...document.querySelectorAll('#info .icard')].filter(c => !c.classList.contains('solo-vuelo') && !/hotel sede/i.test((c.querySelector('.ik') || {}).textContent || ''));
   if(cards.length){ L.push('', 'INFORMACIÓN GENERAL');
     cards.forEach(c => { const k = c.querySelector('.ik'), lis = c.querySelectorAll('li'), v = c.querySelector('.iv');
@@ -1147,6 +1156,11 @@ function mailHTML(r, enPDF){
       B.forEach(bl => { const rows = bl.rows ? bl.rows.map(([k, v]) => `<tr><td valign="top" width="${C ? 104 : 120}" style="width:${C ? 104 : 120}px;padding:${C ? '0 6px 0 0' : '1px 8px 1px 0'}">${T(esc(k), C ? 10 : 12, MUT, 'bold')}</td><td style="padding:${C ? '0;line-height:1.25' : '1px 0;line-height:1.35'}">${T(esc(v).replace(B_HL, x => `<b style="color:${INK}">${x}</b>`), C ? 11 : 13, INK)}</td></tr>`).join('') : `<tr><td colspan="2">${T(esc(bl.text), C ? 11 : 13, INK)}</td></tr>`;
         inner += `<tr><td style="padding:${C ? '3px 0' : '5px 0'}"><table width="100%" cellpadding="0" cellspacing="0"><tr><td bgcolor="#FFFFFF" style="background:#FFFFFF;border:1.5px solid #EBCB72;border-left:5px solid #E0A100;border-radius:8px;padding:${C ? '3px 9px' : '6px 11px'}">${T(bl.i + ' ' + esc(bl.t.toUpperCase()), C ? 10 : 12, '#6B4A00', 'bold', 'Arial,sans-serif', 'letter-spacing:.5px')}<table cellpadding="0" cellspacing="0" style="margin-top:${C ? 1 : 2}px">${rows}</table></td></tr></table></td></tr>`; });
       b += caja('Indicaciones especiales para ti', inner); } }
+  // Hospedaje (después de las indicaciones y antes de los vuelos)
+  { const hi = hotelInfo(r), pad = C ? '3px 0' : '5px 0';
+    let inner = `<tr><td style="padding:${pad}"><table cellpadding="0" cellspacing="0">${hi.lines.map(t => `<tr><td valign="top" style="padding:${C ? '1px 8px 1px 2px' : '2px 8px 2px 2px'}">${T('•', fs, INK, 'bold')}</td><td style="padding:${C ? '1px 0' : '2px 0'}">${T(esc(t).replace(HOTEL.n, `<b style="color:${INK}">${HOTEL.n}</b>`), C ? 12 : fs, INK)}</td></tr>`).join('')}</table></td></tr>`;
+    if(hi.nota) inner += `<tr><td style="padding:${pad}"><table width="100%" cellpadding="0" cellspacing="0"><tr><td bgcolor="#FFF7E6" style="background:#FFF7E6;border-left:4px solid #E0A100;border-radius:6px;padding:${C ? '4px 10px;line-height:1.25' : '8px 12px'}">${T('⚠️ ' + esc(hi.nota), C ? 11 : fs, INK, 'bold')}</td></tr></table></td></tr>`;
+    b += caja('🏨 Hospedaje en el hotel sede', inner); }
   if(C){ // PDF compacto: la clave va junto al nombre o dentro de cada tarjeta de vuelo
     if(!dos && (r.ci || r.cr)) b += key('Clave de reserva', r.ci || r.cr);
     if(tierra) b += p(T(viajeTxt(r), fs, INK, 'bold'));
@@ -1161,14 +1175,10 @@ function mailHTML(r, enPDF){
     if(dos) b += key('Clave de reserva de regreso', r.cr); b += card('Regreso', [r.reg, r.c2], G2, dos);
     b += p(T('Horarios en hora local de cada aeropuerto.', 11, MUT)); }
   const tr = notaDe(r, 'tr'), pe = notaDe(r, 'pe');
-  // Hospedaje: mismo diseño que en la página (recuadro amarillo con título café, viñetas y recuadros verdes dentro)
-  { const hi = hotelInfo(r), pad = C ? '3px 0' : '5px 0';
-    const verde = (tit, txt) => `<tr><td style="padding:${pad}"><table width="100%" cellpadding="0" cellspacing="0"><tr><td bgcolor="#E3F1E7" style="background:#E3F1E7;border:2px solid ${G};border-radius:8px;padding:${C ? '4px 10px;line-height:1.3' : '8px 12px;line-height:1.4'}">${T(tit, C ? 12 : 14, G, 'bold')}<br>${T(txt, C ? 12 : fs, INK)}</td></tr></table></td></tr>`;
-    let inner = `<tr><td style="padding:${pad}"><table cellpadding="0" cellspacing="0">${hi.lines.map(t => `<tr><td valign="top" style="padding:${C ? '1px 8px 1px 2px' : '2px 8px 2px 2px'}">${T('•', fs, INK, 'bold')}</td><td style="padding:${C ? '1px 0' : '2px 0'}">${T(esc(t).replace(HOTEL.n, `<b style="color:${INK}">${HOTEL.n}</b>`), C ? 12 : fs, INK)}</td></tr>`).join('')}</table></td></tr>`;
-    if(!tierra && aplicaLlegada(r)) inner += verde('📍 Recepción en el aeropuerto de Hermosillo', 'A tu llegada al aeropuerto de Hermosillo te pedimos localizar el logo de <b>MetLife</b> para trasladarte al hotel sede Marinaterra.');
-    if(!tierra && aplicaRegreso(r)) inner += verde('🚐 Traslado de regreso al aeropuerto de Hermosillo', 'Los traslados de regreso al aeropuerto serán publicados una vez terminen las sesiones en sitio.');
-    if(hi.nota) inner += `<tr><td style="padding:${pad}"><table width="100%" cellpadding="0" cellspacing="0"><tr><td bgcolor="#FFF7E6" style="background:#FFF7E6;border-left:4px solid #E0A100;border-radius:6px;padding:${C ? '4px 10px;line-height:1.25' : '8px 12px'}">${T('⚠️ ' + esc(hi.nota), C ? 11 : fs, INK, 'bold')}</td></tr></table></td></tr>`;
-    b += caja('🏨 Hospedaje en el hotel sede', inner); }
+  // Recepción y traslado de regreso al aeropuerto: recuadros verdes debajo de los vuelos
+  { const verde = (tit, txt) => `<tr><td style="padding:${C ? '3px 0' : '5px 0'}"><table width="100%" cellpadding="0" cellspacing="0"><tr><td bgcolor="#E3F1E7" style="background:#E3F1E7;border:2px solid ${G};border-radius:8px;padding:${C ? '4px 10px;line-height:1.3' : '8px 12px;line-height:1.4'}">${T(tit, C ? 12 : 14, G, 'bold')}<br>${T(txt, C ? 12 : fs, INK)}</td></tr></table></td></tr>`;
+    if(!tierra && aplicaLlegada(r)) b += verde('📍 Recepción en el aeropuerto de Hermosillo', 'A tu llegada al aeropuerto de Hermosillo te pedimos localizar el logo de <b>MetLife</b> para trasladarte al hotel sede Marinaterra.');
+    if(!tierra && aplicaRegreso(r)) b += verde('🚐 Traslado de regreso al aeropuerto de Hermosillo', 'Los traslados de regreso al aeropuerto serán publicados una vez terminen las sesiones en sitio.'); }
   const cards = [...document.querySelectorAll('#info .icard')].filter(c => !c.classList.contains('solo-vuelo') && !/clima|vestimenta|hotel sede/i.test((c.querySelector('.ik') || {}).textContent || ''));
   // (la recepción en el aeropuerto va como viñeta dentro de Hospedaje, sin título aparte)
   if(!tierra){ b += h2('Puntos importantes de su vuelo');
@@ -1212,12 +1222,14 @@ function waTxt(r){
   const seg = (ic, lab, l) => l && L.push(`${ic} *${lab}:* ${l.v}`, `    📅 ${fmtDate(l.f)}`, `    ${l.o} ${l.s} → ${l.d} ${l.l}`);
   L.push(`👋 Estimado(a) *${r.n.toUpperCase()}*`, '', INTRO_TXT, '');
   { const B = notaBloques(r); if(B.length){ L.push('📌 *Indicaciones especiales para ti*', ''); B.forEach(bl => { L.push(`${bl.i} *${bl.t.toUpperCase()}*`); if(bl.rows) bl.rows.forEach(([k, v]) => L.push(`• *${k}:* ${v}`)); else L.push(bl.text); L.push(''); }); } }
+  { const h = hotelInfo(r); L.push('🏨 *Hospedaje · Hotel Marinaterra*'); h.lines.forEach(t => L.push('• ' + t.replace('Hotel Marinaterra', '*Hotel Marinaterra*'))); if(h.nota) L.push('', '⚠️ ' + h.nota.replace('MetLife', '*MetLife*')); L.push(''); }
   const dos = !!(r.ci && r.cr && r.ci !== r.cr);
   if(!dos && (r.ci || r.cr)) L.push('🔑 *CLAVE DE RESERVA*', '```' + (r.ci || r.cr) + '```', '');
   if(soloTierra(r)) L.push(porCuentaR(r) ? '🚙 *Llega por su cuenta*' : '🚐 *Traslado terrestre*');
   if(dos) L.push('🔑 *CLAVE DE RESERVA DE IDA*', '```' + r.ci + '```'); seg('🛫', 'Ida (conexión)', r.c1); seg('🛫', 'Ida', r.ida);
   if(dos) L.push('', '🔑 *CLAVE DE RESERVA DE REGRESO*', '```' + r.cr + '```'); seg('🛬', 'Regreso', r.reg); seg('🛬', 'Regreso (conexión)', r.c2);
-  { const h = hotelInfo(r); L.push('', '🏨 *Hospedaje · Hotel Marinaterra*'); h.lines.forEach(t => L.push('• ' + t.replace('Hotel Marinaterra', '*Hotel Marinaterra*'))); if(!soloTierra(r) && aplicaLlegada(r)) L.push('', '📍 *Recepción en el aeropuerto de Hermosillo*', LLEGA_TXT.replace('MetLife', '*MetLife*')); if(!soloTierra(r) && aplicaRegreso(r)) L.push('', '🚐 *Traslado de regreso al aeropuerto de Hermosillo*', REGRESO_TXT); if(h.nota) L.push('', '⚠️ ' + h.nota.replace('MetLife', '*MetLife*')); }
+  if(!soloTierra(r) && aplicaLlegada(r)) L.push('', '📍 *Recepción en el aeropuerto de Hermosillo*', LLEGA_TXT.replace('MetLife', '*MetLife*'));
+  if(!soloTierra(r) && aplicaRegreso(r)) L.push('', '🚐 *Traslado de regreso al aeropuerto de Hermosillo*', REGRESO_TXT);
   L.push('',
     '🗓️ *Agenda del evento:*', base + 'agenda-cumbre.jpg', '',
     '🔎 *Consulta tu reserva cuando quieras:*', base, '',
@@ -2073,7 +2085,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 229;
+const APP_V = 230;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

@@ -1415,7 +1415,9 @@ function vueloHTML(r){
     <table style="width:100%;border-collapse:collapse;background:${G};color:#fff"><tr><td style="width:120px;padding:9px 12px;font:12px Arial,sans-serif">Viajero</td><td style="padding:9px 12px;font:bold 13px Arial,sans-serif">${esc(tcase(r.n))}</td></tr></table>
     ${misma ? `<div style="margin:12px 0 2px;font:bold 12px Arial,sans-serif;color:${G};letter-spacing:.4px">CLAVE DE RESERVA (IDA Y REGRESO) <span style="font:bold 17px 'Courier New',monospace;color:#111;letter-spacing:2px;border:2px solid ${G};border-radius:5px;padding:2px 9px;margin-left:6px">${esc(ci)}</span></div>` : ''}
     ${ida.map((l, j) => leg(l, j ? '' : ci)).join('')}${reg.map((l, j) => leg(l, j ? '' : cr)).join('')}
-    <div style="margin-top:14px;font:11px Arial,sans-serif;color:#666">Horarios en hora local de cada aeropuerto. Para documentar, utilice la clave de reserva en el sitio de la aerolínea.</div>
+    <div style="margin-top:10px;font:11px Arial,sans-serif;color:#666">Horarios en hora local de cada aeropuerto.</div>
+    <div style="margin-top:16px;border-left:4px solid ${G};padding-left:9px;font:bold 15px Arial,sans-serif;color:${G};letter-spacing:.4px">PUNTOS IMPORTANTES DE SU VUELO</div>
+    <div style="margin-top:6px;background:#F0F8F2;border-left:4px solid ${G};padding:8px 14px">${[...document.querySelectorAll('section.important li')].map(li => `<div style="display:flex;gap:8px;font:13px/1.55 Arial,sans-serif;color:#16301F;padding:2px 0"><span style="color:${G};font-weight:bold">•</span><span>${li.innerHTML.replace(/<b>/g, '<b style="color:#16301F">')}</span></div>`).join('')}</div>
   </div>`;
 }
 async function vueloPDF(r){
@@ -2133,7 +2135,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 239;
+const APP_V = 240;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

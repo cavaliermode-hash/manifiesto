@@ -1409,7 +1409,7 @@ function vueloHTML(r){
           <tr><td style="padding:2px 0">Duración</td><td></td><td>${dur(l)}</td><td></td></tr>
         </table></td></tr></table>`;
   return `<div style="width:760px;background:#fff;padding:26px 30px 30px;box-sizing:border-box;font-family:Arial,sans-serif">
-    <div style="display:inline-block"><img src="logo-eci-verde.png" style="height:38px;display:block" alt="Viajes El Corte Inglés"><div style="border-top:2px solid ${G};margin-top:8px;padding-top:6px;text-align:right;font:bold 11px Arial,sans-serif;letter-spacing:2px;color:${G}">EMPRESAS</div></div>
+    <table style="width:100%;border-collapse:collapse"><tr><td style="vertical-align:middle"><img src="logo-eci.png" style="height:34px;display:block" alt="Viajes El Corte Inglés"></td><td style="vertical-align:middle;text-align:right"><img src="logo-metlife.png" style="height:40px;display:inline-block" alt="MetLife"></td></tr></table><div style="border-top:2px solid ${G};margin-top:12px"></div>
     <div style="font:bold 22px Arial,sans-serif;color:${G};margin:22px 0 14px">Su viaje</div>
     <div style="border-top:2px solid ${G};width:40%;margin-bottom:4px"></div>
     <table style="width:100%;border-collapse:collapse;background:${G};color:#fff"><tr><td style="width:120px;padding:9px 12px;font:12px Arial,sans-serif">Viajero</td><td style="padding:9px 12px;font:bold 13px Arial,sans-serif">${esc(tcase(r.n))}</td></tr></table>
@@ -2133,7 +2133,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 238;
+const APP_V = 239;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

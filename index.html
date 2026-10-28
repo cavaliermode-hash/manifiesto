@@ -966,29 +966,31 @@ function aeroHTML(r){ if(soloTierra(r)) return ''; let x = '';
   return x ? `<section class="aerobox" aria-label="Aeropuerto">${x}</section>` : ''; }
 /* Indicaciones especiales en bloques claros: cada traslado o pernocta se separa en un recuadro con sus datos clave
    (fecha y hora, dónde le recogen, dirección, destino, vuelo). Si un texto no coincide con ningún formato, se muestra tal cual. */
+const rango = (a, b) => { const x = a.match(/^(.+?) de (\w+)$/), y = b.match(/^(.+?) de (\w+)$/); return 'Del ' + (x && y && x[2] === y[2] ? x[1] : a) + ' al ' + b; };
 function notaBloques(r){
   const ida = [], pern = [], reg = [], otros = [];
   (r.notas || []).forEach(n => { const t = n.t; let m;
     if(n.k === 'tr' && /por tu cuenta/i.test(t)){
-      ida.push({i:'🚙', t:'Llegada por su cuenta', rows:[['Llegada', 'Por su cuenta, directo a la sede del evento (Hotel Marinaterra, San Carlos, Sonora)']].concat(/estacionamiento/i.test(t) ? [['Estacionamiento', 'Considerado para usted en el hotel sede']] : [])}); return; }
+      ida.push({i:'🚙', t:'Llegada por su cuenta', rows:[['Periodo', 'Del martes 3 al jueves 5 de noviembre'], ['Llegada', 'Martes 3 de noviembre, por su cuenta, directo a la sede del evento (Hotel Marinaterra, San Carlos, Sonora)'], ['Regreso', 'Jueves 5 de noviembre, por su cuenta, al terminar el evento']].concat(/estacionamiento/i.test(t) ? [['Estacionamiento', 'Considerado para usted en el hotel sede del martes 3 al jueves 5 de noviembre']] : [])}); return; }
     if(n.k === 'tr' && (m = t.match(/solo a tu regreso: el (.+?) te llevamos del (.+?) al (aeropuerto de [A-ZÁÉÍÓÚa-záéíóúñ ]+?) para tu vuelo (.+?) \(salida ([\d:]+) h\)\.(?: A tu llegada el (.+?) no aplica traslado (.+?)\.)?/))){
       if(m[6]) ida.push({i:'ℹ️', t:'A su llegada', rows:[['Fecha', m[6]], ['Traslado', 'No aplica traslado ' + m[7]]]});
-      reg.push({i:'🚗', t:'Traslado de regreso', rows:[['Fecha', m[1]], ['Recogida', m[2]], ['Destino', m[3].replace(/^a/, 'A')], ['Vuelo', `${m[4]} · salida ${m[5]} h`]]}); return; }
+      reg.push({i:'🚗', t:'Traslado de regreso', rows:[['Periodo', 'Solo el ' + m[1] + ' (regreso)'], ['Fecha', m[1]], ['Recogida', m[2]], ['Destino', m[3].replace(/^a/, 'A')], ['Vuelo', `${m[4]} · salida ${m[5]} h`]]}); return; }
     if(n.k === 'tr' && (m = t.match(/^Traslado terrestre: el (.+?) a las ([\d:]+ h) te recogemos (?:en el punto de encuentro (.+?), para|en tu domicilio registrado para|en el (aeropuerto de [A-ZÁÉÍÓÚa-záéíóúñ ]+?) para) llevarte (?:al |a la |a )(.+?)(, donde tienes tu hospedaje)?\. ?(.*)$/))){
       const rows = [['Fecha y hora', `${m[1]} · ${m[2]}`]];
       if(m[3]){ const p = m[3].split(', '); rows.push(['Punto de encuentro', p[0]], ['Dirección', p.slice(1).join(', ')]); }
       else if(m[4]) rows.push(['Recogida', m[4].replace(/^a/, 'A')]); else rows.push(['Recogida', 'Su domicilio registrado']);
       rows.push(['Destino', m[5].replace(/^sede del evento en (.+)$/, 'Sede del evento (Hotel Marinaterra), $1') + (m[6] ? ' (hospedaje)' : '')]);
       ida.push({i:'🚗', t:'Traslado de ida', rows});
-      const rest = m[7] || ''; let k;
+      const rest = m[7] || ''; let k, fin = '';
       if((k = rest.match(/A tu regreso el (.+?), al aterrizar en tu vuelo (.+?) \(llegada ([\d:]+ h)\), te esperamos en la salida de vuelos nacionales del (.+?) para trasladarte (?:al mismo punto de encuentro: (.+?)|de vuelta a tu domicilio registrado)\.$/)))
-        reg.push({i:'🚗', t:'Traslado de regreso', rows:[['Fecha', k[1]], ['Vuelo', `${k[2]} · llegada ${k[3]}`], ['Recogida', `Salida de vuelos nacionales del ${k[4]}`], ['Destino', k[5] ? 'Mismo punto de encuentro: ' + k[5] : 'Su domicilio registrado']]});
+        fin = k[1], reg.push({i:'🚗', t:'Traslado de regreso', rows:[['Fecha', k[1]], ['Vuelo', `${k[2]} · llegada ${k[3]}`], ['Recogida', `Salida de vuelos nacionales del ${k[4]}`], ['Destino', k[5] ? 'Mismo punto de encuentro: ' + k[5] : 'Su domicilio registrado']]});
       else if((k = rest.match(/Al terminar el evento, el traslado te lleva de vuelta (a la misma dirección|al mismo aeropuerto)\./)))
-        reg.push({i:'🚗', t:'Traslado de regreso', rows:[['Cuándo', 'Al terminar el evento'], ['Recogida', 'Sede del evento (Hotel Marinaterra)'], ['Destino', /aeropuerto/.test(k[1]) ? 'El mismo aeropuerto de llegada' : 'Su domicilio registrado']]});
+        fin = 'jueves 5 de noviembre', reg.push({i:'🚗', t:'Traslado de regreso', rows:[['Fecha', 'Jueves 5 de noviembre, al terminar el evento'], ['Recogida', 'Sede del evento (Hotel Marinaterra)'], ['Destino', /aeropuerto/.test(k[1]) ? 'El mismo aeropuerto de llegada' : 'Su domicilio registrado']]});
       else if(rest) reg.push({i:'🚗', t:'Traslado de regreso', text: rest});
+      rows.unshift(['Periodo', fin ? `${rango(m[1], fin)} (ida y regreso)` : `${m[1].replace(/^./, c => c.toUpperCase())} (solo ida)`]);
       return; }
     if(n.k === 'pe' && (m = t.match(/^Hospedaje a tu llegada en el (.+?), conectado a (.+?): check-in el (.+?) y check-out el (.+?)\.$/))){
-      pern.push({i:'🏨', t:'Pernocta a su llegada', rows:[['Hotel', m[1]], ['Ubicación', 'Conectado a ' + m[2]], ['Check-in', m[3]], ['Check-out', m[4]]]}); return; }
+      pern.push({i:'🏨', t:'Pernocta a su llegada', rows:[['Periodo', `${rango(m[3], m[4])} (1 noche)`], ['Hotel', m[1]], ['Ubicación', 'Conectado a ' + m[2]], ['Check-in', m[3]], ['Check-out', m[4]]]}); return; }
     otros.push({i: (NOTA[n.k] || {}).i || '•', t: (NOTA[n.k] || {}).t || 'Indicación', text: t});
   });
   return ida.concat(pern, reg, otros);
@@ -2233,7 +2235,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 276;
+const APP_V = 277;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

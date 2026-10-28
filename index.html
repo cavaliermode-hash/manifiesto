@@ -602,7 +602,7 @@ body.locked>*:not(#gate){visibility:hidden}
 #cla .ktable td,#pyt .ktable td{padding:3px 6px!important}
 #cla .ktable td.kn,#pyt .ktable td.kn{font-size:11.5px!important;line-height:1.2;text-transform:uppercase;letter-spacing:.01em}
 #pyt .ktable td.kn small{font-size:10.5px;text-transform:none}
-#cla .cpdf button,#cla .cpdf .cwa,#pyt .cpdf button,#pyt .cpdf .cwa{width:27px!important;height:26px!important;font-size:14px!important;border-radius:5px}
+#cla .cpdf button,#cla .cpdf .cwa,#pyt .cpdf button,#pyt .cpdf .cwa{width:27px!important;height:26px!important;font-size:14px!important;border-radius:5px}#cla .cpdf button,#cla .cpdf .cwa{width:24px!important;font-size:13px!important}#cla .cbx{gap:2px}
 #cla .ctab td.cc{font-size:12px}#cla .ctab td.cc button{padding:2px 5px}
 #pyt .ptag{font-size:9.5px;padding:2px 5px;margin-left:4px}
 #pyt .pgrp{margin-top:12px}#pyt .pgrp h3{font-size:14.5px}#pyt .pw{font-size:12px;margin-bottom:5px}
@@ -688,7 +688,7 @@ button.ptile{font:inherit;cursor:pointer;width:100%;transition:transform .08s,bo
 </section>
 <section class="wrap ctl" id="cla" hidden>
   <h2 class="ct">Claves de reserva</h2>
-  <p class="cs">Todas las claves en una sola lista. Ordena tocando el encabezado de cada columna; toca una clave para copiarla. En <b>Itinerario</b>: 📄 abre su itinerario en PDF, 💬 lo envía por WhatsApp y ✉️ por correo.</p>
+  <p class="cs">Todas las claves en una sola lista. Ordena tocando el encabezado de cada columna; toca una clave para copiarla. En <b>Itinerario</b>: ✈️ abre el PDF solo de vuelos (formato Viajes El Corte Inglés), 📄 abre su itinerario en PDF, 💬 lo envía por WhatsApp y ✉️ por correo.</p>
   <div class="csearch"><input id="cq" type="search" placeholder="🔍 Buscar por nombre o apellido" autocomplete="off" aria-label="Buscar por nombre o apellido"><span id="cqn"></span></div>
   <div class="ktable-wrap"><table class="ktable ctab">
     <thead><tr>
@@ -1390,13 +1390,58 @@ async function descargarPDF(r, msg, ver){
 document.addEventListener('click', e => { const b = e.target.closest('[data-pdf], [data-pdfv]'); if(!b) return; e.preventDefault();
   const r = DATA[+(b.dataset.pdfv ?? b.dataset.pdf)]; DLG = true; setTimeout(() => { DLG = false; awaySince = 0; }, 3000);
   window.open(location.pathname + '?pdf=' + encodeURIComponent(r.n) + '&v=' + APP_V + '.' + Date.now(), '_blank'); /* v: evita que el navegador use una versión guardada */ });
+/* ---------- PDF solo de vuelos (formato Viajes El Corte Inglés · "Su viaje") ---------- */
+const AERO_N = {MEX:'Mexico City, (Benito Juarez Intl)', HMO:'Hermosillo, (I.Pesqueira Garcia)', GDL:'Guadalajara, (Miguel Hidalgo y Costilla Intl)', MTY:'Monterrey, (Gral. Mariano Escobedo Intl)', MID:'Merida, (Manuel Crescencio Rejon Intl)', QRO:'Queretaro, (Queretaro Intl)', CUL:'Culiacan, (Fedl. de Bachigualato Intl)', ACA:'Acapulco, (Juan N. Alvarez Intl)', TIJ:'Tijuana, (Gral. Abelardo L. Rodriguez Intl)', PBC:'Puebla, (Hermanos Serdan Intl)', TLC:'Toluca, (Lic. Adolfo Lopez Mateos Intl)', NLU:'Santa Lucia, (Felipe Angeles Intl)', LMM:'Los Mochis, (Valle del Fuerte Intl)'};
+const LINEA = v => { const m = String(v || '').match(/^(.*?)\s*(\d+)$/); if(!m) return v; const al = m[1].toUpperCase(), c = {AEROMEXICO:['Aeromexico','AM'], VOLARIS:['Volaris','Y4'], 'VIVA AEROBUS':['Viva Aerobus','VB']}[al]; return c ? `${c[0]} ${c[1]} ${m[2]}` : v; };
+const DIAV = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'], MESV = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const fV = (iso, conDia) => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || ''); if(!m) return iso || ''; const d = new Date(Date.UTC(+m[1], m[2]-1, +m[3])); return (conDia ? DIAV[d.getUTCDay()] + ' ' : '') + m[3] + ' ' + MESV[m[2]-1] + (conDia ? ' ' + m[1] : ''); };
+function vueloHTML(r){
+  const G = '#1C6B2E', ida = [r.c1, r.ida].filter(Boolean), reg = [r.reg, r.c2].filter(Boolean), ci = r.ci || r.cr, cr = r.cr || r.ci, misma = ci && cr && ci === cr;
+  const dur = l => { const m = legMin(l); return m > 0 ? `${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')} (Sin paradas)` : ''; };
+  const leg = (l, clave) => `<div style="font:15px Arial,sans-serif;color:#222;margin:14px 0 4px 2px">${fV(l.f, true)}</div>
+    <table style="width:100%;border-collapse:collapse;background:#EFEFEF"><tr>
+      <td style="width:64px;vertical-align:top;padding:10px 6px 10px 12px"><div style="width:40px;height:40px;border:1px solid #c9c9c9;background:#e2e2e2;display:flex;align-items:center;justify-content:center;font-size:22px;color:#9a9a9a">✈</div></td>
+      <td style="padding:10px 12px 10px 4px">
+        <table style="width:100%;border-collapse:collapse;font:12px Arial,sans-serif;color:#222">
+          <tr><td colspan="2" style="font:bold 15px Arial,sans-serif;padding:2px 0 8px">${esc(LINEA(l.v))}</td><td colspan="2" style="text-align:right;padding:2px 0 8px">${clave && !misma ? `<span style="font:bold 11px Arial,sans-serif;color:${G};letter-spacing:.4px">CLAVE DE RESERVA</span> <span style="font:bold 15px 'Courier New',monospace;color:#111;letter-spacing:2px;border:2px solid ${G};border-radius:5px;padding:2px 7px">${esc(clave)}</span>` : ''}</td></tr>
+          <tr><td style="width:90px;font-weight:bold;padding:2px 0">Salida</td><td style="width:170px;font-weight:bold">${fV(l.f)} ${esc(l.s || '')}</td><td style="font-weight:bold">${esc(AERO_N[l.o] || l.o)} (+)</td><td></td></tr>
+          <tr><td style="font-weight:bold;padding:2px 0">Llegada</td><td style="font-weight:bold">${fV(l.f)} ${esc(l.l || '')}</td><td style="font-weight:bold">${esc(AERO_N[l.d] || l.d)} (+)</td><td></td></tr>
+          <tr><td style="padding:2px 0">Duración</td><td></td><td>${dur(l)}</td><td></td></tr>
+        </table></td></tr></table>`;
+  return `<div style="width:760px;background:#fff;padding:26px 30px 30px;box-sizing:border-box;font-family:Arial,sans-serif">
+    <div style="display:inline-block"><img src="logo-eci-verde.png" style="height:38px;display:block" alt="Viajes El Corte Inglés"><div style="border-top:2px solid ${G};margin-top:8px;padding-top:6px;text-align:right;font:bold 11px Arial,sans-serif;letter-spacing:2px;color:${G}">EMPRESAS</div></div>
+    <div style="font:bold 22px Arial,sans-serif;color:${G};margin:22px 0 14px">Su viaje</div>
+    <div style="border-top:2px solid ${G};width:40%;margin-bottom:4px"></div>
+    <table style="width:100%;border-collapse:collapse;background:${G};color:#fff"><tr><td style="width:120px;padding:9px 12px;font:12px Arial,sans-serif">Viajero</td><td style="padding:9px 12px;font:bold 13px Arial,sans-serif">${esc(tcase(r.n))}</td></tr></table>
+    ${misma ? `<div style="margin:12px 0 2px;font:bold 12px Arial,sans-serif;color:${G};letter-spacing:.4px">CLAVE DE RESERVA (IDA Y REGRESO) <span style="font:bold 17px 'Courier New',monospace;color:#111;letter-spacing:2px;border:2px solid ${G};border-radius:5px;padding:2px 9px;margin-left:6px">${esc(ci)}</span></div>` : ''}
+    ${ida.map(l => leg(l, ci)).join('')}${reg.map(l => leg(l, cr)).join('')}
+    <div style="margin-top:14px;font:11px Arial,sans-serif;color:#666">Horarios en hora local de cada aeropuerto. Para documentar, utilice la clave de reserva en el sitio de la aerolínea.</div>
+  </div>`;
+}
+async function vueloPDF(r){
+  const [{ jsPDF }, h2c] = await Promise.all([loadJsPDF(), loadH2C()]);
+  const box = document.createElement('div'); box.style.cssText = 'position:fixed;left:-10000px;top:0;background:#fff';
+  box.innerHTML = vueloHTML(r); document.body.appendChild(box);
+  try{
+    await Promise.all([...box.querySelectorAll('img')].map(im => im.complete ? 0 : new Promise(ok => { im.onload = im.onerror = ok; })));
+    const el = box.firstElementChild, canvas = await h2c(el, {scale:2, backgroundColor:'#ffffff', useCORS:true, logging:false});
+    const doc = new jsPDF({unit:'pt', format:'letter'}), W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight(), M = 24;
+    const k = (W - 2*M) / el.offsetWidth, h = el.offsetHeight * k;
+    if(h <= H - 2*M) doc.addImage(canvas.toDataURL('image/jpeg', 0.92), 'JPEG', M, M, W - 2*M, h);
+    else { const kk = (H - 2*M) / el.offsetHeight, w = el.offsetWidth * kk; doc.addImage(canvas.toDataURL('image/jpeg', 0.92), 'JPEG', (W - w)/2, M, w, H - 2*M); }
+    return doc.output('blob');
+  } finally { box.remove(); }
+}
+document.addEventListener('click', e => { const b = e.target.closest('[data-vpdf]'); if(!b) return; e.preventDefault();
+  const r = DATA[+b.dataset.vpdf]; DLG = true; setTimeout(() => { DLG = false; awaySince = 0; }, 3000);
+  window.open(location.pathname + '?vpdf=' + encodeURIComponent(r.n) + '&v=' + APP_V + '.' + Date.now(), '_blank'); });
 function pdfDirecto(){
-  const n = new URLSearchParams(location.search).get('pdf'); if(!n) return false;
+  const sp = new URLSearchParams(location.search), solo = !!sp.get('vpdf'), n = sp.get('pdf') || sp.get('vpdf'); if(!n) return false;
   const r = DATA.find(x => x.n === n.trim().toUpperCase());
-  document.title = r ? 'Itinerario ' + tcase(r.n) : 'Itinerario';
+  document.title = r ? (solo ? 'Vuelos ' : 'Itinerario ') + tcase(r.n) : 'Itinerario';
   document.body.insertAdjacentHTML('beforeend', `<div style="position:fixed;inset:0;z-index:2000;background:#fff;font:600 17px/1.5 system-ui,sans-serif;color:#136c34;padding:40px 20px;text-align:center" id="pdfst">${r ? 'Generando itinerario de ' + esc(tcase(r.n)) + '…' : 'No se encontró la reserva.'}</div>`);
   if(!r) return true;
-  itinPDF(r).then(blob => { const url = URL.createObjectURL(new File([blob], 'Itinerario ' + tcase(r.n) + '.pdf', {type:'application/pdf'}));
+  (solo ? vueloPDF(r) : itinPDF(r)).then(blob => { const url = URL.createObjectURL(new File([blob], (solo ? 'Vuelos ' : 'Itinerario ') + tcase(r.n) + '.pdf', {type:'application/pdf'}));
     $('#pdfst').innerHTML = `<a href="${url}" style="color:#136c34">Abrir itinerario de ${esc(tcase(r.n))} (PDF)</a>`; location.replace(url); })
     .catch(() => { $('#pdfst').textContent = 'No se pudo generar el PDF. Revisa tu conexión y recarga.'; });
   return true;
@@ -1750,7 +1795,7 @@ function vFiltra(id){
 document.addEventListener('input', e => { if(VQ[e.target.id]) vFiltra(e.target.id); });
 addEventListener('DOMContentLoaded', () => Object.entries(VQ).forEach(([id, sel]) => { const c = $(sel); if(c) new MutationObserver(() => vFiltra(id)).observe(c, {childList:true, subtree:true}); }));
 /* Botones 📄 PDF, 💬 WhatsApp y ✉️ correo de una persona (Claves y Traslados y pernoctas) */
-function accBtns(i){ const n = DATA[i].n; return `<td class="cpdf"><div class="cbx"><button data-pdfv="${i}" title="Abrir el itinerario de ${esc(tcase(n))} en PDF" aria-label="PDF de ${esc(tcase(n))}">📄</button>${TEL[n]
+function accBtns(i, vuelos){ const n = DATA[i].n; return `<td class="cpdf"><div class="cbx">${vuelos && [DATA[i].ida, DATA[i].reg, DATA[i].c1, DATA[i].c2].some(Boolean) ? `<button class="cvue" data-vpdf="${i}" title="PDF solo de vuelos de ${esc(tcase(n))} (formato Viajes El Corte Inglés)" aria-label="PDF de vuelos de ${esc(tcase(n))}">✈️</button>` : ''}<button data-pdfv="${i}" title="Abrir el itinerario de ${esc(tcase(n))} en PDF" aria-label="PDF de ${esc(tcase(n))}">📄</button>${TEL[n]
       ? `<a class="cwa" href="https://wa.me/52${TEL[n]}?text=${encodeURIComponent(waTxt(DATA[i]))}" target="_blank" rel="noopener" title="Enviar por WhatsApp a ${esc(tcase(n))} (${TEL[n]})" aria-label="WhatsApp a ${esc(tcase(n))}">💬</a>`
       : '<span class="cwa na" title="Sin teléfono registrado">—</span>'}${MAIL[n]
       ? `<a class="cwa cml" data-mail="${i}" href="mailto:${encodeURIComponent(MAIL[n])}?subject=${encodeURIComponent('Tu itinerario · Segunda Cumbre Universales')}&body=${encodeURIComponent(mailTxt(DATA[i]))}" title="Enviar por correo a ${esc(tcase(n))} (${esc(MAIL[n])})" aria-label="Correo a ${esc(tcase(n))}">✉️</a>`
@@ -1762,7 +1807,7 @@ function claRender(){
     : `<span class="cl">Ida</span>${btn(x.ci)}<br><span class="cl">Regreso</span>${btn(x.cr)}`;
   const L = claRows(), qn = $('#cqn'); if(qn) qn.textContent = $('#cq').value.trim() ? `${L.length} de ${DATA.length}` : '';
   $('#cbody').innerHTML = (L.length ? '' : '<tr><td colspan="3" class="cnone">Sin resultados para esa búsqueda.</td></tr>') + L.map(x => `<tr><td class="kn">${esc(x.n)}</td><td class="cc">${cell(x)}</td>
-    ${accBtns(x.i)}</tr>`).join('');
+    ${accBtns(x.i, true)}</tr>`).join('');
 }
 /* ---------- Traslados y pernoctas ---------- */
 const notaDe = (r, k) => ((r.notas || []).find(n => n.k === k) || {}).t || '';
@@ -2088,7 +2133,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 236;
+const APP_V = 237;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

@@ -629,6 +629,7 @@ button.ptile{font:inherit;cursor:pointer;width:100%;transition:transform .08s,bo
 #cla td.kll{font-size:11.5px;color:var(--muted);white-space:nowrap}
 #cla .kll2{display:none}
 @media (max-width:560px){#cla td.kll,#cla th:nth-child(2){display:none}#cla .ktable td{padding:3px 3px!important}#cla .cpdf button,#cla .cpdf .cwa{width:22px!important;height:24px!important;font-size:12px!important}#cla .ctab td.cc{font-size:11px}#cla .ctab td.cc button{padding:2px 3px}#cla .rtag{font-size:8px;padding:2px 4px;margin-left:3px}#cla .kll2{display:block;font:500 10.5px/1.3 var(--body);color:var(--muted);text-transform:none;margin-top:2px}}
+.zipbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:8px 0 2px}.zipbar button{font:700 13px var(--body);padding:8px 12px;border-radius:8px;border:1.5px solid var(--green);background:var(--green);color:#fff;cursor:pointer}.zipbar button+button{background:#fff;color:var(--green)}.zipbar button:disabled{opacity:.55;cursor:wait}#zipmsg{font-size:12.5px;color:var(--muted)}
 </style>
 </head>
 <body>
@@ -694,6 +695,7 @@ button.ptile{font:inherit;cursor:pointer;width:100%;transition:transform .08s,bo
 <section class="wrap ctl" id="cla" hidden>
   <h2 class="ct">Claves de reserva</h2>
   <p class="cs">Todas las claves en una sola lista. Ordena tocando el encabezado de cada columna; toca una clave para copiarla. En <b>Itinerario</b>: ✈️ abre y descarga el PDF solo de vuelos, 📄 abre su itinerario en PDF, 💬 lo envía por WhatsApp y ✉️ por correo.</p>
+  <div class="zipbar"><button type="button" id="zipv">⬇️ ZIP de PDF de vuelos</button><button type="button" id="zipi">⬇️ ZIP de itinerarios</button><span id="zipmsg" role="status"></span></div>
   <div class="csearch"><input id="cq" type="search" placeholder="🔍 Buscar por nombre o apellido" autocomplete="off" aria-label="Buscar por nombre o apellido"><span id="cqn"></span></div>
   <div class="ktable-wrap"><table class="ktable ctab">
     <thead><tr>
@@ -1444,6 +1446,31 @@ async function vueloPDF(r){
 document.addEventListener('click', e => { const b = e.target.closest('[data-vpdf]'); if(!b) return; e.preventDefault();
   const r = DATA[+b.dataset.vpdf]; DLG = true; setTimeout(() => { DLG = false; awaySince = 0; }, 3000);
   window.open(location.pathname + '?vpdf=' + encodeURIComponent(r.n) + '&v=' + APP_V + '.' + Date.now(), '_blank'); });
+/* ---------- Descargar todos los PDF en un ZIP (un PDF por persona, con su nombre). Respeta el buscador de Claves. ---------- */
+let zipP; function loadZip(){ if(window.JSZip) return Promise.resolve(window.JSZip);
+  return zipP = zipP || new Promise((ok, ko) => { const sc = document.createElement('script'); sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js'; sc.onload = () => ok(window.JSZip); sc.onerror = ko; document.head.appendChild(sc); }); }
+let ZIPPING = false;
+async function zipTodos(tipo){
+  if(ZIPPING) return; ZIPPING = true;
+  const msg = $('#zipmsg'), bs = [$('#zipv'), $('#zipi')]; bs.forEach(b => b.disabled = true);
+  const L = claRows().map(x => DATA[x.i]).filter(r => tipo === 'i' || [r.c1, r.ida, r.reg, r.c2].some(Boolean));
+  DLG = true;
+  try{
+    const JSZip = await loadZip(), zip = new JSZip(), usados = {};
+    for(let k = 0; k < L.length; k++){ const r = L[k];
+      msg.textContent = `Generando ${k + 1} de ${L.length}: ${tcase(r.n)}…`;
+      const blob = tipo === 'v' ? await vueloPDF(r) : await itinPDF(r);
+      let nom = tcase(r.n); usados[nom] = (usados[nom] || 0) + 1; if(usados[nom] > 1) nom += ' ' + usados[nom];
+      zip.file(nom + '.pdf', blob); }
+    msg.textContent = 'Comprimiendo…';
+    const z = await zip.generateAsync({type:'blob'}), url = URL.createObjectURL(z), a = document.createElement('a');
+    a.href = url; a.download = (tipo === 'v' ? 'PDF vuelos' : 'Itinerarios') + ' - Segunda Cumbre Universales.zip'; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+    msg.textContent = `✓ Listo: ${L.length} PDF en el ZIP.`;
+  }catch(e){ msg.textContent = 'No se pudo generar el ZIP. Revisa tu conexión e intenta de nuevo.'; }
+  finally{ ZIPPING = false; bs.forEach(b => b.disabled = false); setTimeout(() => { DLG = false; awaySince = 0; }, 800); }
+}
+document.addEventListener('click', e => { if(e.target.id === 'zipv') zipTodos('v'); else if(e.target.id === 'zipi') zipTodos('i'); });
 function pdfDirecto(){
   const sp = new URLSearchParams(location.search), solo = !!sp.get('vpdf'), n = sp.get('pdf') || sp.get('vpdf'); if(!n) return false;
   pdfDirecto2(sp, solo, n.trim().toUpperCase()); return true;
@@ -2163,7 +2190,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 250;
+const APP_V = 251;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

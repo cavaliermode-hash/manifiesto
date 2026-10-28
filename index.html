@@ -1020,8 +1020,8 @@ function lineaTiempo(r){
       add(f, '12:30', {tipo: 'blk', i: b.i, t: b.t, rows: R}); return; }
     add('', 0, {tipo: 'blk', i: b.i, t: b.t, rows: b.rows, text: b.text});
   });
-  legsI.forEach((l, j) => add(l.f, l.s, {tipo: 'vuelo', leg: l, dir: 'Ida', con: j < legsI.length - 1}));
-  legsR.forEach((l, j) => add(l.f, l.s, {tipo: 'vuelo', leg: l, dir: 'Regreso'}));
+  legsI.forEach((l, j) => add(l.f, l.s, {tipo: 'vuelo', leg: l, dir: 'Ida', con: j < legsI.length - 1, pk: !j}));
+  legsR.forEach((l, j) => add(l.f, l.s, {tipo: 'vuelo', leg: l, dir: 'Regreso', pk: !j}));
   if(!tierra && aplicaLlegada(r)){ const l = legsI.find(x => x.d === 'HMO'); add(l.f, minDe(l.l) + 1, {tipo: 'verde', i: '📍', t: 'Recepción en el aeropuerto de Hermosillo', text: LLEGA_TXT}); }
   { const h = hotelInfo(r), ci = isoDe(((h.lines.find(t => /^Check in/i.test(t)) || '').replace(/(\d+) noviembre/, '$1 de noviembre'))) || HOTEL.ci;
     add(ci, '15:00', {tipo: 'hotel', i: '🏨', t: 'Hospedaje en el hotel sede', lines: h.lines.filter(t => !/^Check out/i.test(t)), nota: h.nota});
@@ -1145,9 +1145,10 @@ function mailTxt(r){
   const seg = (lab, l) => l && L.push(`${lab}: ${l.v} · ${fmtDate(l.f)} · ${l.o} ${l.s} > ${l.d} ${l.l} (hora local)`);
   L.push(`Estimado(a) ${r.n.toUpperCase()}:`, '', INTRO_TXT, '');
   if(!tierra){ L.push('DATOS DE SU RESERVACIÓN AÉREA'); const u = claveUna(r);
-    if(dosClaves(r)) L.push(`CLAVE DE RESERVA DE IDA: [ ${r.ci} ]`, `CLAVE DE RESERVA DE REGRESO: [ ${r.cr} ]`); else L.push(`${u.lab.toUpperCase()}: [ ${u.k} ]`); L.push(''); }
+    if(dosClaves(r)) L.push('Su viaje tiene dos claves de reserva distintas: la clave de ida aparece en su vuelo de ida y la clave de regreso en su vuelo de regreso.'); else L.push(`${u.lab.toUpperCase()}: [ ${u.k} ]`); L.push(''); }
   L.push('SU ITINERARIO DÍA POR DÍA'); let fa = null;
   lineaTiempo(r).forEach(x => { if(x.f !== fa){ fa = x.f; L.push('', '📅 ' + (x.f ? fLarga(x.f).toUpperCase() : 'INDICACIONES')); } else L.push('');
+    if(x.tipo === 'vuelo' && x.pk && dosClaves(r)) L.push(`CLAVE DE RESERVA DE ${x.dir.toUpperCase()}: [ ${x.dir === 'Ida' ? r.ci : r.cr} ]`);
     if(x.tipo === 'vuelo'){ const l = x.leg; L.push(`✈️ Vuelo de ${x.dir.toLowerCase()}: ${l.v} · ${l.o} ${l.s} > ${l.d} ${l.l} (hora local)`); return; }
     L.push(`${x.i} ${x.t.toUpperCase()}`);
     if(x.tipo === 'hotel'){ x.lines.forEach(t => L.push('- ' + t)); if(x.nota) L.push('IMPORTANTE: ' + x.nota); }
@@ -1203,7 +1204,7 @@ function mailHTML(r, enPDF){
   b += p(T(esc(INTRO_TXT).replace('Segunda Cumbre Universales', `<b style="color:${INK}">Segunda Cumbre Universales</b>`), C ? 12 : fs, INK), C ? 'padding-top:2px;padding-bottom:2px' : 'padding-top:4px;padding-bottom:4px');
   /* Itinerario en orden cronológico, agrupado por día */
   if(!tierra){ const u = claveUna(r); b += p(T('Datos de su reservación aérea', C ? 14 : 16, G, 'bold'), C ? 'padding-top:8px;padding-bottom:2px' : 'padding-top:14px;padding-bottom:4px');
-    if(dos) b += key('Clave de reserva de ida', r.ci) + key('Clave de reserva de regreso', r.cr); else b += key(u.lab, u.k); }
+    if(dos) b += p(T('Su viaje tiene dos claves de reserva distintas: la clave de ida aparece en su vuelo de ida y la clave de regreso en su vuelo de regreso.', C ? 11 : fs, INK)); else b += key(u.lab, u.k); }
   { const blkRows = rows => (rows || []).map(([k, v]) => `<tr><td valign="top" width="${C ? 104 : 120}" style="width:${C ? 104 : 120}px;padding:${C ? '0 6px 0 0' : '1px 8px 1px 0'}">${T(esc(k), C ? 10 : 12, MUT, 'bold')}</td><td style="padding:${C ? '0;line-height:1.25' : '1px 0;line-height:1.35'}">${T(esc(v).replace(B_HL, x => `<b style="color:${INK}">${x}</b>`), C ? 11 : 13, INK)}</td></tr>`).join('');
     const blk = (ic, t, inner) => `<tr><td style="padding:${C ? '3px 0' : '5px 0'}"><table width="100%" cellpadding="0" cellspacing="0"><tr><td bgcolor="#FFFFFF" style="background:#FFFFFF;border:1.5px solid #EBCB72;border-left:5px solid #E0A100;border-radius:8px;padding:${C ? '3px 9px' : '6px 11px'}">${T(ic + ' ' + esc(t.toUpperCase()), C ? 10 : 12, '#6B4A00', 'bold', 'Arial,sans-serif', 'letter-spacing:.5px')}<table cellpadding="0" cellspacing="0" style="margin-top:${C ? 1 : 2}px">${inner}</table></td></tr></table></td></tr>`;
     const verde = (tit, txt) => `<tr><td style="padding:${C ? '3px 0' : '5px 0'}"><table width="100%" cellpadding="0" cellspacing="0"><tr><td bgcolor="#E3F1E7" style="background:#E3F1E7;border:2px solid ${G};border-radius:8px;padding:${C ? '4px 10px;line-height:1.3' : '8px 12px;line-height:1.4'}">${T(tit, C ? 12 : 14, G, 'bold')}<br>${T(txt, C ? 12 : fs, INK)}</td></tr></table></td></tr>`;
@@ -1211,6 +1212,7 @@ function mailHTML(r, enPDF){
     b += h2('Su itinerario día por día');
     let fa = null;
     lineaTiempo(r).forEach(x => { if(x.f !== fa){ fa = x.f; b += dia(x.f); }
+      if(x.tipo === 'vuelo' && dos && x.pk) b += key(x.dir === 'Ida' ? 'Clave de reserva de ida' : 'Clave de reserva de regreso', x.dir === 'Ida' ? r.ci : r.cr);
       if(x.tipo === 'vuelo') b += C ? cardC(x.dir, [x.leg], x.dir === 'Ida' ? G1 : G2, '') : card(x.dir, [x.leg], x.dir === 'Ida' ? G1 : G2, false);
       else if(x.tipo === 'verde') b += verde(x.i + ' ' + esc(x.t), x.text === REGRESO_TXT ? `<b>${esc(x.text)}</b>` : esc(x.text).replace('MetLife', '<b>MetLife</b>'));
       else if(x.tipo === 'hotel') b += blk(x.i, x.t, `<tr><td colspan="2">${x.lines.map(t => T('• ' + esc(t).replace(HOTEL.n, `<b style="color:${INK}">${HOTEL.n}</b>`), C ? 11 : 13, INK)).join('<br>')}${x.nota ? '<br>' + T('⚠️ ' + esc(x.nota), C ? 11 : 13, INK, 'bold') : ''}</td></tr>`);
@@ -1270,9 +1272,10 @@ function waTxt(r){
   /* Orden: 0) servicios adicionales  1) vuelos y claves  2) hospedaje  3) traslados  4) puntos importantes */
   const tierra = soloTierra(r);
   if(!tierra){ L.push('*Datos de su reservación aérea*'); const u = claveUna(r);
-    if(dosClaves(r)) L.push('🔑 *CLAVE DE RESERVA DE IDA*', '➡️ *' + r.ci + '*', '🔑 *CLAVE DE RESERVA DE REGRESO*', '➡️ *' + r.cr + '*'); else L.push('🔑 *' + u.lab.toUpperCase() + '*', '➡️ *' + u.k + '*'); L.push(''); }
+    if(dosClaves(r)) L.push('Su viaje tiene dos claves de reserva distintas: la clave de ida aparece en su vuelo de ida y la clave de regreso en su vuelo de regreso.'); else L.push('🔑 *' + u.lab.toUpperCase() + '*', '➡️ *' + u.k + '*'); L.push(''); }
   L.push('🗓️ *SU ITINERARIO DÍA POR DÍA*'); let fa = null;
   lineaTiempo(r).forEach(x => { if(x.f !== fa){ fa = x.f; L.push('', '📅 *' + (x.f ? fLarga(x.f).toUpperCase() : 'INDICACIONES') + '*'); } else L.push('');
+    if(x.tipo === 'vuelo' && x.pk && dosClaves(r)) L.push(`🔑 *CLAVE DE RESERVA DE ${x.dir.toUpperCase()}*`, '➡️ *' + (x.dir === 'Ida' ? r.ci : r.cr) + '*');
     if(x.tipo === 'vuelo'){ const l = x.leg; L.push(`${x.dir === 'Ida' ? '🛫' : '🛬'} *Vuelo de ${x.dir.toLowerCase()}:* ${l.v}`, `    ${l.o} ${l.s} → ${l.d} ${l.l}`); return; }
     L.push(`${x.i} *${x.t}*`);
     if(x.tipo === 'hotel'){ x.lines.forEach(t => L.push('• ' + t.replace('Hotel Marinaterra', '*Hotel Marinaterra*'))); if(x.nota) L.push('⚠️ ' + x.nota.replace('MetLife', '*MetLife*')); }
@@ -2251,7 +2254,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 285;
+const APP_V = 286;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

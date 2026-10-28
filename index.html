@@ -1025,7 +1025,7 @@ function lineaTiempo(r){
   if(!tierra && aplicaLlegada(r)){ const l = legsI.find(x => x.d === 'HMO'); add(l.f, minDe(l.l) + 1, {tipo: 'verde', i: '📍', t: 'Recepción en el aeropuerto de Hermosillo', text: LLEGA_TXT}); }
   { const h = hotelInfo(r), ci = isoDe(((h.lines.find(t => /^Check in/i.test(t)) || '').replace(/(\d+) noviembre/, '$1 de noviembre'))) || HOTEL.ci;
     add(ci, '15:00', {tipo: 'hotel', i: '🏨', t: 'Hospedaje en el hotel sede', lines: h.lines, nota: h.nota});
-    add(HOTEL.co, '12:00', {tipo: 'info', i: '🛎️', t: 'Check-out del ' + HOTEL.n, text: 'Entrega de habitación a las 12:00 h.'}); }
+    add(HOTEL.co, '12:00', {tipo: 'info', i: '🛎️', t: 'Check-out del ' + HOTEL.n, text: ''}); }
   if(!tierra && aplicaRegreso(r) && !regHMO){ const l = legsR.find(x => x.o === 'HMO'); add(l.f, minDe(l.s) - 1, {tipo: 'verde', i: '🚐', t: 'Traslado del hotel al aeropuerto de Hermosillo', text: REGRESO_TXT}); }
   S.forEach((x, k) => x.k = k);
   return S.sort((a, b) => a.f.localeCompare(b.f) || a.m - b.m || a.k - b.k);
@@ -1151,7 +1151,7 @@ function mailTxt(r){
     if(x.tipo === 'vuelo'){ const l = x.leg; L.push(`✈️ Vuelo de ${x.dir.toLowerCase()}: ${l.v} · ${l.o} ${l.s} > ${l.d} ${l.l} (hora local)`); return; }
     L.push(`${x.i} ${x.t.toUpperCase()}`);
     if(x.tipo === 'hotel'){ x.lines.forEach(t => L.push('- ' + t)); if(x.nota) L.push('IMPORTANTE: ' + x.nota); }
-    else if(x.rows) x.rows.forEach(([k, v]) => L.push(`- ${k}: ${v}`)); else L.push(x.text); });
+    else if(x.rows) x.rows.forEach(([k, v]) => L.push(`- ${k}: ${v}`)); else if(x.text) L.push(x.text); });
   if(!tierra){ L.push('', 'PUNTOS IMPORTANTES DE SU VUELO'); document.querySelectorAll('section.important li').forEach(li => L.push('- ' + li.innerText.trim())); }
   L.push('', 'Importante.- Le recordamos que MetLife cubre únicamente las noches de hotel y traslados terrestres que estén dentro del evento o por ruta.',
     '', 'Le enviamos un cordial saludo deseándole un buen viaje y nos reiteramos a sus órdenes.', '', 'Viajes El Corte Inglés');
@@ -1214,7 +1214,7 @@ function mailHTML(r, enPDF){
       if(x.tipo === 'vuelo') b += C ? cardC(x.dir, [x.leg], x.dir === 'Ida' ? G1 : G2, '') : card(x.dir, [x.leg], x.dir === 'Ida' ? G1 : G2, false);
       else if(x.tipo === 'verde') b += verde(x.i + ' ' + esc(x.t), esc(x.text).replace('MetLife', '<b>MetLife</b>'));
       else if(x.tipo === 'hotel') b += blk(x.i, x.t, `<tr><td colspan="2">${x.lines.map(t => T('• ' + esc(t).replace(HOTEL.n, `<b style="color:${INK}">${HOTEL.n}</b>`), C ? 11 : 13, INK)).join('<br>')}${x.nota ? '<br>' + T('⚠️ ' + esc(x.nota), C ? 11 : 13, INK, 'bold') : ''}</td></tr>`);
-      else if(x.tipo === 'info') b += blk(x.i, x.t, `<tr><td colspan="2">${T(esc(x.text), C ? 11 : 13, INK)}</td></tr>`);
+      else if(x.tipo === 'info') b += blk(x.i, x.t, x.text ? `<tr><td colspan="2">${T(esc(x.text), C ? 11 : 13, INK)}</td></tr>` : '');
       else b += blk(x.i, x.t, x.rows ? blkRows(x.rows) : `<tr><td colspan="2">${T(esc(x.text), C ? 11 : 13, INK)}</td></tr>`); });
     if(!tierra) b += p(T('Horarios de vuelo en hora local de cada aeropuerto.', C ? 10 : 11, MUT)); }
   if(!tierra){ b += h2('Puntos importantes de su vuelo');
@@ -1276,7 +1276,7 @@ function waTxt(r){
     if(x.tipo === 'vuelo'){ const l = x.leg; L.push(`${x.dir === 'Ida' ? '🛫' : '🛬'} *Vuelo de ${x.dir.toLowerCase()}:* ${l.v}`, `    ${l.o} ${l.s} → ${l.d} ${l.l}`); return; }
     L.push(`${x.i} *${x.t}*`);
     if(x.tipo === 'hotel'){ x.lines.forEach(t => L.push('• ' + t.replace('Hotel Marinaterra', '*Hotel Marinaterra*'))); if(x.nota) L.push('⚠️ ' + x.nota.replace('MetLife', '*MetLife*')); }
-    else if(x.rows) x.rows.forEach(([k, v]) => L.push(`• *${k}:* ${v}`)); else L.push(x.text.replace('MetLife', '*MetLife*')); });
+    else if(x.rows) x.rows.forEach(([k, v]) => L.push(`• *${k}:* ${v}`)); else if(x.text) L.push(x.text.replace('MetLife', '*MetLife*')); });
   if(!tierra) L.push('_Horarios de vuelo en hora local de cada aeropuerto._');
   if(!tierra){ L.push('', '📌 *PUNTOS IMPORTANTES DE SU VUELO*'); document.querySelectorAll('section.important li').forEach(li => L.push('• ' + li.innerText.trim())); }
   L.push('',
@@ -2251,7 +2251,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 281;
+const APP_V = 282;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

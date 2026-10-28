@@ -974,7 +974,10 @@ function notaBloques(r){
       ida.push({i:'🚙', t:'Llegada por su cuenta', rows:[['Periodo', 'Del martes 3 al jueves 5 de noviembre'], ['Llegada', 'Martes 3 de noviembre, por su cuenta, directo a la sede del evento (Hotel Marinaterra, San Carlos, Sonora)'], ['Regreso', 'Jueves 5 de noviembre, por su cuenta, al terminar el evento']].concat(/estacionamiento/i.test(t) ? [['Estacionamiento', 'Considerado para usted en el hotel sede del martes 3 al jueves 5 de noviembre']] : [])}); return; }
     if(n.k === 'tr' && (m = t.match(/solo a tu regreso: el (.+?) te llevamos del (.+?) al (aeropuerto de [A-ZÁÉÍÓÚa-záéíóúñ ]+?) para tu vuelo (.+?) \(salida ([\d:]+) h\)\.(?: A tu llegada el (.+?) no aplica traslado (.+?)\.)?/))){
       if(m[6]) ida.push({i:'ℹ️', t:'A su llegada', rows:[['Fecha', m[6]], ['Traslado', 'No aplica traslado ' + m[7]]]});
-      reg.push({i:'🚗', t:'Traslado de regreso', rows:[['Periodo', 'Solo el ' + m[1] + ' (regreso)'], ['Fecha', m[1]], ['Recogida', m[2]], ['Destino', m[3].replace(/^a/, 'A')], ['Vuelo', `${m[4]} · salida ${m[5]} h`]]}); return; }
+      const cdmx = t.match(/Al aterrizar en la Ciudad de México en tu vuelo (.+?) \(llegada ([\d:]+ h)\), te esperamos en la salida de vuelos nacionales del (.+?) para trasladarte al (.+?)\.$/);
+      reg.push({i:'🚗', t:'Traslado de regreso', rows:[['Periodo', 'Solo el ' + m[1] + (cdmx ? ' (regreso: Hermosillo y Ciudad de México)' : ' (regreso)')], ['Fecha', m[1]], ['Recogida', m[2]], ['Destino', m[3].replace(/^a/, 'A')], ['Vuelo', `${m[4]} · salida ${m[5]} h`]]});
+      if(cdmx) reg.push({i:'🚗', t:'Traslado de regreso a su ciudad', rows:[['Fecha', m[1]], ['Vuelo', `${cdmx[1]} · llegada ${cdmx[2]}`], ['Recogida', `Salida de vuelos nacionales del ${cdmx[3]}`], ['Destino', cdmx[4]]]});
+      return; }
     if(n.k === 'tr' && (m = t.match(/^Traslado terrestre: el (.+?) a las ([\d:]+ h) te recogemos (?:en el punto de encuentro (.+?), para|en tu domicilio registrado para|en el (aeropuerto de [A-ZÁÉÍÓÚa-záéíóúñ ]+?) para) llevarte (?:al |a la |a )(.+?)(, donde tienes tu hospedaje)?\. ?(.*)$/))){
       const rows = [['Fecha y hora', `${m[1]} · ${m[2]}`]];
       if(m[3]){ const p = m[3].split(', '); rows.push(['Punto de encuentro', p[0]], ['Dirección', p.slice(1).join(', ')]); }
@@ -2235,7 +2238,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 277;
+const APP_V = 278;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

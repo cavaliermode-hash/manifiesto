@@ -936,7 +936,12 @@ const HOTEL_EXC = {
 /* Recepción en el aeropuerto de Hermosillo (logo de MetLife): solo si su vuelo llega a Hermosillo dentro de las fechas del evento (3 al 5 nov). */
 const INTRO_TXT = 'En seguimiento a su confirmación de asistencia a la Segunda Cumbre Universales, nos complace compartirle los detalles de su itinerario de viaje.';
 const LLEGA_TXT = 'A tu llegada al aeropuerto de Hermosillo te pedimos localizar el logo de MetLife para trasladarte al hotel sede Marinaterra.';
-const VUELO_TXT = 'A continuación le compartimos los datos de su reservación aérea. Le sugerimos conservar sus claves de reserva, ya que las necesitará para realizar su check-in y consultar su itinerario directamente con la aerolínea.';
+/* Claves: si la ida y el regreso tienen la misma clave se muestra una sola vez; si son distintas, se separan y se hace énfasis */
+const dosClaves = r => !!(r.ci && r.cr && r.ci !== r.cr);
+const claveUna = r => { const i = !!(r.ida || r.c1), g = !!(r.reg || r.c2); return {k: r.ci || r.cr || '-', lab: i && g ? 'Clave de reserva (ida y regreso)' : i ? 'Clave de reserva de ida' : 'Clave de reserva de regreso'}; };
+const VUELO_TXT_R = r => dosClaves(r)
+  ? 'A continuación le compartimos los datos de su reservación aérea. Importante: su viaje tiene dos claves de reserva distintas, una para el vuelo de ida y otra para el vuelo de regreso. Le sugerimos conservar ambas, ya que las necesitará para realizar su check-in y consultar su itinerario directamente con la aerolínea.'
+  : 'A continuación le compartimos los datos de su reservación aérea. Le sugerimos conservar su clave de reserva, ya que la necesitará para realizar su check-in y consultar su itinerario directamente con la aerolínea.';
 const REGRESO_TXT = 'Los traslados de regreso al aeropuerto serán publicados una vez terminen las sesiones en sitio.';
 /* Traslado de regreso al aeropuerto de Hermosillo: aplica si su vuelo de regreso sale de Hermosillo dentro de las fechas del evento (3 al 5 de noviembre). */
 function aplicaRegreso(r){ const reg = [r.reg, r.c2].filter(Boolean), l = reg.find(x => x.o === 'HMO'); return !!l && l.f >= HOTEL.ci && l.f <= HOTEL.co; }
@@ -1104,9 +1109,10 @@ function mailTxt(r){
   L.push(`Estimado(a) ${r.n.toUpperCase()}:`, '', INTRO_TXT, '');
   L.push(tierra ? '1. DATOS DE SU VIAJE' : '1. DATOS DE SU RESERVA DE VUELO');
   if(tierra){ L.push(viajeTxt(r)); }
-  else { L.push(VUELO_TXT);
-    if(r.ida || r.c1){ L.push('', `CLAVE DE RESERVA DE IDA: [ ${r.ci || r.cr || '-'} ]`); seg('Ida (conexión)', r.c1); seg('Ida', r.ida); }
-    if(r.reg || r.c2){ L.push('', `CLAVE DE RESERVA DE REGRESO: [ ${r.cr || r.ci || '-'} ]`); seg('Regreso', r.reg); seg('Regreso (conexión)', r.c2); }
+  else { const dos = dosClaves(r), u = claveUna(r); L.push(VUELO_TXT_R(r));
+    if(!dos) L.push('', `${u.lab.toUpperCase()}: [ ${u.k} ]`, '');
+    if(dos) L.push('', `CLAVE DE RESERVA DE IDA: [ ${r.ci} ]`); seg('Ida (conexión)', r.c1); seg('Ida', r.ida);
+    if(dos) L.push('', `CLAVE DE RESERVA DE REGRESO: [ ${r.cr} ]`); seg('Regreso', r.reg); seg('Regreso (conexión)', r.c2);
     L.push('Horarios en hora local de cada aeropuerto.'); }
   { const h = hotelInfo(r); L.push('', '2. HOSPEDAJE EN EL HOTEL SEDE'); h.lines.forEach(t => L.push('- ' + t)); if(h.nota) L.push('IMPORTANTE: ' + h.nota); }
   { const B = notaBloques(r), ll = !tierra && aplicaLlegada(r), rg = !tierra && aplicaRegreso(r);
@@ -1165,13 +1171,14 @@ function mailHTML(r, enPDF){
   b += p(`${T('Estimado(a)', C ? 13 : 15, MUT)} ${T(esc(r.n.toUpperCase()), C ? 15 : 17, INK, 'bold')}`, C ? 'padding-top:6px' : 'padding-top:12px');
   b += p(T(esc(INTRO_TXT).replace('Segunda Cumbre Universales', `<b style="color:${INK}">Segunda Cumbre Universales</b>`), C ? 12 : fs, INK), C ? 'padding-top:2px;padding-bottom:2px' : 'padding-top:4px;padding-bottom:4px');
   /* Orden: 1) vuelos y claves de ida/regreso  2) hospedaje  3) traslados  4) puntos importantes */
-  const kI = r.ci || r.cr, kR = r.cr || r.ci;
+  const u = claveUna(r);
   b += h2(tierra ? 'Datos de su viaje' : 'Datos de su reserva de vuelo');
   if(tierra) b += p(T(viajeTxt(r), fs, INK, 'bold'));
-  else { b += p(T(VUELO_TXT, C ? 11 : fs, INK), C ? 'padding-bottom:2px' : 'padding-bottom:4px');
-    if(C) b += cardC('Ida', [r.c1, r.ida], G1, kI) + cardC('Regreso', [r.reg, r.c2], G2, kR);
-    else { if(r.ida || r.c1) b += key('Clave de reserva de ida', kI || '-'); b += card('Ida', [r.c1, r.ida], G1, false);
-      if(r.reg || r.c2) b += key('Clave de reserva de regreso', kR || '-'); b += card('Regreso', [r.reg, r.c2], G2, false); }
+  else { b += p(T(VUELO_TXT_R(r).replace('dos claves de reserva distintas', `<b style="color:${INK}">dos claves de reserva distintas</b>`), C ? 11 : fs, INK), C ? 'padding-bottom:2px' : 'padding-bottom:4px');
+    if(!dos) b += key(u.lab, u.k);
+    if(C) b += cardC('Ida', [r.c1, r.ida], G1, dos ? r.ci : '') + cardC('Regreso', [r.reg, r.c2], G2, dos ? r.cr : '');
+    else { if(dos) b += key('Clave de reserva de ida', r.ci); b += card('Ida', [r.c1, r.ida], G1, false);
+      if(dos) b += key('Clave de reserva de regreso', r.cr); b += card('Regreso', [r.reg, r.c2], G2, false); }
     b += p(T('Horarios en hora local de cada aeropuerto.', C ? 10 : 11, MUT)); }
   // Hospedaje
   { const hi = hotelInfo(r), pad = C ? '3px 0' : '5px 0';
@@ -1241,9 +1248,10 @@ function waTxt(r){
   const tierra = soloTierra(r);
   L.push(tierra ? '🧳 *DATOS DE SU VIAJE*' : '✈️ *DATOS DE SU RESERVA DE VUELO*');
   if(tierra) L.push(porCuentaR(r) ? '🚙 Llega por su cuenta a la sede del evento.' : '🚐 Viaje por traslado terrestre.');
-  else { L.push(VUELO_TXT);
-    if(r.ida || r.c1){ L.push('', '🔑 *CLAVE DE RESERVA DE IDA*', '➡️ *' + (r.ci || r.cr || '-') + '*'); seg('🛫', 'Ida (conexión)', r.c1); seg('🛫', 'Ida', r.ida); }
-    if(r.reg || r.c2){ L.push('', '🔑 *CLAVE DE RESERVA DE REGRESO*', '➡️ *' + (r.cr || r.ci || '-') + '*'); seg('🛬', 'Regreso', r.reg); seg('🛬', 'Regreso (conexión)', r.c2); }
+  else { const dos = dosClaves(r), u = claveUna(r); L.push(VUELO_TXT_R(r).replace('dos claves de reserva distintas', '*dos claves de reserva distintas*'));
+    if(!dos) L.push('', '🔑 *' + u.lab.toUpperCase() + '*', '➡️ *' + u.k + '*', '');
+    if(dos) L.push('', '🔑 *CLAVE DE RESERVA DE IDA*', '➡️ *' + r.ci + '*'); seg('🛫', 'Ida (conexión)', r.c1); seg('🛫', 'Ida', r.ida);
+    if(dos) L.push('', '🔑 *CLAVE DE RESERVA DE REGRESO*', '➡️ *' + r.cr + '*'); seg('🛬', 'Regreso', r.reg); seg('🛬', 'Regreso (conexión)', r.c2);
     L.push('_Horarios en hora local de cada aeropuerto._'); }
   { const h = hotelInfo(r); L.push('', '🏨 *HOSPEDAJE · HOTEL MARINATERRA*'); h.lines.forEach(t => L.push('• ' + t.replace('Hotel Marinaterra', '*Hotel Marinaterra*'))); if(h.nota) L.push('', '⚠️ ' + h.nota.replace('MetLife', '*MetLife*')); }
   { const B = notaBloques(r), ll = !tierra && aplicaLlegada(r), rg = !tierra && aplicaRegreso(r);
@@ -2224,7 +2232,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 266;
+const APP_V = 267;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

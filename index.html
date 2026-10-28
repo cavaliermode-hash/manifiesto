@@ -988,7 +988,7 @@ function detailView(r){
   const q0 = state.q; state.q = ''; const card = paxCard(r); state.q = q0;
   const first = tcase(splitName(r.n).nom.split(' ')[0] || r.n.split(' ')[0]);
   return `<div class="detail">
-    <button class="back" id="back"><span aria-hidden="true">‹</span> ${VOLVER_A ? 'Volver al Concentrado' : 'Volver a la búsqueda'}</button>
+    <button class="back" id="back"><span aria-hidden="true">‹</span> ${VOLVER_A ? 'Volver a ' + ({con:'Concentrado', lle:'Llegadas', sal:'Salidas'}[VOLVER_A.tab] || 'VECI') : 'Volver a la búsqueda'}</button>
     <div class="dhello">
       <p class="dname"><span class="est">Estimado(a)</span> <b>${esc(r.n)}</b></p><p class="dsub dintro">${esc(INTRO_TXT)}</p>
     </div>
@@ -1661,7 +1661,7 @@ function ctlRender(){
         const con = cx ? ` · conexión ${esc(cx.v)} ${lle ? 'desde ' + esc(cx.o) : 'a ' + esc(cx.d)}` : '';
         const clave = lle ? (r.ci || r.cr) : (r.cr || r.ci);
         const pern = lle && (r.notas||[]).some(n => n.k === 'pe') ? '<span class="ctag">Hotel NH</span>' : '';
-        return `<li>${esc(r.n)}</li>`; }).join('') + '</ul></section>';
+        return `<li>${esc(r.n)}${kBtns(r.n)}</li>`; }).join('') + '</ul></section>';
   });
   $('#cout').innerHTML = html || '<p class="cnote">No hay invitados en este filtro.</p>';
 }
@@ -1917,12 +1917,13 @@ function kRows(){
   return rows;
 }
 
+const kBtns = n => `<span class="knb"><button type="button" data-kver="${esc(n)}" title="Ver su reserva como en la búsqueda" aria-label="Ver reserva de ${esc(n)}">🔍</button><button type="button" data-kcopy="${esc(n)}" title="Copiar nombre" aria-label="Copiar nombre de ${esc(n)}">📋</button></span>`;
 /* Concentrado: 🔍 abre la reserva tal como si se hubiera buscado el nombre; 📋 copia el nombre */
 document.addEventListener('click', e => {
-  const v = e.target.closest('#kbody [data-kver]');
+  const v = e.target.closest('#kbody [data-kver], #cout [data-kver]');
   if(v){ const n = v.dataset.kver, i = DATA.findIndex(r => r.n === n); if(i < 0) return;
     VOLVER_A = {tab: CTL.tab, y: window.scrollY}; ctlTab('man'); const q = document.getElementById('q'); if(q){ q.value = n; state.q = n; } render(); openPax(i); return; }
-  const c = e.target.closest('#kbody [data-kcopy]');
+  const c = e.target.closest('#kbody [data-kcopy], #cout [data-kcopy]');
   if(c){ const n = c.dataset.kcopy, ok = () => { c.textContent = '✓'; setTimeout(() => c.textContent = '📋', 1400); };
     Promise.resolve().then(() => navigator.clipboard.writeText(n)).then(ok).catch(() => { const ta = document.createElement('textarea'); ta.value = n; document.body.appendChild(ta); ta.select(); try{ document.execCommand('copy'); ok(); }catch(err){} ta.remove(); }); }
 });
@@ -2085,7 +2086,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 230;
+const APP_V = 231;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

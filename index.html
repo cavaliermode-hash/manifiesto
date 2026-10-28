@@ -982,7 +982,7 @@ function detailView(r){
   const q0 = state.q; state.q = ''; const card = paxCard(r); state.q = q0;
   const first = tcase(splitName(r.n).nom.split(' ')[0] || r.n.split(' ')[0]);
   return `<div class="detail">
-    <button class="back" id="back"><span aria-hidden="true">‹</span> Volver a la búsqueda</button>
+    <button class="back" id="back"><span aria-hidden="true">‹</span> ${VOLVER_A ? 'Volver al Concentrado' : 'Volver a la búsqueda'}</button>
     <div class="dhello">
       <p class="dname"><span class="est">Estimado(a)</span> <b>${esc(r.n)}</b></p><p class="dsub dintro">${esc(INTRO_TXT)}</p>
     </div>
@@ -1514,8 +1514,10 @@ $('#out').addEventListener('click', e=>{
   if(f){ state.q=f.dataset.flight; $('#q').value=state.q; window.scrollTo({top:0}); render(); }
 });
 function openPax(i){ state.sel = i; try{ history.pushState({sel:i}, ''); }catch(e){} window.scrollTo({top:0}); render(); const b=document.getElementById('back'); if(b) b.focus({preventScroll:true}); }
-function closePax(){ state.sel = null; render(); const q=document.getElementById('q'); if(q) q.focus({preventScroll:true}); }
-window.addEventListener('popstate', e => { if(!$('#agv').hidden){ agvClose(); return; } state.sel = e.state && e.state.sel!=null ? e.state.sel : null; render(); });
+let VOLVER_A = null; // {tab, y}: la reserva se abrió desde el Concentrado; al volver regresa ahí
+function volverConcentrado(){ const v = VOLVER_A; VOLVER_A = null; state.sel = null; const q = document.getElementById('q'); if(q) q.value = ''; state.q = ''; render(); ctlTab(v.tab); setTimeout(() => window.scrollTo({top: v.y || 0}), 30); }
+function closePax(){ if(VOLVER_A) return volverConcentrado(); state.sel = null; render(); const q=document.getElementById('q'); if(q) q.focus({preventScroll:true}); }
+window.addEventListener('popstate', e => { if(!$('#agv').hidden){ agvClose(); return; } if(VOLVER_A && !(e.state && e.state.sel!=null)) return volverConcentrado(); state.sel = e.state && e.state.sel!=null ? e.state.sel : null; render(); });
 /* ---------- Visor de agenda con botón Regresar ---------- */
 function agvClose(){ $('#agv').hidden = true; document.body.style.overflow = ''; const o = $('#ag-open'); if(o) o.focus({preventScroll:true}); }
 document.addEventListener('click', e => { const a = e.target.closest('#ag-open, [data-agv]'); if(!a) return; e.preventDefault();
@@ -1902,7 +1904,7 @@ function kRows(){
 document.addEventListener('click', e => {
   const v = e.target.closest('#kbody [data-kver]');
   if(v){ const n = v.dataset.kver, i = DATA.findIndex(r => r.n === n); if(i < 0) return;
-    ctlTab('man'); const q = document.getElementById('q'); if(q){ q.value = n; state.q = n; } render(); openPax(i); return; }
+    VOLVER_A = {tab: CTL.tab, y: window.scrollY}; ctlTab('man'); const q = document.getElementById('q'); if(q){ q.value = n; state.q = n; } render(); openPax(i); return; }
   const c = e.target.closest('#kbody [data-kcopy]');
   if(c){ const n = c.dataset.kcopy, ok = () => { c.textContent = '✓'; setTimeout(() => c.textContent = '📋', 1400); };
     Promise.resolve().then(() => navigator.clipboard.writeText(n)).then(ok).catch(() => { const ta = document.createElement('textarea'); ta.value = n; document.body.appendChild(ta); ta.select(); try{ document.execCommand('copy'); ok(); }catch(err){} ta.remove(); }); }
@@ -2066,7 +2068,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 227;
+const APP_V = 228;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

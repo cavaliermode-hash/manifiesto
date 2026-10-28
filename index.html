@@ -1450,7 +1450,7 @@ function vueloHTML(r, pie){ /* despedida ECI siempre al final (búsqueda, VECI y
     <div style="margin-top:10px;font:11px Arial,sans-serif;color:#666">Horarios en hora local de cada aeropuerto.</div>
     <div style="margin-top:16px;border-left:4px solid ${G};padding-left:9px;font:bold 15px Arial,sans-serif;color:${G};letter-spacing:.4px">PUNTOS IMPORTANTES DE SU VUELO</div>
     <div style="margin-top:6px;background:#F0F8F2;border-left:4px solid ${G};padding:8px 14px">${[...document.querySelectorAll('section.important li')].map(li => `<div style="display:flex;gap:8px;font:13px/1.55 Arial,sans-serif;color:#16301F;padding:2px 0"><span style="color:${G};font-weight:bold">•</span><span>${li.innerHTML.replace(/<b>/g, '<b style="color:#16301F">')}</span></div>`).join('')}</div>
-    ${pie !== false ? `<div style="margin-top:16px;font:13px Arial,sans-serif;color:#222">Le enviamos un cordial saludo deseándole un buen viaje y nos reiteramos a sus órdenes.&nbsp;&nbsp;<i style="font-weight:bold;color:${G}">Viajes El Corte Inglés</i></div>` : ''}
+    ${true ? `<div style="margin-top:16px;font:13px Arial,sans-serif;color:#222">Le enviamos un cordial saludo deseándole un buen viaje y nos reiteramos a sus órdenes.&nbsp;&nbsp;<i style="font-weight:bold;color:${G}">Viajes El Corte Inglés</i></div>` : ''}
   </div>`;
 }
 async function vueloPDF(r, pie){
@@ -1518,7 +1518,7 @@ async function pdfDirecto2(sp, solo, nn){
   document.title = r ? (solo ? 'Vuelos ' : 'Itinerario ') + tcase(r.n) : 'Itinerario';
   document.body.insertAdjacentHTML('beforeend', `<div style="position:fixed;inset:0;z-index:2000;background:#fff;font:600 17px/1.5 system-ui,sans-serif;color:#136c34;padding:40px 20px;text-align:center" id="pdfst">${r ? 'Generando itinerario de ' + esc(tcase(r.n)) + '…' : 'No se encontró la reserva.'}</div>`);
   if(!r) return;
-  (solo ? vueloPDF(r, !!sp.get('ver')) : itinPDF(r)).then(blob => { const url = URL.createObjectURL(new File([blob], (solo ? '' : 'Itinerario ') + tcase(r.n) + '.pdf', {type:'application/pdf'}));
+  (solo ? vueloPDF(r, true) : itinPDF(r)).then(blob => { const url = URL.createObjectURL(new File([blob], (solo ? '' : 'Itinerario ') + tcase(r.n) + '.pdf', {type:'application/pdf'}));
     $('#pdfst').innerHTML = `<a href="${url}" style="color:#136c34">Abrir itinerario de ${esc(tcase(r.n))} (PDF)</a>`; if(solo && !sp.get('ver')){ // PDF de vuelos (VECI): se descarga automáticamente y además se abre para verlo
       const nombre = tcase(r.n) + '.pdf', dl = document.createElement('a'); dl.href = url; dl.download = nombre; document.body.appendChild(dl); dl.click(); dl.remove();
       $('#pdfst').innerHTML = `✓ Se descargó <b>${esc(nombre)}</b><br><a href="${url}" style="color:#136c34">Abrir PDF</a>`; setTimeout(() => location.replace(url), 900); }
@@ -2233,7 +2233,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 274;
+const APP_V = 275;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

@@ -622,6 +622,7 @@ button.ptile{font:inherit;cursor:pointer;width:100%;transition:transform .08s,bo
 .nbt{margin:0 0 2px;font:700 13.5px/1.2 var(--display);text-transform:uppercase;letter-spacing:.04em;color:#6B4A00}
 .nblk dl{display:grid;grid-template-columns:max-content 1fr;gap:1px 10px;margin:0;font-size:13.5px;line-height:1.3}.nblk dt{font-weight:700;color:var(--muted)}.nblk dd{margin:0;color:var(--ink,#16301F)}.nbx{margin:0;font-size:14px}
 @media (max-width:480px){.nblk dl{font-size:13px;gap:1px 8px}.nblk dt{font-size:12px}}
+.knb{display:inline-flex;gap:3px;margin-left:6px;vertical-align:middle}.knb button{font-size:12px;line-height:1;padding:3px 5px;border:1px solid var(--line);border-radius:6px;background:#fff;cursor:pointer}.knb button:hover{border-color:var(--green);background:var(--green-soft)}
 </style>
 </head>
 <body>
@@ -1896,6 +1897,16 @@ function kRows(){
     if(!c) c = a.f.localeCompare(b.f) || a.n.localeCompare(b.n,'es'); return c * KON.dir; });
   return rows;
 }
+
+/* Concentrado: 🔍 abre la reserva tal como si se hubiera buscado el nombre; 📋 copia el nombre */
+document.addEventListener('click', e => {
+  const v = e.target.closest('#kbody [data-kver]');
+  if(v){ const n = v.dataset.kver, i = DATA.findIndex(r => r.n === n); if(i < 0) return;
+    ctlTab('man'); const q = document.getElementById('q'); if(q){ q.value = n; state.q = n; } render(); openPax(i); return; }
+  const c = e.target.closest('#kbody [data-kcopy]');
+  if(c){ const n = c.dataset.kcopy, ok = () => { c.textContent = '✓'; setTimeout(() => c.textContent = '📋', 1400); };
+    Promise.resolve().then(() => navigator.clipboard.writeText(n)).then(ok).catch(() => { const ta = document.createElement('textarea'); ta.value = n; document.body.appendChild(ta); ta.select(); try{ document.execCommand('copy'); ok(); }catch(err){} ta.remove(); }); }
+});
 function konRender(){
   const lle = KON.m === 'lle'; $('#k-t').textContent = lle ? 'Concentrado de llegadas' : 'Concentrado de regresos (salidas)'; $('#k-fh').textContent = lle ? 'Llegada' : 'Salida';
   document.querySelectorAll('.kmode button').forEach(b => b.setAttribute('aria-pressed', b.dataset.m === KON.m));
@@ -1904,7 +1915,7 @@ function konRender(){
   document.querySelectorAll('#con .ktable th button').forEach(b => { if(b.dataset.sort === KON.sort){ b.setAttribute('aria-sort', KON.dir>0?'ascending':'descending'); b.querySelector('span').dataset.a = KON.dir>0?'▲':'▼'; } else b.removeAttribute('aria-sort'); });
   const rows = all.filter(x => KON.filter === 'all' || x.s === KON.filter);
   $('#kbody').innerHTML = rows.map(x => { const l = x.l;
-    return `<tr class="st-${x.s}"><td class="kn">${esc(x.n)}</td>${l ? `<td class="kf">${esc(fmtDate(l.f))}<small>${esc(lle ? l.l : l.s)} · ${esc(l.o)}→${esc(l.d)}</small></td>
+    return `<tr class="st-${x.s}"><td class="kn">${esc(x.n)}<span class="knb"><button type="button" data-kver="${esc(x.n)}" title="Ver su reserva como en la búsqueda" aria-label="Ver reserva de ${esc(x.n)}">🔍</button><button type="button" data-kcopy="${esc(x.n)}" title="Copiar nombre" aria-label="Copiar nombre de ${esc(x.n)}">📋</button></span></td>${l ? `<td class="kf">${esc(fmtDate(l.f))}<small>${esc(lle ? l.l : l.s)} · ${esc(l.o)}→${esc(l.d)}</small></td>
       <td class="kv">${esc(l.v)}</td>` : `<td class="kf">${esc(x.lab)}<small>${x.v === 'Por su cuenta' ? '🚗' : '🚐'} ${esc(x.det)}</small></td><td class="kv">${esc(x.v)}</td>`}<td><div class="kb"><button class="bok" data-n="${esc(x.n)}" data-s="ok" aria-pressed="${x.s==='ok'}">✓ Check-in</button>
       <button class="bns" data-n="${esc(x.n)}" data-s="ns" aria-pressed="${x.s==='ns'}">✗ No show</button></div></td></tr>`; }).join('')
     || '<tr><td colspan="4" class="cnote">No hay invitados en este filtro.</td></tr>';
@@ -2055,7 +2066,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 226;
+const APP_V = 227;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

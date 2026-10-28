@@ -1207,7 +1207,7 @@ function mailHTML(r, enPDF){
   { const blkRows = rows => (rows || []).map(([k, v]) => `<tr><td valign="top" width="${C ? 104 : 120}" style="width:${C ? 104 : 120}px;padding:${C ? '0 6px 0 0' : '1px 8px 1px 0'}">${T(esc(k), C ? 10 : 12, MUT, 'bold')}</td><td style="padding:${C ? '0;line-height:1.25' : '1px 0;line-height:1.35'}">${T(esc(v).replace(B_HL, x => `<b style="color:${INK}">${x}</b>`), C ? 11 : 13, INK)}</td></tr>`).join('');
     const blk = (ic, t, inner) => `<tr><td style="padding:${C ? '3px 0' : '5px 0'}"><table width="100%" cellpadding="0" cellspacing="0"><tr><td bgcolor="#FFFFFF" style="background:#FFFFFF;border:1.5px solid #EBCB72;border-left:5px solid #E0A100;border-radius:8px;padding:${C ? '3px 9px' : '6px 11px'}">${T(ic + ' ' + esc(t.toUpperCase()), C ? 10 : 12, '#6B4A00', 'bold', 'Arial,sans-serif', 'letter-spacing:.5px')}<table cellpadding="0" cellspacing="0" style="margin-top:${C ? 1 : 2}px">${inner}</table></td></tr></table></td></tr>`;
     const verde = (tit, txt) => `<tr><td style="padding:${C ? '3px 0' : '5px 0'}"><table width="100%" cellpadding="0" cellspacing="0"><tr><td bgcolor="#E3F1E7" style="background:#E3F1E7;border:2px solid ${G};border-radius:8px;padding:${C ? '4px 10px;line-height:1.3' : '8px 12px;line-height:1.4'}">${T(tit, C ? 12 : 14, G, 'bold')}<br>${T(txt, C ? 12 : fs, INK)}</td></tr></table></td></tr>`;
-    const dia = f => `<tr><td style="padding:${C ? '8px 0 2px' : '14px 0 4px'}"><table width="100%" cellpadding="0" cellspacing="0"><tr><td bgcolor="${G}" style="background:${G};border-radius:6px;padding:${C ? '3px 10px' : '6px 12px'}">${T('📅 ' + (f ? fLarga(f).toUpperCase() : 'INDICACIONES'), C ? 11 : 13, '#FFFFFF', 'bold', 'Arial,sans-serif', 'letter-spacing:.6px')}</td></tr></table></td></tr>`;
+    const dia = f => `<tr><td style="padding:${C ? '8px 0 2px' : '14px 0 4px'}"><table width="100%" cellpadding="0" cellspacing="0"><tr><td bgcolor="#EAF5EE" style="background:#EAF5EE;border-left:5px solid ${G};border-radius:6px;padding:${C ? '4px 10px' : '7px 12px'}">${T('📅 ' + (f ? fLarga(f).toUpperCase() : 'INDICACIONES'), C ? 13 : 15, ON, 'bold', 'Arial,sans-serif', 'letter-spacing:.6px')}</td></tr></table></td></tr>`;
     b += h2('Su itinerario día por día');
     let fa = null;
     lineaTiempo(r).forEach(x => { if(x.f !== fa){ fa = x.f; b += dia(x.f); }
@@ -2251,7 +2251,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 280;
+const APP_V = 281;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

@@ -1024,7 +1024,7 @@ function lineaTiempo(r){
   legsR.forEach((l, j) => add(l.f, l.s, {tipo: 'vuelo', leg: l, dir: 'Regreso'}));
   if(!tierra && aplicaLlegada(r)){ const l = legsI.find(x => x.d === 'HMO'); add(l.f, minDe(l.l) + 1, {tipo: 'verde', i: '📍', t: 'Recepción en el aeropuerto de Hermosillo', text: LLEGA_TXT}); }
   { const h = hotelInfo(r), ci = isoDe(((h.lines.find(t => /^Check in/i.test(t)) || '').replace(/(\d+) noviembre/, '$1 de noviembre'))) || HOTEL.ci;
-    add(ci, '15:00', {tipo: 'hotel', i: '🏨', t: 'Hospedaje en el hotel sede', lines: h.lines, nota: h.nota});
+    add(ci, '15:00', {tipo: 'hotel', i: '🏨', t: 'Hospedaje en el hotel sede', lines: h.lines.filter(t => !/^Check out/i.test(t)), nota: h.nota});
     add(HOTEL.co, '12:00', {tipo: 'info', i: '🛎️', t: 'Check-out del ' + HOTEL.n, text: ''}); }
   if(!tierra && aplicaRegreso(r) && !regHMO){ const l = legsR.find(x => x.o === 'HMO'); add(l.f, minDe(l.s) - 1, {tipo: 'verde', i: '🚐', t: 'Traslado del hotel al aeropuerto de Hermosillo', text: REGRESO_TXT}); }
   S.forEach((x, k) => x.k = k);
@@ -2251,7 +2251,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 282;
+const APP_V = 283;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

@@ -1410,7 +1410,7 @@ const LINEA = v => { const m = String(v || '').match(/^(.*?)\s*(\d+)$/); if(!m) 
 const LOGO_AL = v => ({AEROMEXICO:'logo-am.png', VOLARIS:'logo-y4.png', 'VIVA AEROBUS':'logo-vb.png'})[String(v || '').toUpperCase().replace(/\s*\d+$/, '')] || '';
 const DIAV = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'], MESV = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 const fV = (iso, conDia) => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || ''); if(!m) return iso || ''; const d = new Date(Date.UTC(+m[1], m[2]-1, +m[3])); return (conDia ? DIAV[d.getUTCDay()] + ' ' : '') + m[3] + ' ' + MESV[m[2]-1] + (conDia ? ' ' + m[1] : ''); };
-function vueloHTML(r, pie){ /* pie: nota MetLife y despedida (solo cuando se abre desde la búsqueda) */
+function vueloHTML(r, pie){ /* pie: despedida ECI (solo cuando se abre desde la búsqueda) */
   const G = '#1C6B2E', ida = [r.c1, r.ida].filter(Boolean), reg = [r.reg, r.c2].filter(Boolean), ci = r.ci || r.cr, cr = r.cr || r.ci, misma = ci && cr && ci === cr;
   const dur = l => { const m = legMin(l); return m > 0 ? `${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')} (Sin paradas)` : ''; };
   const leg = (l, clave, lab) => `<div style="font:15px Arial,sans-serif;color:#222;margin:14px 0 4px 2px">${fV(l.f, true)}</div>
@@ -1433,8 +1433,7 @@ function vueloHTML(r, pie){ /* pie: nota MetLife y despedida (solo cuando se abr
     <div style="margin-top:10px;font:11px Arial,sans-serif;color:#666">Horarios en hora local de cada aeropuerto.</div>
     <div style="margin-top:16px;border-left:4px solid ${G};padding-left:9px;font:bold 15px Arial,sans-serif;color:${G};letter-spacing:.4px">PUNTOS IMPORTANTES DE SU VUELO</div>
     <div style="margin-top:6px;background:#F0F8F2;border-left:4px solid ${G};padding:8px 14px">${[...document.querySelectorAll('section.important li')].map(li => `<div style="display:flex;gap:8px;font:13px/1.55 Arial,sans-serif;color:#16301F;padding:2px 0"><span style="color:${G};font-weight:bold">•</span><span>${li.innerHTML.replace(/<b>/g, '<b style="color:#16301F">')}</span></div>`).join('')}</div>
-    ${pie ? `<div style="margin-top:14px;background:#FFF7E6;border-left:4px solid #E0A100;padding:9px 14px;font:bold 13px/1.45 Arial,sans-serif;color:#16301F">Importante.- Le recordamos que MetLife cubre únicamente las noches de hotel y traslados terrestres que estén dentro del evento o por ruta.</div>
-    <div style="margin-top:12px;font:13px Arial,sans-serif;color:#222">Le enviamos un cordial saludo deseándole un buen viaje y nos reiteramos a sus órdenes.&nbsp;&nbsp;<i style="font-weight:bold;color:${G}">Viajes El Corte Inglés</i></div>` : ''}
+    ${pie ? `<div style="margin-top:16px;font:13px Arial,sans-serif;color:#222">Le enviamos un cordial saludo deseándole un buen viaje y nos reiteramos a sus órdenes.&nbsp;&nbsp;<i style="font-weight:bold;color:${G}">Viajes El Corte Inglés</i></div>` : ''}
   </div>`;
 }
 async function vueloPDF(r, pie){
@@ -2217,7 +2216,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 260;
+const APP_V = 261;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

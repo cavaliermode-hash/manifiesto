@@ -688,7 +688,7 @@ button.ptile{font:inherit;cursor:pointer;width:100%;transition:transform .08s,bo
 </section>
 <section class="wrap ctl" id="cla" hidden>
   <h2 class="ct">Claves de reserva</h2>
-  <p class="cs">Todas las claves en una sola lista. Ordena tocando el encabezado de cada columna; toca una clave para copiarla. En <b>Itinerario</b>: ✈️ abre el PDF solo de vuelos (formato Viajes El Corte Inglés), 📄 abre su itinerario en PDF, 💬 lo envía por WhatsApp y ✉️ por correo.</p>
+  <p class="cs">Todas las claves en una sola lista. Ordena tocando el encabezado de cada columna; toca una clave para copiarla. En <b>Itinerario</b>: ✈️ abre y descarga el PDF solo de vuelos, 📄 abre su itinerario en PDF, 💬 lo envía por WhatsApp y ✉️ por correo.</p>
   <div class="csearch"><input id="cq" type="search" placeholder="🔍 Buscar por nombre o apellido" autocomplete="off" aria-label="Buscar por nombre o apellido"><span id="cqn"></span></div>
   <div class="ktable-wrap"><table class="ktable ctab">
     <thead><tr>
@@ -1444,7 +1444,10 @@ function pdfDirecto(){
   document.body.insertAdjacentHTML('beforeend', `<div style="position:fixed;inset:0;z-index:2000;background:#fff;font:600 17px/1.5 system-ui,sans-serif;color:#136c34;padding:40px 20px;text-align:center" id="pdfst">${r ? 'Generando itinerario de ' + esc(tcase(r.n)) + '…' : 'No se encontró la reserva.'}</div>`);
   if(!r) return true;
   (solo ? vueloPDF(r) : itinPDF(r)).then(blob => { const url = URL.createObjectURL(new File([blob], (solo ? 'Vuelos ' : 'Itinerario ') + tcase(r.n) + '.pdf', {type:'application/pdf'}));
-    $('#pdfst').innerHTML = `<a href="${url}" style="color:#136c34">Abrir itinerario de ${esc(tcase(r.n))} (PDF)</a>`; location.replace(url); })
+    $('#pdfst').innerHTML = `<a href="${url}" style="color:#136c34">Abrir itinerario de ${esc(tcase(r.n))} (PDF)</a>`; if(solo){ // PDF de vuelos: se descarga automáticamente y además se abre para verlo
+      const nombre = 'Vuelos ' + tcase(r.n) + '.pdf', dl = document.createElement('a'); dl.href = url; dl.download = nombre; document.body.appendChild(dl); dl.click(); dl.remove();
+      $('#pdfst').innerHTML = `✓ Se descargó <b>${esc(nombre)}</b><br><a href="${url}" style="color:#136c34">Abrir PDF</a>`; setTimeout(() => location.replace(url), 900); }
+    else location.replace(url); })
     .catch(() => { $('#pdfst').textContent = 'No se pudo generar el PDF. Revisa tu conexión y recarga.'; });
   return true;
 }
@@ -1797,7 +1800,7 @@ function vFiltra(id){
 document.addEventListener('input', e => { if(VQ[e.target.id]) vFiltra(e.target.id); });
 addEventListener('DOMContentLoaded', () => Object.entries(VQ).forEach(([id, sel]) => { const c = $(sel); if(c) new MutationObserver(() => vFiltra(id)).observe(c, {childList:true, subtree:true}); }));
 /* Botones 📄 PDF, 💬 WhatsApp y ✉️ correo de una persona (Claves y Traslados y pernoctas) */
-function accBtns(i, vuelos){ const n = DATA[i].n; return `<td class="cpdf"><div class="cbx">${vuelos && [DATA[i].ida, DATA[i].reg, DATA[i].c1, DATA[i].c2].some(Boolean) ? `<button class="cvue" data-vpdf="${i}" title="PDF solo de vuelos de ${esc(tcase(n))} (formato Viajes El Corte Inglés)" aria-label="PDF de vuelos de ${esc(tcase(n))}">✈️</button>` : ''}<button data-pdfv="${i}" title="Abrir el itinerario de ${esc(tcase(n))} en PDF" aria-label="PDF de ${esc(tcase(n))}">📄</button>${TEL[n]
+function accBtns(i, vuelos){ const n = DATA[i].n; return `<td class="cpdf"><div class="cbx">${vuelos && [DATA[i].ida, DATA[i].reg, DATA[i].c1, DATA[i].c2].some(Boolean) ? `<button class="cvue" data-vpdf="${i}" title="Abrir y descargar el PDF de vuelos de ${esc(tcase(n))}" aria-label="PDF de vuelos de ${esc(tcase(n))}">✈️</button>` : ''}<button data-pdfv="${i}" title="Abrir el itinerario de ${esc(tcase(n))} en PDF" aria-label="PDF de ${esc(tcase(n))}">📄</button>${TEL[n]
       ? `<a class="cwa" href="https://wa.me/52${TEL[n]}?text=${encodeURIComponent(waTxt(DATA[i]))}" target="_blank" rel="noopener" title="Enviar por WhatsApp a ${esc(tcase(n))} (${TEL[n]})" aria-label="WhatsApp a ${esc(tcase(n))}">💬</a>`
       : '<span class="cwa na" title="Sin teléfono registrado">—</span>'}${MAIL[n]
       ? `<a class="cwa cml" data-mail="${i}" href="mailto:${encodeURIComponent(MAIL[n])}?subject=${encodeURIComponent('Tu itinerario · Segunda Cumbre Universales')}&body=${encodeURIComponent(mailTxt(DATA[i]))}" title="Enviar por correo a ${esc(tcase(n))} (${esc(MAIL[n])})" aria-label="Correo a ${esc(tcase(n))}">✉️</a>`
@@ -2135,7 +2138,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 240;
+const APP_V = 241;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

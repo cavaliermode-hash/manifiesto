@@ -630,6 +630,7 @@ button.ptile{font:inherit;cursor:pointer;width:100%;transition:transform .08s,bo
 #cla .kll2{display:none}
 @media (max-width:560px){#cla td.kll,#cla th:nth-child(2){display:none}#cla .ktable td{padding:3px 3px!important}#cla .cpdf button,#cla .cpdf .cwa{width:22px!important;height:24px!important;font-size:12px!important}#cla .ctab td.cc{font-size:11px}#cla .ctab td.cc button{padding:2px 3px}#cla .rtag{font-size:8px;padding:2px 4px;margin-left:3px}#cla .kll2{display:block;font:500 10.5px/1.3 var(--body);color:var(--muted);text-transform:none;margin-top:2px}}
 .zipbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:8px 0 2px}.zipbar button{font:700 13px var(--body);padding:8px 12px;border-radius:8px;border:1.5px solid var(--green);background:var(--green);color:#fff;cursor:pointer}.zipbar button+button{background:#fff;color:var(--green)}.zipbar button:disabled{opacity:.55;cursor:wait}#zipmsg{font-size:12.5px;color:var(--muted)}
+.rolbar{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 2px}.rolbar button{font:600 12px var(--body);padding:5px 10px;border-radius:999px;border:1px solid var(--line);background:#fff;color:var(--ink,#16301F);cursor:pointer}.rolbar button b{font-weight:800;margin-left:2px}.rolbar button.st{border-color:#9DB8DA;color:#1E5BA8}.rolbar button.on{background:var(--green);border-color:var(--green);color:#fff}.rolbar button.st.on{background:#1E5BA8;border-color:#1E5BA8;color:#fff}
 </style>
 </head>
 <body>
@@ -696,6 +697,7 @@ button.ptile{font:inherit;cursor:pointer;width:100%;transition:transform .08s,bo
   <h2 class="ct">Claves de reserva</h2>
   <p class="cs">Todas las claves en una sola lista. Ordena tocando el encabezado de cada columna; toca una clave para copiarla. En <b>Itinerario</b>: ✈️ abre y descarga el PDF solo de vuelos, 📄 abre su itinerario en PDF, 💬 lo envía por WhatsApp y ✉️ por correo.</p>
   <div class="zipbar"><button type="button" id="zipv">⬇️ ZIP de PDF de vuelos</button><button type="button" id="zipi">⬇️ ZIP de itinerarios</button><span id="zipmsg" role="status"></span></div>
+  <div class="rolbar" id="rolbar" role="group" aria-label="Filtrar por rol"></div>
   <div class="csearch"><input id="cq" type="search" placeholder="🔍 Buscar por nombre o apellido" autocomplete="off" aria-label="Buscar por nombre o apellido"><span id="cqn"></span></div>
   <div class="ktable-wrap"><table class="ktable ctab">
     <thead><tr>
@@ -1808,7 +1810,7 @@ async function syncStart(pin){
   document.addEventListener('visibilitychange', () => { if(!document.hidden) syncPull(); });
 }
 /* ---------- Claves de reserva ---------- */
-const CLA = {sort:'ll', dir:1}; // por omisión: ordenados por llegada
+const CLA = {sort:'ll', dir:1, rol:''}; // por omisión: ordenados por llegada; rol: filtro por rol ('' = todos, 'STAFF*' = todo el staff)
 /* Llegada de cada persona (para ordenar Claves): vuelo que llega a Hermosillo, o fecha del traslado / llegada por su cuenta */
 function llegaDe(r){
   const ida = [r.c1, r.ida].filter(Boolean), l = ida.find(x => x.d === 'HMO') || ida[ida.length - 1];
@@ -1822,6 +1824,7 @@ function claRows(){
   const rows = DATA.map((r, i) => ({i, n:r.n, ci:r.ci || (!r.cr ? r.cl || '' : ''), cr:r.cr || '', ...llegaDe(r), rol:r.rol || ''}));
   const k = CLA.sort;
   rows.sort((a,b) => { const v = x => k==='ci' ? (x.ci || x.cr) : x[k]; let c = (k==='n' ? 0 : (!v(a)) - (!v(b))) || String(v(a)).localeCompare(String(v(b)),'es'); if(!c) c = a.n.localeCompare(b.n,'es'); return c * CLA.dir; });
+  if(CLA.rol){ const f = CLA.rol === 'STAFF*' ? (x => /^staff/i.test(x.rol)) : (x => x.rol.toUpperCase() === CLA.rol); for(let k = rows.length - 1; k >= 0; k--) if(!f(rows[k])) rows.splice(k, 1); }
   const q = norm($('#cq') ? $('#cq').value : '').split(/\s+/).filter(Boolean); // buscador: todas las palabras escritas deben aparecer en el nombre o la clave
   return q.length ? rows.filter(x => { const t = norm(x.n + ' ' + x.ci + ' ' + x.cr); return q.every(w => t.includes(w)); }) : rows;
 }
@@ -1853,7 +1856,14 @@ function accBtns(i, vuelos){ const n = DATA[i].n; return `<td class="cpdf"><div 
       : '<span class="cwa na" title="Sin teléfono registrado">—</span>'}${MAIL[n]
       ? `<a class="cwa cml" data-mail="${i}" href="mailto:${encodeURIComponent(MAIL[n])}?subject=${encodeURIComponent('Tu itinerario · Segunda Cumbre Universales')}&body=${encodeURIComponent(mailTxt(DATA[i]))}" title="Enviar por correo a ${esc(tcase(n))} (${esc(MAIL[n])})" aria-label="Correo a ${esc(tcase(n))}">✉️</a>`
       : '<span class="cwa na" title="Sin correo registrado">—</span>'}</div></td>`; }
-function claRender(){
+function rolBar(){ const el = document.getElementById('rolbar'); if(!el) return;
+  const c = {}; DATA.forEach(r => { const k = (r.rol || 'SIN ROL').toUpperCase(); c[k] = (c[k] || 0) + 1; });
+  const orden = Object.keys(c).sort((a, b) => (/^STAFF/.test(a) - /^STAFF/.test(b)) || c[b] - c[a] || a.localeCompare(b, 'es'));
+  const nSt = DATA.filter(r => /^staff/i.test(r.rol || '')).length;
+  const chip = (k, t, n) => `<button type="button" data-rol="${esc(k)}" class="${CLA.rol === k ? 'on' : ''}${/^STAFF/.test(k) ? ' st' : ''}" aria-pressed="${CLA.rol === k}">${esc(t)} <b>${n}</b></button>`;
+  el.innerHTML = chip('', 'Todos', DATA.length) + orden.map(k => chip(k, k, c[k])).join('') + (nSt ? chip('STAFF*', 'Todo el staff', nSt) : ''); }
+document.addEventListener('click', e => { const b = e.target.closest('#rolbar [data-rol]'); if(!b) return; CLA.rol = CLA.rol === b.dataset.rol ? '' : b.dataset.rol; claRender(); });
+function claRender(){ rolBar();
   document.querySelectorAll('#cla .ktable th button').forEach(b => { if(b.dataset.sort === CLA.sort){ b.setAttribute('aria-sort', CLA.dir>0?'ascending':'descending'); b.querySelector('span').dataset.a = CLA.dir>0?'▲':'▼'; } else b.removeAttribute('aria-sort'); });
   const btn = c => `<button data-c="${esc(c)}" title="Copiar">${esc(c)}</button>`;
   const cell = x => !x.ci && !x.cr ? '—' : (!x.cr || x.cr === x.ci) ? btn(x.ci) : !x.ci ? `<span class="cl">Regreso</span>${btn(x.cr)}`
@@ -2190,7 +2200,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 252;
+const APP_V = 253;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

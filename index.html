@@ -975,12 +975,10 @@ function notasHTML(r){
   const B = notaBloques(r); if(!B.length) return '';
   return `<section class="notas" aria-label="Indicaciones especiales"><h3>Indicaciones especiales para ti</h3>${B.map(b => `<div class="nblk"><p class="nbt"><span aria-hidden="true">${b.i}</span> ${esc(b.t)}</p>${b.rows ? `<dl>${b.rows.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v).replace(B_HL, x => `<b>${x}</b>`)}</dd>`).join('')}</dl>` : `<p class="nbx">${esc(b.text)}</p>`}</div>`).join('')}</section>`;
 }
-function paxRow(r){
+function paxRow(r){ // resultado de búsqueda: solo el nombre y "Ver mi reserva"
   const i = DATA.indexOf(r);
   return `<button class="prow" data-open="${i}" aria-label="Ver la reserva de ${esc(r.n)}">
-    <span class="prow-t"><span class="prow-n">${hl(r.n)}</span>${r.rg?`<span class="prow-c">${esc(r.rg)}</span>`:''}
-      <span class="itin">${soloTierra(r) ? '<span class="il"><b class="ilab">Traslado</b><span class="iseg">Traslado terrestre</span></span>' : itinLine('Ida', r.c1 ? [r.c1, r.ida] : [r.ida]) + itinLine('Regreso', r.c2 ? [r.reg, r.c2] : [r.reg])}</span>
-      ${(r.notas||[]).length?`<span class="nchips"><span class="nchip">📌 Indicaciones especiales para ti</span></span>`:''}</span>
+    <span class="prow-t"><span class="prow-n">${hl(r.n)}</span></span>
     <span class="prow-b">Ver mi reserva <span aria-hidden="true">›</span></span>
   </button>`;
 }
@@ -2086,7 +2084,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 232;
+const APP_V = 233;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

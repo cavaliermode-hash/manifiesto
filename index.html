@@ -1224,10 +1224,10 @@ function waTxt(r){
   { const B = notaBloques(r); if(B.length){ L.push('📌 *Indicaciones especiales para ti*', ''); B.forEach(bl => { L.push(`${bl.i} *${bl.t.toUpperCase()}*`); if(bl.rows) bl.rows.forEach(([k, v]) => L.push(`• *${k}:* ${v}`)); else L.push(bl.text); L.push(''); }); } }
   { const h = hotelInfo(r); L.push('🏨 *Hospedaje · Hotel Marinaterra*'); h.lines.forEach(t => L.push('• ' + t.replace('Hotel Marinaterra', '*Hotel Marinaterra*'))); if(h.nota) L.push('', '⚠️ ' + h.nota.replace('MetLife', '*MetLife*')); L.push(''); }
   const dos = !!(r.ci && r.cr && r.ci !== r.cr);
-  if(!dos && (r.ci || r.cr)) L.push('🔑 *CLAVE DE RESERVA*', '```' + (r.ci || r.cr) + '```', '');
+  if(!dos && (r.ci || r.cr)) L.push('🔑 *CLAVE DE RESERVA*', '➡️ *' + (r.ci || r.cr) + '*', '');
   if(soloTierra(r)) L.push(porCuentaR(r) ? '🚙 *Llega por su cuenta*' : '🚐 *Traslado terrestre*');
-  if(dos) L.push('🔑 *CLAVE DE RESERVA DE IDA*', '```' + r.ci + '```'); seg('🛫', 'Ida (conexión)', r.c1); seg('🛫', 'Ida', r.ida);
-  if(dos) L.push('', '🔑 *CLAVE DE RESERVA DE REGRESO*', '```' + r.cr + '```'); seg('🛬', 'Regreso', r.reg); seg('🛬', 'Regreso (conexión)', r.c2);
+  if(dos) L.push('🔑 *CLAVE DE RESERVA DE IDA*', '➡️ *' + r.ci + '*'); seg('🛫', 'Ida (conexión)', r.c1); seg('🛫', 'Ida', r.ida);
+  if(dos) L.push('', '🔑 *CLAVE DE RESERVA DE REGRESO*', '➡️ *' + r.cr + '*'); seg('🛬', 'Regreso', r.reg); seg('🛬', 'Regreso (conexión)', r.c2);
   if(!soloTierra(r) && aplicaLlegada(r)) L.push('', '📍 *Recepción en el aeropuerto de Hermosillo*', LLEGA_TXT.replace('MetLife', '*MetLife*'));
   if(!soloTierra(r) && aplicaRegreso(r)) L.push('', '🚐 *Traslado de regreso al aeropuerto de Hermosillo*', REGRESO_TXT);
   L.push('',
@@ -2086,7 +2086,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 231;
+const APP_V = 232;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

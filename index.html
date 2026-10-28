@@ -1186,7 +1186,9 @@ function mailHTML(r, enPDF){
   // (sin botón de PDF en el correo)
   if(C) b += p(T('Le enviamos un cordial saludo deseándole un buen viaje y nos reiteramos a sus órdenes.', 11) + '&nbsp;&nbsp;' + T('Viajes El Corte Inglés', 11, G, 'bold', 'Arial,sans-serif', 'font-style:italic'), 'padding-top:4px');
   else b += p(T('Le enviamos un cordial saludo deseándole un buen viaje y nos reiteramos a sus órdenes.')) + p(T('Viajes El Corte Inglés', fs, G, 'bold', 'Arial,sans-serif', 'font-style:italic'), C ? 'padding-top:2px;padding-bottom:4px' : 'padding-top:6px;padding-bottom:10px');
-  return `<table width="640" cellpadding="4" cellspacing="0" style="width:640px;max-width:640px;font-family:Arial,sans-serif;background:#ffffff">${b}</table>`;
+  // PDF: 640 px fijos (cabe en una hoja). Correo: a lo ancho de la ventana del correo, hasta 1000 px, para leerse mejor.
+  return C ? `<table width="640" cellpadding="4" cellspacing="0" style="width:640px;max-width:640px;font-family:Arial,sans-serif;background:#ffffff">${b}</table>`
+    : `<table width="100%" cellpadding="4" cellspacing="0" style="width:100%;max-width:1000px;font-family:Arial,sans-serif;background:#ffffff">${b}</table>`;
 }
 /* Correo con formato:
    - Computadora: se descarga un borrador de correo (.eml) con el diseño del PDF en el cuerpo, el PDF adjunto,
@@ -2084,7 +2086,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 233;
+const APP_V = 234;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

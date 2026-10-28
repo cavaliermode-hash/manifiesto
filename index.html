@@ -1109,7 +1109,7 @@ function mailTxt(r){
   L.push(`Estimado(a) ${r.n.toUpperCase()}:`, '', INTRO_TXT, '');
   L.push(tierra ? '1. DATOS DE SU VIAJE' : '1. VUELO');
   if(tierra){ L.push(viajeTxt(r)); }
-  else { const dos = dosClaves(r), u = claveUna(r); L.push(VUELO_TXT_R(r));
+  else { const dos = dosClaves(r), u = claveUna(r); L.push('A continuación le compartimos los datos de su reservación aérea.');
     if(!dos) L.push('', `${u.lab.toUpperCase()}: [ ${u.k} ]`, '');
     if(dos) L.push('', `CLAVE DE RESERVA DE IDA: [ ${r.ci} ]`); seg('Ida (conexión)', r.c1); seg('Ida', r.ida);
     if(dos) L.push('', `CLAVE DE RESERVA DE REGRESO: [ ${r.cr} ]`); seg('Regreso', r.reg); seg('Regreso (conexión)', r.c2);
@@ -1174,7 +1174,7 @@ function mailHTML(r, enPDF){
   const u = claveUna(r);
   b += h2(tierra ? 'Datos de su viaje' : 'Vuelo');
   if(tierra) b += p(T(viajeTxt(r), fs, INK, 'bold'));
-  else { b += p(T(VUELO_TXT_R(r).replace('dos claves de reserva distintas', `<b style="color:${INK}">dos claves de reserva distintas</b>`), C ? 11 : fs, INK), C ? 'padding-bottom:2px' : 'padding-bottom:4px');
+  else { b += p(T('A continuación le compartimos los datos de su reservación aérea.', C ? 11 : fs, INK), C ? 'padding-bottom:2px' : 'padding-bottom:4px');
     if(!dos) b += key(u.lab, u.k);
     if(C) b += cardC('Ida', [r.c1, r.ida], G1, dos ? r.ci : '') + cardC('Regreso', [r.reg, r.c2], G2, dos ? r.cr : '');
     else { if(dos) b += key('Clave de reserva de ida', r.ci); b += card('Ida', [r.c1, r.ida], G1, false);
@@ -2232,7 +2232,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 268;
+const APP_V = 269;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

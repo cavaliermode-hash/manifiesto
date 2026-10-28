@@ -777,8 +777,6 @@ button.ptile{font:inherit;cursor:pointer;width:100%;transition:transform .08s,bo
       <div><p class="svc-k">Hospedaje</p><h3>Hospedaje coordinado por nuestro equipo.</h3><p class="svc-sede"><span>Sede del evento</span>Hotel Marinaterra</p></div>
     </div>
   </section>
-  <div class="dcierre" id="cierre"><p class="dimp"><b>Importante.- Le recordamos que MetLife cubre únicamente las noches de hotel y traslados terrestres que estén dentro del evento o por ruta.</b></p>
-    <p class="dbye">Le enviamos un cordial saludo deseándole un buen viaje y nos reiteramos a sus órdenes.&nbsp;&nbsp;<b><i>Viajes El Corte Inglés</i></b></p></div>
   <section class="agenda ag-compact" id="agenda" aria-labelledby="ag-t">
     <div class="ag-head"><div><h2 id="ag-t">Agenda del evento</h2><p>Segunda Cumbre Universales · San Carlos, Sonora · Horarios en hora local de Sonora</p></div><a class="ag-pdf" href="agenda-cumbre.jpg" id="ag-open">📄 Ver agenda completa</a></div>
     <div class="ag-tabs" role="tablist" aria-label="Días del evento">
@@ -807,6 +805,8 @@ button.ptile{font:inherit;cursor:pointer;width:100%;transition:transform .08s,bo
       <li><b>Qué necesita llevar:</b> una <b>identificación oficial vigente</b> (INE o pasaporte) <b>con el mismo nombre de su reserva</b>, y su <b>clave de reserva o pase de abordar</b>.</li>
     </ul>
   </section>
+  <div class="dcierre" id="cierre"><p class="dimp"><b>Importante.- Le recordamos que MetLife cubre únicamente las noches de hotel y traslados terrestres que estén dentro del evento o por ruta.</b></p>
+    <p class="dbye">Le enviamos un cordial saludo deseándole un buen viaje y nos reiteramos a sus órdenes.&nbsp;&nbsp;<b><i>Viajes El Corte Inglés</i></b></p></div>
   <section class="faq" aria-labelledby="faq-t">
     <h2 id="faq-t">Preguntas frecuentes</h2>
     <details><summary>¿Los horarios están en hora de qué ciudad?</summary><p>Cada horario está en la hora local del aeropuerto. En estas fechas, Sonora tiene 1 hora menos que la Ciudad de México: si sales de Hermosillo a las 12:39, en la Ciudad de México son las 13:39.</p></details>
@@ -1013,8 +1013,6 @@ function detailView(r){
     ${card}
     ${aeroHTML(r)}
     ${tripSteps(r)}
-    <div class="dcierre"><p class="dimp"><b>Importante.- Le recordamos que MetLife cubre únicamente las noches de hotel y traslados terrestres que estén dentro del evento o por ruta.</b></p>
-      <p class="dbye">Le enviamos un cordial saludo deseándole un buen viaje y nos reiteramos a sus órdenes.&nbsp;&nbsp;<b><i>Viajes El Corte Inglés</i></b></p></div>
   </div>`;
 }
 /* ---------- Guía del viaje ---------- */
@@ -1693,7 +1691,7 @@ function agItems(D){
   // Pantalla principal: encabezado de agenda y tarjetas de servicios. Dentro de la reserva: agenda por día e información general.
   const ag = document.getElementById('agenda'); if(ag) ag.classList.toggle('ag-compact', !sel);
   const inf = document.getElementById('info'); if(inf) inf.hidden = !sel;
-  const sv = document.getElementById('services'); if(sv) sv.hidden = !!sel; const ci = document.getElementById('cierre'); if(ci) ci.hidden = !!sel;
+  const sv = document.getElementById('services'); if(sv) sv.hidden = !!sel;
   if(sel && !tierra){ // con vuelo: traslado hotel → aeropuerto de Hermosillo antes del regreso; el pick up se comparte en sitio
     const v = sel.reg, out = [];
     D.it.forEach(x => { if(/^Regreso a tu ciudad/.test(x[2]) && v){
@@ -2221,7 +2219,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 263;
+const APP_V = 264;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

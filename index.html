@@ -1112,6 +1112,7 @@ function mailHTML(r, enPDF){
   const W = (t, sz = 13, w = 'normal', extra = '') => T(t, sz, ON, w, 'Arial,sans-serif', extra); // texto sobre fondo verde
   const M = (t, sz = 22) => T(t, sz, INK, 'bold', "'Courier New',monospace");
   const h2 = t => `<tr data-h="1"><td style="padding:${C ? '9px 0 2px' : '16px 0 6px'}"><table cellpadding="0" cellspacing="0"><tr><td width="4" bgcolor="${G}" style="background:${G};width:4px">&nbsp;</td><td style="padding-left:8px">${T(t.toUpperCase(), C ? 12 : 14, G, 'bold', 'Arial,sans-serif', 'letter-spacing:.5px')}</td></tr></table></td></tr>`;
+  const caja = (tit, inner) => `<tr><td style="padding:${C ? '6px 0 2px' : '12px 0 4px'}"><table width="100%" cellpadding="0" cellspacing="0"><tr><td bgcolor="#FFFBEF" style="background:#FFFBEF;border:1.5px solid #F2D58A;border-radius:12px;padding:${C ? '6px 10px' : '12px 14px'}">${T(esc(tit.toUpperCase()), C ? 12 : 15, '#6B4A00', 'bold', 'Arial,sans-serif', 'letter-spacing:.6px')}<table width="100%" cellpadding="0" cellspacing="0" style="margin-top:${C ? 2 : 6}px">${inner}</table></td></tr></table></td></tr>`;
   const p = (t, st = '') => `<tr><td style="font-family:Arial,sans-serif;font-size:${fs}px;line-height:${C ? 1.3 : 1.45};${C ? 'padding:1px 4px;' : ''}color:${INK};${st}">${t}</td></tr>`;
   const key = (lab, v) => `<tr><td style="padding:${C ? '2px 0' : '6px 0'}"><table cellpadding="${C ? 3 : 6}" cellspacing="0"><tr><td bgcolor="${HB}" style="background:${HB};border:2px solid ${G};border-radius:8px;padding:${C ? '3px 10px' : '6px 12px'}">${W(lab.toUpperCase(), C ? 11 : 12, 'bold', 'letter-spacing:.5px')}&nbsp;&nbsp;${T(esc(v), C ? 15 : 18, ON, 'bold', "'Courier New',monospace", 'letter-spacing:2px')}</td></tr></table></td></tr>`;
   const card = (title, legs, fill, sinTitulo) => { legs = legs.filter(Boolean); if(!legs.length) return '';
@@ -1142,9 +1143,10 @@ function mailHTML(r, enPDF){
   b += p(T(esc(INTRO_TXT), C ? 12 : fs, INK), C ? 'padding-top:2px;padding-bottom:2px' : 'padding-top:4px;padding-bottom:4px');
   // Indicaciones especiales (van primero): un recuadro por traslado o pernocta con sus datos clave
   { const B = notaBloques(r); if(!B.length && tierra) B.push({i:'🚐', t:'Traslado terrestre', text:'Viaje por traslado terrestre.'});
-    if(B.length){ b += h2('Indicaciones especiales para ti');
-      B.forEach(bl => { const rows = bl.rows ? bl.rows.map(([k, v]) => `<tr><td valign="top" width="${C ? 104 : 120}" style="width:${C ? 104 : 120}px;padding:${C ? '0 6px 0 0' : '1px 8px 1px 0'}">${T(esc(k), C ? 10 : 12, MUT, 'bold')}</td><td style="padding:${C ? '0;line-height:1.25' : '1px 0;line-height:1.35'}">${T(esc(v).replace(B_HL, x => `<b style="color:${INK}">${x}</b>`), C ? 11 : 13, INK)}</td></tr>`).join('') : `<tr><td colspan="2">${T(esc(bl.text), C ? 12 : fs, INK)}</td></tr>`;
-        b += `<tr><td style="padding:${C ? '1px 0' : '3px 0'}"><table width="100%" cellpadding="0" cellspacing="0"><tr><td bgcolor="#FFFBEF" style="background:#FFFBEF;border:1.5px solid #E8C35A;border-left:5px solid #E0A100;border-radius:8px;padding:${C ? '3px 9px' : '6px 11px'}">${T(bl.i + ' ' + esc(bl.t.toUpperCase()), C ? 10 : 12, '#6B4A00', 'bold', 'Arial,sans-serif', 'letter-spacing:.5px')}<table cellpadding="0" cellspacing="0" style="margin-top:${C ? 1 : 2}px">${rows}</table></td></tr></table></td></tr>`; }); } }
+    if(B.length){ let inner = '';
+      B.forEach(bl => { const rows = bl.rows ? bl.rows.map(([k, v]) => `<tr><td valign="top" width="${C ? 104 : 120}" style="width:${C ? 104 : 120}px;padding:${C ? '0 6px 0 0' : '1px 8px 1px 0'}">${T(esc(k), C ? 10 : 12, MUT, 'bold')}</td><td style="padding:${C ? '0;line-height:1.25' : '1px 0;line-height:1.35'}">${T(esc(v).replace(B_HL, x => `<b style="color:${INK}">${x}</b>`), C ? 11 : 13, INK)}</td></tr>`).join('') : `<tr><td colspan="2">${T(esc(bl.text), C ? 11 : 13, INK)}</td></tr>`;
+        inner += `<tr><td style="padding:${C ? '3px 0' : '5px 0'}"><table width="100%" cellpadding="0" cellspacing="0"><tr><td bgcolor="#FFFFFF" style="background:#FFFFFF;border:1.5px solid #EBCB72;border-left:5px solid #E0A100;border-radius:8px;padding:${C ? '3px 9px' : '6px 11px'}">${T(bl.i + ' ' + esc(bl.t.toUpperCase()), C ? 10 : 12, '#6B4A00', 'bold', 'Arial,sans-serif', 'letter-spacing:.5px')}<table cellpadding="0" cellspacing="0" style="margin-top:${C ? 1 : 2}px">${rows}</table></td></tr></table></td></tr>`; });
+      b += caja('Indicaciones especiales para ti', inner); } }
   if(C){ // PDF compacto: la clave va junto al nombre o dentro de cada tarjeta de vuelo
     if(!dos && (r.ci || r.cr)) b += key('Clave de reserva', r.ci || r.cr);
     if(tierra) b += p(T(viajeTxt(r), fs, INK, 'bold'));
@@ -1159,11 +1161,14 @@ function mailHTML(r, enPDF){
     if(dos) b += key('Clave de reserva de regreso', r.cr); b += card('Regreso', [r.reg, r.c2], G2, dos);
     b += p(T('Horarios en hora local de cada aeropuerto.', 11, MUT)); }
   const tr = notaDe(r, 'tr'), pe = notaDe(r, 'pe');
-  { const hi = hotelInfo(r); b += h2('Hospedaje en el hotel sede');
-    b += `<tr><td style="padding:${C ? '1px 4px' : '2px 4px'}"><table cellpadding="0" cellspacing="0">${hi.lines.map(t => `<tr><td valign="top" style="padding:${C ? '1px 6px 1px 0' : '2px 6px 2px 0'}">${T('•', fs, G, 'bold')}</td><td style="padding:${C ? '1px 0' : '2px 0'}">${T(esc(t).replace(HOTEL.n, `<b style="color:${INK}">${HOTEL.n}</b>`))}</td></tr>`).join('')}</table></td></tr>`;
-    if(!tierra && aplicaLlegada(r)) b += `<tr><td style="padding-top:${C ? 4 : 8}px"><table width="100%" cellpadding="0" cellspacing="0"><tr><td bgcolor="#E3F1E7" style="background:#E3F1E7;border:2px solid ${G};border-radius:8px;padding:${C ? '5px 10px;line-height:1.3' : '9px 12px'}">${T('📍 RECEPCIÓN EN EL AEROPUERTO DE HERMOSILLO', C ? 11 : 12, G, 'bold', 'Arial,sans-serif', 'letter-spacing:.5px')}<br>${T('A tu llegada al aeropuerto de Hermosillo te pedimos localizar el logo de <b>MetLife</b> para trasladarte al hotel sede Marinaterra.', C ? 12 : fs, INK)}</td></tr></table></td></tr>`;
-    if(!tierra && aplicaRegreso(r)) b += `<tr><td style="padding-top:${C ? 4 : 8}px"><table width="100%" cellpadding="0" cellspacing="0"><tr><td bgcolor="#E3F1E7" style="background:#E3F1E7;border:2px solid ${G};border-radius:8px;padding:${C ? '5px 10px;line-height:1.3' : '9px 12px'}">${T('🚐 TRASLADO DE REGRESO AL AEROPUERTO DE HERMOSILLO', C ? 11 : 12, G, 'bold', 'Arial,sans-serif', 'letter-spacing:.5px')}<br>${T('Los traslados de regreso al aeropuerto serán publicados una vez terminen las sesiones en sitio.', C ? 12 : fs, INK)}</td></tr></table></td></tr>`;
-    if(hi.nota) b += `<tr><td style="padding-top:${C ? 3 : 6}px"><table width="100%" cellpadding="0" cellspacing="0"><tr><td bgcolor="#FFF7E6" style="background:#FFF7E6;border-left:4px solid #E0A100;padding:${C ? '4px 10px;line-height:1.25' : '8px 12px'}">${T('⚠️ ' + esc(hi.nota), C ? 11 : fs, INK, 'bold')}</td></tr></table></td></tr>`; }
+  // Hospedaje: mismo diseño que en la página (recuadro amarillo con título café, viñetas y recuadros verdes dentro)
+  { const hi = hotelInfo(r), pad = C ? '3px 0' : '5px 0';
+    const verde = (tit, txt) => `<tr><td style="padding:${pad}"><table width="100%" cellpadding="0" cellspacing="0"><tr><td bgcolor="#E3F1E7" style="background:#E3F1E7;border:2px solid ${G};border-radius:8px;padding:${C ? '4px 10px;line-height:1.3' : '8px 12px;line-height:1.4'}">${T(tit, C ? 12 : 14, G, 'bold')}<br>${T(txt, C ? 12 : fs, INK)}</td></tr></table></td></tr>`;
+    let inner = `<tr><td style="padding:${pad}"><table cellpadding="0" cellspacing="0">${hi.lines.map(t => `<tr><td valign="top" style="padding:${C ? '1px 8px 1px 2px' : '2px 8px 2px 2px'}">${T('•', fs, INK, 'bold')}</td><td style="padding:${C ? '1px 0' : '2px 0'}">${T(esc(t).replace(HOTEL.n, `<b style="color:${INK}">${HOTEL.n}</b>`), C ? 12 : fs, INK)}</td></tr>`).join('')}</table></td></tr>`;
+    if(!tierra && aplicaLlegada(r)) inner += verde('📍 Recepción en el aeropuerto de Hermosillo', 'A tu llegada al aeropuerto de Hermosillo te pedimos localizar el logo de <b>MetLife</b> para trasladarte al hotel sede Marinaterra.');
+    if(!tierra && aplicaRegreso(r)) inner += verde('🚐 Traslado de regreso al aeropuerto de Hermosillo', 'Los traslados de regreso al aeropuerto serán publicados una vez terminen las sesiones en sitio.');
+    if(hi.nota) inner += `<tr><td style="padding:${pad}"><table width="100%" cellpadding="0" cellspacing="0"><tr><td bgcolor="#FFF7E6" style="background:#FFF7E6;border-left:4px solid #E0A100;border-radius:6px;padding:${C ? '4px 10px;line-height:1.25' : '8px 12px'}">${T('⚠️ ' + esc(hi.nota), C ? 11 : fs, INK, 'bold')}</td></tr></table></td></tr>`;
+    b += caja('🏨 Hospedaje en el hotel sede', inner); }
   const cards = [...document.querySelectorAll('#info .icard')].filter(c => !c.classList.contains('solo-vuelo') && !/clima|vestimenta|hotel sede/i.test((c.querySelector('.ik') || {}).textContent || ''));
   // (la recepción en el aeropuerto va como viñeta dentro de Hospedaje, sin título aparte)
   if(!tierra){ b += h2('Puntos importantes de su vuelo');
@@ -2068,7 +2073,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 228;
+const APP_V = 229;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

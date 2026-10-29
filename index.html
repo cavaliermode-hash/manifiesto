@@ -1905,7 +1905,8 @@ function llegaDe(r){
   if(m){ const iso = `2026-11-${m[1].padStart(2, '0')}`; return {ll: `${iso} ${m[3].padStart(5, '0')}`, llt: `${fmtDate(iso)} · ${m[3]} h · traslado`}; }
   return {ll: '2026-11-03 99:99', llt: /por tu cuenta/i.test(t) ? 'Llega por su cuenta' : '—'};
 }
-const rolTag = rol => rol ? `<span class="rtag">${esc(rol.toUpperCase())}</span>` : '';
+const rolVer = rol => /^staff/i.test(rol || '') ? 'STAFF' : String(rol || ''); // staff sin distinguir VECI o MetLife
+const rolTag = rol => rol ? `<span class="rtag">${esc(rolVer(rol).toUpperCase())}</span>` : '';
 function claRows(){
   const rows = DATA.map((r, i) => ({i, n:r.n, ci:r.ci || (!r.cr ? r.cl || '' : ''), cr:r.cr || '', ...llegaDe(r), rol:r.rol || ''}));
   const k = CLA.sort;
@@ -2261,7 +2262,7 @@ function repRender(){
     const th = (k2, lab, cls = '') => `<th class="${cls}"><button type="button" data-rso="${k2}">${lab}${RV.sort === k2 ? (RV.dir > 0 ? ' ▲' : ' ▼') : ''}</button></th>`;
     h += `<div class="csearch"><input id="rq" class="vq" type="search" placeholder="🔍 Buscar por nombre o rol" autocomplete="off" value="${esc(RV.q)}" aria-label="Buscar por nombre o rol"><span class="vqn">${L.length} de ${n}</span></div>${RV.st ? `<p class="cs">Filtro: <b>${esc(RV.st)}</b> · <button type="button" class="lnk" data-rst="${esc(RV.st)}" style="all:unset;cursor:pointer;color:var(--green);font-weight:700;text-decoration:underline">quitar filtro</button></p>` : ''}
       <div class="ktable-wrap"><table class="rtab"><thead><tr>${th('n', 'Nombre')}${th('tarifa', 'Tarifa', 'hm')}${th('iva', 'IVA', 'hm')}${th('otros', 'Otros imp.', 'hm')}${th('total', 'Total')}</tr></thead>
-      <tbody>${L.map(x => { const [, bg, fg] = stc(x.st); return `<tr><td><b>${esc(tcase(x.n))}</b><br><span class="rs" style="background:${bg};color:${fg}">${esc(x.st || 'SIN ESTATUS')}</span> <small style="color:var(--muted)">${esc(x.rol)}</small></td><td class="hm">${mxn(x.tarifa)}</td><td class="hm">${mxn(x.iva)}</td><td class="hm">${mxn(x.otros)}</td><td><b>${mxn(x.total)}</b></td></tr>`; }).join('')}</tbody>
+      <tbody>${L.map(x => { const [, bg, fg] = stc(x.st); return `<tr><td><b>${esc(tcase(x.n))}</b><br><span class="rs" style="background:${bg};color:${fg}">${esc(x.st || 'SIN ESTATUS')}</span> <small style="color:var(--muted)">${esc(rolVer(x.rol))}</small></td><td class="hm">${mxn(x.tarifa)}</td><td class="hm">${mxn(x.iva)}</td><td class="hm">${mxn(x.otros)}</td><td><b>${mxn(x.total)}</b></td></tr>`; }).join('')}</tbody>
       <tfoot><tr><td>Total (${L.length})</td><td class="hm">${mxn(t.tarifa)}</td><td class="hm">${mxn(t.iva)}</td><td class="hm">${mxn(t.otros)}</td><td>${mxn(t.total)}</td></tr></tfoot></table></div>
       ${repNotaHTML()}<div class="ctools"><button type="button" class="rdl">⬇️ Descargar reporte en Excel</button></div>`;
   }
@@ -2346,7 +2347,7 @@ async function repExcel(btn){
     head(wd.getRow(4), ['No.', 'Nombre', 'Rol', 'Estatus', 'Tarifa', 'IVA', 'Otros impuestos', 'Total']);
     const L = F.slice().sort((a, b) => a.n.localeCompare(b.n, 'es')); let k = 5;
     L.forEach((x, i) => { const row = wd.getRow(k), [, bg, fg] = REP_ST.find(([l]) => stKey(l) === stKey(x.st)) || ['', '#FFFFFF', '#16301F'];
-      row.values = [i + 1, tcase(x.n), x.rol, x.st, x.tarifa, x.iva, x.otros, x.total];
+      row.values = [i + 1, tcase(x.n), rolVer(x.rol), x.st, x.tarifa, x.iva, x.otros, x.total];
       for(let j = 1; j <= 8; j++){ const c = row.getCell(j); borde(c); if(j >= 5) c.numFmt = MON; if(i % 2) c.fill = {type:'pattern', pattern:'solid', fgColor:{argb:'FFF7FAF8'}}; }
       const e = row.getCell(4); e.fill = {type:'pattern', pattern:'solid', fgColor:{argb:hx(bg)}}; e.font = {color:{argb:hx(fg)}, size:10}; row.getCell(1).alignment = {horizontal:'center'}; row.getCell(8).font = {bold:true}; k++; });
     { const row = wd.getRow(k); row.values = ['', 'TOTAL', '', `${L.length} personas`, {formula:`SUBTOTAL(9,E5:E${k - 1})`, result:tot.tarifa}, {formula:`SUBTOTAL(9,F5:F${k - 1})`, result:tot.iva}, {formula:`SUBTOTAL(9,G5:G${k - 1})`, result:tot.otros}, {formula:`SUBTOTAL(9,H5:H${k - 1})`, result:tot.total}];
@@ -2444,7 +2445,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 307;
+const APP_V = 308;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

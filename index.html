@@ -979,6 +979,9 @@ function notaBloques(r){
       reg.push({i:'🚗', t:'Traslado de regreso', rows:[['Periodo', 'Solo el ' + m[1] + (cdmx ? ' (regreso: Hermosillo y Ciudad de México)' : ' (regreso)')], ['Fecha', m[1]], ['Recogida', m[2]], ['Destino', m[3].replace(/^a/, 'A')], ['Vuelo', `${m[4]} · salida ${m[5]} h`]]});
       if(cdmx) reg.push({i:'🚗', t:'Traslado de regreso a su ciudad', rows:[['Fecha', m[1]], ['Vuelo', `${cdmx[1]} · llegada ${cdmx[2]}`], ['Recogida', `Salida de vuelos nacionales del ${cdmx[3]}`], ['Destino', cdmx[4]]]});
       return; }
+    if(n.k === 'tr' && (m = t.match(/^Traslado terrestre solo a tu regreso: el (.+?), al aterrizar en tu vuelo (.+?) \(llegada ([\d:]+ h)\), te esperamos en la salida de vuelos nacionales del (.+?) para trasladarte al punto de encuentro (.+?)\.$/))){
+      const p = m[5].split(', ');
+      reg.push({i:'🚗', t:'Traslado de regreso', rows:[['Periodo', 'Solo el ' + m[1] + ' (regreso)'], ['Fecha', m[1]], ['Vuelo', `${m[2]} · llegada ${m[3]}`], ['Recogida', `Salida de vuelos nacionales del ${m[4]}`], ['Destino', 'Punto de encuentro: ' + p[0]], ['Dirección', p.slice(1).join(', ')]]}); return; }
     if(n.k === 'tr' && (m = t.match(/^Traslado terrestre: el (.+?) a las ([\d:]+ h) te recogemos (?:en el punto de encuentro (.+?), para|en tu domicilio registrado para|en el (aeropuerto de [A-ZÁÉÍÓÚa-záéíóúñ ]+?) para) llevarte (?:al |a la |a )(.+?)(, donde tienes tu hospedaje)?\. ?(.*)$/))){
       const rows = [['Fecha y hora', `${m[1]} · ${m[2]}`]];
       if(m[3]){ const p = m[3].split(', '); rows.push(['Punto de encuentro', p[0]], ['Dirección', p.slice(1).join(', ')]); }
@@ -2259,7 +2262,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 289;
+const APP_V = 290;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

@@ -637,7 +637,9 @@ button.ptile{font:inherit;cursor:pointer;width:100%;transition:transform .08s,bo
 .dcierre{margin:18px 0 6px}.dcierre .dimp{margin:0;background:#FFF7E6;border-left:4px solid #E0A100;padding:10px 14px;color:var(--ink);line-height:1.45}.dcierre .dbye{margin:12px 2px 0;color:var(--ink)}.dcierre .dbye i{color:#1C6B2E}
 .itinweb{margin:14px 0;background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px 12px;overflow-x:auto}
 .rmode{display:flex;gap:6px;margin:6px 0 10px}.rmode button{flex:1;border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 10px;font:600 14px var(--body);cursor:pointer}.rmode button[aria-pressed="true"]{background:var(--green);color:#fff;border-color:var(--green)}
-.rst{width:100%;border-collapse:collapse;margin:6px 0 14px;font-size:14px}.rst td{padding:6px 10px;border:1px solid #fff}.rst td.n{text-align:right;font:700 15px var(--mono);width:70px}.rst td.p{text-align:right;width:70px;font-size:13px}.rst tr{cursor:pointer}.rst tr.on td{outline:2px solid var(--ink);outline-offset:-2px}
+.rstw{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;align-items:center;margin:4px 0 12px}@media (min-width:760px){.rstw{grid-template-columns:minmax(0,520px) 260px;justify-content:start;gap:24px}}
+.rst{width:100%;border-collapse:collapse;font-size:12.5px}.rst td{padding:3px 8px;border:1px solid #fff;line-height:1.25}.rst td.n{text-align:right;font:700 13px var(--mono);width:46px}.rst td.p{text-align:right;width:54px;font-size:12px}
+.rpie{margin:0;display:flex;flex-direction:column;align-items:center;gap:6px}.rpie svg{width:200px;height:200px}.rpie figcaption{display:flex;flex-wrap:wrap;justify-content:center;gap:4px 10px;font-size:11.5px;color:var(--muted)}.rpie figcaption span{display:inline-flex;align-items:center;gap:4px}.rpie i{width:10px;height:10px;border-radius:2px;display:inline-block;border:1px solid #bbb}.rst tr{cursor:pointer}.rst tr.on td{outline:2px solid var(--ink);outline-offset:-2px}
 .rst tr.tt td{background:#D9D9D9;font-weight:700;cursor:default}
 .rkpi{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:6px 0 14px}.rkpi div{border:1px solid var(--line);border-radius:10px;padding:8px;text-align:center;background:#fff}.rkpi b{display:block;font:700 17px/1.2 var(--mono);color:var(--green)}.rkpi span{font-size:12px;color:var(--muted)}
 .rh{font:700 15px var(--body);color:var(--green);margin:14px 0 6px;text-transform:uppercase;letter-spacing:.4px}
@@ -2225,6 +2227,15 @@ const stKey = t => norm(t).replace(/\s+/g, ' ').trim();
 const grupoRol = x => /^RELLENO$/.test(x.n) ? 'Relleno (bloqueo)' : /^STAFF/i.test(x.rol) ? 'Staff' : 'Invitados';
 const r2 = x => Math.round(x * 100) / 100;
 const sumR = L => { const t = L.reduce((a, x) => ({tarifa:a.tarifa + x.tarifa, iva:a.iva + x.iva, otros:a.otros + x.otros, total:a.total + x.total}), {tarifa:0, iva:0, otros:0, total:0}); for(const k in t) t[k] = r2(t[k]); return t; };
+function pastelSVG(D){ // gráfica de pastel por estatus (SVG)
+  const T = D.reduce((a, d) => a + d.v, 0) || 1, cx = 110, cy = 110, R = 100; let a0 = -Math.PI / 2, sl = '', tx = '';
+  D.filter(d => d.v > 0).forEach(d => { const fr = d.v / T, a1 = a0 + fr * 2 * Math.PI, m = (a0 + a1) / 2;
+    if(fr >= 0.999) sl += `<circle cx="${cx}" cy="${cy}" r="${R}" fill="${d.bg}"/>`;
+    else sl += `<path d="M${cx},${cy} L${(cx + R * Math.cos(a0)).toFixed(2)},${(cy + R * Math.sin(a0)).toFixed(2)} A${R},${R} 0 ${fr > 0.5 ? 1 : 0} 1 ${(cx + R * Math.cos(a1)).toFixed(2)},${(cy + R * Math.sin(a1)).toFixed(2)} Z" fill="${d.bg}" stroke="#fff" stroke-width="2"><title>${esc(d.l)}: ${d.v}</title></path>`;
+    if(fr >= 0.05) tx += `<text x="${(cx + R * 0.62 * Math.cos(m)).toFixed(1)}" y="${(cy + R * 0.62 * Math.sin(m)).toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-size="13" font-weight="700" fill="${d.fg}">${(fr * 100).toFixed(1)}%</text>`;
+    a0 = a1; });
+  return `<figure class="rpie"><svg viewBox="0 0 220 220" role="img" aria-label="Gráfica de pastel por estatus">${sl}${tx}</svg><figcaption>${D.filter(d => d.v > 0).map(d => `<span><i style="background:${d.bg}"></i>${esc(d.l.replace(/ OK$/, ''))} · ${d.v}</span>`).join('')}</figcaption></figure>`;
+}
 function repRender(){
   const el = $('#rout'); if(!el) return;
   document.querySelectorAll('.rmode [data-rv]').forEach(b => b.setAttribute('aria-pressed', b.dataset.rv === RV.v));
@@ -2232,7 +2243,7 @@ function repRender(){
   const F = REP.filas, tot = sumR(F), n = F.length;
   const stRow = ([lab, bg, fg]) => { const c = F.filter(x => stKey(x.st) === stKey(lab)).length; return `<tr data-rst="${esc(lab)}" class="${RV.st === lab ? 'on' : ''}"><td style="background:${bg};color:${fg}">${esc(lab)}</td><td class="n" style="background:${bg};color:${fg}">${c}</td><td class="p" style="background:${bg};color:${fg}">${n ? (c * 100 / n).toFixed(1) : 0}%</td></tr>`; };
   const otros = F.filter(x => !REP_ST.some(([l]) => stKey(l) === stKey(x.st)));
-  let h = `<h3 class="rh">Estatus de telemarketing</h3><table class="rst"><tbody>${REP_ST.map(stRow).join('')}${otros.length ? `<tr><td>Otro / sin estatus</td><td class="n">${otros.length}</td><td class="p">${(otros.length * 100 / n).toFixed(1)}%</td></tr>` : ''}<tr class="tt"><td>TOTAL DE INVITADOS</td><td class="n">${n}</td><td class="p">100%</td></tr></tbody></table>`;
+  let h = `<h3 class="rh">Estatus de telemarketing</h3><div class="rstw"><table class="rst"><tbody>${REP_ST.map(stRow).join('')}${otros.length ? `<tr><td>Otro / sin estatus</td><td class="n">${otros.length}</td><td class="p">${(otros.length * 100 / n).toFixed(1)}%</td></tr>` : ''}<tr class="tt"><td>TOTAL DE INVITADOS</td><td class="n">${n}</td><td class="p">100%</td></tr></tbody></table>${pastelSVG(REP_ST.map(([l, bg, fg]) => ({l, bg, fg, v: F.filter(x => stKey(x.st) === stKey(l)).length})))}</div>`;
   if(RV.v === 'tot'){
     const G = ['Invitados', 'Staff', 'Relleno (bloqueo)'].map(g => [g, F.filter(x => grupoRol(x) === g)]).filter(([, L]) => L.length);
     const ep = F.filter(x => /OK/.test(x.ep)).length, inv = F.filter(x => grupoRol(x) === 'Invitados');
@@ -2433,7 +2444,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 303;
+const APP_V = 304;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

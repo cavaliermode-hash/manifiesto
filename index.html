@@ -664,6 +664,7 @@ button.ptile{font:inherit;cursor:pointer;width:100%;transition:transform .08s,bo
     <div class="sub" id="upd" hidden></div>
     <nav class="tabs" role="tablist" aria-label="Apartados">
       <button role="tab" data-tab="man" aria-selected="true">Manifiesto</button>
+      <button role="tab" data-tab="rep" aria-selected="false">Reporte</button>
       <button role="tab" data-veci="1" aria-selected="false">VECI</button>
     </nav>
     <nav class="tabs vsub" aria-label="Secciones VECI" hidden>
@@ -672,7 +673,6 @@ button.ptile{font:inherit;cursor:pointer;width:100%;transition:transform .08s,bo
       <button role="tab" data-tab="pyt" aria-selected="false">Traslados y pernoctas</button>
       <button role="tab" data-tab="con" aria-selected="false">Concentrado</button>
       <button role="tab" data-tab="cla" aria-selected="false">Claves</button>
-      <button role="tab" data-tab="rep" aria-selected="false">Reporte</button>
     </nav>
   </div>
 </header>
@@ -2159,8 +2159,8 @@ $('#kreset').addEventListener('click', async () => {
 function ctlTab(t){
   CTL.tab = t; CTL.filter = 'all';
   document.querySelectorAll('.tabs button[data-tab]').forEach(b => b.setAttribute('aria-selected', b.dataset.tab === t));
-  const vb = document.querySelector('.tabs [data-veci]'); if(vb) vb.setAttribute('aria-selected', t !== 'man');
-  const vs = document.querySelector('.tabs.vsub'); if(vs) vs.hidden = t === 'man';
+  const vb = document.querySelector('.tabs [data-veci]'); if(vb) vb.setAttribute('aria-selected', t !== 'man' && t !== 'rep');
+  const vs = document.querySelector('.tabs.vsub'); if(vs) vs.hidden = t === 'man' || t === 'rep';
   document.querySelectorAll('.cstat').forEach(b => b.setAttribute('aria-pressed', b.dataset.f === 'all'));
   const on = t !== 'man', con = t === 'con', cla = t === 'cla', pyt = t === 'pyt', rp = t === 'rep'; document.body.classList.toggle('vctl', on);
   $('#ctl').hidden = !on || con || cla || pyt || rp; $('#con').hidden = !con; $('#cla').hidden = !cla; $('#pyt').hidden = !pyt; $('#rep').hidden = !rp; $('#pmsg').textContent = ''; $('#cmsg2').textContent = ''; $('#cmsg').textContent = ''; $('#kmsg').textContent = '';
@@ -2188,8 +2188,8 @@ function askPw(msg){
 const VECI_MIN = 60, VECI_MS = VECI_MIN * 60000;
 const veciSes = () => { try{ const v = JSON.parse(sessionStorage.getItem('veci') || 'null'); return v && Date.now() - v.t < VECI_MS ? v : null; }catch(e){ return null; } };
 const veciSave = pw => { try{ sessionStorage.setItem('veci', JSON.stringify({pw: pw || (veciSes() || {}).pw || '', t: Date.now()})); }catch(e){} };
-const veciEnd = () => { try{ sessionStorage.removeItem('veci'); }catch(e){} TEL = {}; MAIL = {}; REP = null; DATA = DATA.filter(r => !r.staff); };
-async function veciTel(pw){ if(PACK && PACK.tel && !Object.keys(TEL).length){ try{ const c = await Cifra.descifrar(PACK.tel, pw); TEL = c.tel || {}; MAIL = c.mail || {}; REP = c.rep || null; staffAdd(c.staff || []); }catch(e){ TEL = {}; MAIL = {}; } } }
+const veciEnd = () => { try{ sessionStorage.removeItem('veci'); }catch(e){} TEL = {}; MAIL = {}; DATA = DATA.filter(r => !r.staff); };
+async function veciTel(pw){ if(PACK && PACK.tel && !Object.keys(TEL).length){ try{ const c = await Cifra.descifrar(PACK.tel, pw); TEL = c.tel || {}; MAIL = c.mail || {}; staffAdd(c.staff || []); }catch(e){ TEL = {}; MAIL = {}; } } }
 /* Staff: viene protegido con la contraseña VECI y solo se agrega a las pestañas de VECI (no al buscador público ni a Traslados y pernoctas) */
 const stTag = n => DATA.some(r => r.staff && r.n === n) ? '<span class="stag">STAFF</span>' : '';
 function staffAdd(L){ DATA = DATA.filter(r => !r.staff); L.forEach(r => { r.staff = true; r._w = new Set(norm(r.n).split(/\s+/).filter(Boolean)); r._n = norm(r.n); DATA.push(r); }); }
@@ -2213,7 +2213,7 @@ const sumR = L => L.reduce((a, x) => ({tarifa:a.tarifa + x.tarifa, iva:a.iva + x
 function repRender(){
   const el = $('#rout'); if(!el) return;
   document.querySelectorAll('.rmode [data-rv]').forEach(b => b.setAttribute('aria-pressed', b.dataset.rv === RV.v));
-  if(!REP || !REP.filas){ el.innerHTML = '<p class="cs">No hay datos del reporte. Vuelve a entrar a VECI con la contraseña.</p>'; return; }
+  if(!REP || !REP.filas){ el.innerHTML = '<p class="cs">No hay datos del reporte todavía.</p>'; return; }
   const F = REP.filas, tot = sumR(F), n = F.length;
   const stRow = ([lab, bg, fg]) => { const c = F.filter(x => stKey(x.st) === stKey(lab)).length; return `<tr data-rst="${esc(lab)}" class="${RV.st === lab ? 'on' : ''}"><td style="background:${bg};color:${fg}">${esc(lab)}</td><td class="n" style="background:${bg};color:${fg}">${c}</td><td class="p" style="background:${bg};color:${fg}">${n ? (c * 100 / n).toFixed(1) : 0}%</td></tr>`; };
   const otros = F.filter(x => !REP_ST.some(([l]) => stKey(l) === stKey(x.st)));
@@ -2221,8 +2221,7 @@ function repRender(){
   if(RV.v === 'tot'){
     const G = ['Invitados', 'Staff', 'Relleno (bloqueo)'].map(g => [g, F.filter(x => grupoRol(x) === g)]).filter(([, L]) => L.length);
     const ep = F.filter(x => /OK/.test(x.ep)).length, inv = F.filter(x => grupoRol(x) === 'Invitados');
-    h += `<div class="rkpi"><div><b>${inv.length}</b><span>Invitados</span></div><div><b>${F.filter(x => grupoRol(x) === 'Staff').length}</b><span>Staff</span></div><div><b>${ep}</b><span>Envío y pase OK</span></div><div><b>${n - ep}</b><span>Envío y pase pendiente</span></div>
-      <div><b>${F.filter(x => x.pern).length}</b><span>Pernocta NH</span></div><div><b>${F.filter(x => x.tras).length}</b><span>Con traslado</span></div><div><b>${Object.keys(TEL).length}</b><span>Con teléfono</span></div><div><b>${Object.keys(MAIL).length}</b><span>Con correo</span></div></div>`;
+    h += `<div class="rkpi"><div><b>${inv.length}</b><span>Invitados</span></div><div><b>${F.filter(x => grupoRol(x) === 'Staff').length}</b><span>Staff</span></div><div><b>${F.filter(x => x.pern).length}</b><span>Pernocta NH</span></div><div><b>${F.filter(x => x.tras).length}</b><span>Con traslado</span></div></div>`;
     h += `<h3 class="rh">Presupuesto aéreo · totales</h3><div class="rkpi"><div><b>${mxn(tot.tarifa)}</b><span>Tarifa</span></div><div><b>${mxn(tot.iva)}</b><span>IVA</span></div><div><b>${mxn(tot.otros)}</b><span>Otros impuestos</span></div><div><b>${mxn(tot.total)}</b><span>Total</span></div></div>`;
     if(REP.totXls && Math.abs(REP.totXls.total - tot.total) > 0.5) h += `<p class="cs">⚠️ El total del Excel (${mxn(REP.totXls.total)}) no coincide con la suma por nombre (${mxn(tot.total)}).</p>`;
     const tabla = (tit, rows) => `<h3 class="rh">${tit}</h3><div class="ktable-wrap"><table class="rtab"><thead><tr><th></th><th>Personas</th><th class="hm">Tarifa</th><th class="hm">IVA</th><th class="hm">Otros imp.</th><th>Total</th><th>Promedio</th></tr></thead><tbody>${rows.map(([l, L]) => { const t = sumR(L), con = L.filter(x => x.total > 0).length; return `<tr><td>${esc(l)}</td><td>${L.length}</td><td class="hm">${mxn(t.tarifa)}</td><td class="hm">${mxn(t.iva)}</td><td class="hm">${mxn(t.otros)}</td><td>${mxn(t.total)}</td><td>${con ? mxn(t.total / con) : '—'}</td></tr>`; }).join('')}</tbody><tfoot><tr><td>Total</td><td>${n}</td><td class="hm">${mxn(tot.tarifa)}</td><td class="hm">${mxn(tot.iva)}</td><td class="hm">${mxn(tot.otros)}</td><td>${mxn(tot.total)}</td><td>${F.filter(x => x.total > 0).length ? mxn(tot.total / F.filter(x => x.total > 0).length) : '—'}</td></tr></tfoot></table></div>`;
@@ -2239,7 +2238,7 @@ function repRender(){
     const th = (k2, lab, cls = '') => `<th class="${cls}"><button type="button" data-rso="${k2}">${lab}${RV.sort === k2 ? (RV.dir > 0 ? ' ▲' : ' ▼') : ''}</button></th>`;
     h += `<div class="csearch"><input id="rq" class="vq" type="search" placeholder="🔍 Buscar por nombre o rol" autocomplete="off" value="${esc(RV.q)}" aria-label="Buscar por nombre o rol"><span class="vqn">${L.length} de ${n}</span></div>${RV.st ? `<p class="cs">Filtro: <b>${esc(RV.st)}</b> · <button type="button" class="lnk" data-rst="${esc(RV.st)}" style="all:unset;cursor:pointer;color:var(--green);font-weight:700;text-decoration:underline">quitar filtro</button></p>` : ''}
       <div class="ktable-wrap"><table class="rtab"><thead><tr>${th('n', 'Nombre')}${th('tarifa', 'Tarifa', 'hm')}${th('iva', 'IVA', 'hm')}${th('otros', 'Otros imp.', 'hm')}${th('total', 'Total')}</tr></thead>
-      <tbody>${L.map(x => { const [, bg, fg] = stc(x.st); return `<tr><td><b>${esc(tcase(x.n))}</b><br><span class="rs" style="background:${bg};color:${fg}">${esc(x.st || 'SIN ESTATUS')}</span> <small style="color:var(--muted)">${esc(x.rol)}${x.zn ? ' · ' + esc(x.zn) : ''}${/OK/.test(x.ep) ? ' · Envío y pase OK' : ''}</small></td><td class="hm">${mxn(x.tarifa)}</td><td class="hm">${mxn(x.iva)}</td><td class="hm">${mxn(x.otros)}</td><td><b>${mxn(x.total)}</b></td></tr>`; }).join('')}</tbody>
+      <tbody>${L.map(x => { const [, bg, fg] = stc(x.st); return `<tr><td><b>${esc(tcase(x.n))}</b><br><span class="rs" style="background:${bg};color:${fg}">${esc(x.st || 'SIN ESTATUS')}</span> <small style="color:var(--muted)">${esc(x.rol)}${x.zn ? ' · ' + esc(x.zn) : ''}</small></td><td class="hm">${mxn(x.tarifa)}</td><td class="hm">${mxn(x.iva)}</td><td class="hm">${mxn(x.otros)}</td><td><b>${mxn(x.total)}</b></td></tr>`; }).join('')}</tbody>
       <tfoot><tr><td>Total (${L.length})</td><td class="hm">${mxn(t.tarifa)}</td><td class="hm">${mxn(t.iva)}</td><td class="hm">${mxn(t.otros)}</td><td>${mxn(t.total)}</td></tr></tfoot></table></div>
       <div class="ctools"><button type="button" id="rxls">Copiar tabla para Excel</button></div>`;
   }
@@ -2262,20 +2261,20 @@ document.addEventListener('input', e => { if(e.target.id !== 'rq') return; RV.q 
 // actividad dentro de VECI: renueva los 60 minutos (como mucho una vez cada 15 s)
 let veciTick = 0;
 ['pointerdown','keydown','scroll','touchstart'].forEach(ev => addEventListener(ev, () => {
-  if(CTL.tab === 'man' || document.hidden || Date.now() - veciTick < 15000) return; if(!veciSes()) return; veciTick = Date.now(); veciSave(); }, {passive:true}));
+  if(CTL.tab === 'man' || CTL.tab === 'rep' || document.hidden || Date.now() - veciTick < 15000) return; if(!veciSes()) return; veciTick = Date.now(); veciSave(); }, {passive:true}));
 // si se cumplen los 60 minutos sin actividad estando en VECI, se vuelve a pedir la contraseña
 async function veciVence(){
-  if(CTL.tab === 'man' || DLG || veciSes()) return;
+  if(CTL.tab === 'man' || CTL.tab === 'rep' || DLG || veciSes()) return;
   const tab = CTL.tab; veciEnd();
   if(await conGate(`Pasaron ${VECI_MIN} minutos sin actividad. Escribe la contraseña para seguir en VECI:`)) ctlTab(tab); else ctlTab('man');
 }
 setInterval(() => { if(!document.hidden) veciVence(); }, 20000);
 document.querySelectorAll('.tabs button[data-tab]').forEach(b => b.addEventListener('click', async () => {
   // dentro de VECI se cambia de sección sin volver a pedir contraseña
-  if(b.dataset.tab !== 'man' && CTL.tab === 'man' && !(await conGate())) return; ctlTab(b.dataset.tab); }));
+  if(!['man', 'rep'].includes(b.dataset.tab) && ['man', 'rep'].includes(CTL.tab) && !(await conGate())) return; ctlTab(b.dataset.tab); }));
 /* VECI: una sola pestaña con contraseña que agrupa Llegadas, Salidas, Traslados y pernoctas, Concentrado y Claves. */
 document.querySelector('.tabs [data-veci]').addEventListener('click', async () => {
-  if(CTL.tab !== 'man') return; if(!(await conGate())) return; ctlTab('lle'); });
+  if(CTL.tab !== 'man' && CTL.tab !== 'rep') return; if(!(await conGate())) return; ctlTab('lle'); });
 document.querySelectorAll('.cstat').forEach(b => b.addEventListener('click', () => {
   CTL.filter = b.dataset.f; document.querySelectorAll('.cstat').forEach(x => x.setAttribute('aria-pressed', x === b)); ctlRender(); }));
 $('#cout').addEventListener('click', e => { const b = e.target.closest('button[data-n]'); if(!b) return;
@@ -2340,7 +2339,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 295;
+const APP_V = 296;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');
@@ -2360,7 +2359,7 @@ window.addEventListener('pagehide', e => { if(e.persisted) lockNow(); });
 async function unlock(pin, fromSaved){
   try{ const d = await Cifra.descifrar(PACK.enc, pin);
     if(UNLOCKED){ gate.hidden = true; document.body.classList.remove('locked'); return; } // re-entrada tras salir de la app
-    UNLOCKED = true; DATA = d.filas; gate.hidden = true; $('#upd').textContent = 'Actualizado: ' + PACK.actualizado + ' · v' + APP_V; { const vv = document.getElementById('verv'); if(vv) vv.textContent = 'Versión ' + APP_V + ' · datos actualizados ' + PACK.actualizado; } init(); syncStart(pin); if(!pdfDirecto()) restoreView(); }
+    UNLOCKED = true; DATA = d.filas; REP = d.rep || null; gate.hidden = true; $('#upd').textContent = 'Actualizado: ' + PACK.actualizado + ' · v' + APP_V; { const vv = document.getElementById('verv'); if(vv) vv.textContent = 'Versión ' + APP_V + ' · datos actualizados ' + PACK.actualizado; } init(); syncStart(pin); if(!pdfDirecto()) restoreView(); }
   catch(e){ showGate('PIN incorrecto. Revísalo e intenta de nuevo.'); }
 }
 $('#gate-form').addEventListener('submit', e => { e.preventDefault(); const v = gin.value.trim();

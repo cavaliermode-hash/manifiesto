@@ -2245,7 +2245,7 @@ function repRender(){
     const th = (k2, lab, cls = '') => `<th class="${cls}"><button type="button" data-rso="${k2}">${lab}${RV.sort === k2 ? (RV.dir > 0 ? ' ▲' : ' ▼') : ''}</button></th>`;
     h += `<div class="csearch"><input id="rq" class="vq" type="search" placeholder="🔍 Buscar por nombre o rol" autocomplete="off" value="${esc(RV.q)}" aria-label="Buscar por nombre o rol"><span class="vqn">${L.length} de ${n}</span></div>${RV.st ? `<p class="cs">Filtro: <b>${esc(RV.st)}</b> · <button type="button" class="lnk" data-rst="${esc(RV.st)}" style="all:unset;cursor:pointer;color:var(--green);font-weight:700;text-decoration:underline">quitar filtro</button></p>` : ''}
       <div class="ktable-wrap"><table class="rtab"><thead><tr>${th('n', 'Nombre')}${th('tarifa', 'Tarifa', 'hm')}${th('iva', 'IVA', 'hm')}${th('otros', 'Otros imp.', 'hm')}${th('total', 'Total')}</tr></thead>
-      <tbody>${L.map(x => { const [, bg, fg] = stc(x.st); return `<tr><td><b>${esc(tcase(x.n))}</b><br><span class="rs" style="background:${bg};color:${fg}">${esc(x.st || 'SIN ESTATUS')}</span> <small style="color:var(--muted)">${esc(x.rol)}${x.zn ? ' · ' + esc(x.zn) : ''}</small></td><td class="hm">${mxn(x.tarifa)}</td><td class="hm">${mxn(x.iva)}</td><td class="hm">${mxn(x.otros)}</td><td><b>${mxn(x.total)}</b></td></tr>`; }).join('')}</tbody>
+      <tbody>${L.map(x => { const [, bg, fg] = stc(x.st); return `<tr><td><b>${esc(tcase(x.n))}</b><br><span class="rs" style="background:${bg};color:${fg}">${esc(x.st || 'SIN ESTATUS')}</span> <small style="color:var(--muted)">${esc(x.rol)}</small></td><td class="hm">${mxn(x.tarifa)}</td><td class="hm">${mxn(x.iva)}</td><td class="hm">${mxn(x.otros)}</td><td><b>${mxn(x.total)}</b></td></tr>`; }).join('')}</tbody>
       <tfoot><tr><td>Total (${L.length})</td><td class="hm">${mxn(t.tarifa)}</td><td class="hm">${mxn(t.iva)}</td><td class="hm">${mxn(t.otros)}</td><td>${mxn(t.total)}</td></tr></tfoot></table></div>
       <div class="ctools"><button type="button" id="rxls">Copiar tabla para Excel</button></div>`;
   }
@@ -2258,7 +2258,7 @@ document.addEventListener('click', e => {
   const cp = e.target.closest('#rcopy, #rxls'); if(!cp || !REP) return;
   let t;
   if(cp.id === 'rxls'){ const q = norm(RV.q).trim(); const L = REP.filas.filter(x => (!RV.st || stKey(x.st) === stKey(RV.st)) && (!q || norm(x.n + ' ' + x.rol).includes(q)));
-    t = ['Nombre\tRol\tEstatus\tZona\tTarifa\tIVA\tOtros impuestos\tTotal'].concat(L.map(x => [tcase(x.n), x.rol, x.st, x.zn, x.tarifa, x.iva, x.otros, x.total].join('\t'))).join('\n'); }
+    t = ['Nombre\tRol\tEstatus\tTarifa\tIVA\tOtros impuestos\tTotal'].concat(L.map(x => [tcase(x.n), x.rol, x.st, x.tarifa, x.iva, x.otros, x.total].join('\t'))).join('\n'); }
   else { const F = REP.filas, tot = sumR(F);
     t = ['*Reporte de telemarketing · Segunda Cumbre Universales*', ''].concat(REP_ST.map(([l]) => `${l}: ${F.filter(x => stKey(x.st) === stKey(l)).length}`), [`*TOTAL DE INVITADOS: ${F.length}*`, '', '*Presupuesto aéreo*', `Tarifa: ${mxn(tot.tarifa)}`, `IVA: ${mxn(tot.iva)}`, `Otros impuestos: ${mxn(tot.otros)}`, `*Total: ${mxn(tot.total)}*`]).join('\n'); }
   const ok = () => { $('#rmsg').textContent = cp.id === 'rxls' ? 'Tabla copiada: pégala en Excel.' : 'Resumen copiado: pégalo en WhatsApp o correo.'; };
@@ -2347,7 +2347,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 297;
+const APP_V = 298;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

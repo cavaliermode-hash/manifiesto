@@ -635,6 +635,7 @@ button.ptile{font:inherit;cursor:pointer;width:100%;transition:transform .08s,bo
 @media (max-width:560px){.zrb{white-space:normal}.zrb button{margin:2px 0 2px 4px;padding:5px 7px;font-size:11px}}
 .ziproles tr.zall td{background:#F0F8F2;font-weight:800}
 .dcierre{margin:18px 0 6px}.dcierre .dimp{margin:0;background:#FFF7E6;border-left:4px solid #E0A100;padding:10px 14px;color:var(--ink);line-height:1.45}.dcierre .dbye{margin:12px 2px 0;color:var(--ink)}.dcierre .dbye i{color:#1C6B2E}
+.itinweb{margin:14px 0;background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px 12px;overflow-x:auto}
 </style>
 </head>
 <body>
@@ -1053,10 +1054,7 @@ function detailView(r){
       <p class="dname"><span class="est">Estimado(a)</span> <b>${esc(r.n)}</b></p><p class="dsub dintro">${esc(INTRO_TXT)}</p>
     </div>
     ${countdownHTML(r)}
-    ${notasHTML(r)}
-    ${hotelHTML(r)}
-    ${card}
-    ${aeroHTML(r)}
+    <section class="itinweb" aria-label="Su itinerario día por día">${mailHTML(r, 'web')}</section>
     ${tripSteps(r)}
   </div>`;
 }
@@ -1167,7 +1165,7 @@ function mailHTML(r, enPDF){
   const MUT = '#5C6B80', INK = '#16301F', base = location.origin + location.pathname;
   // Correo y PDF: verdes claros con texto verde oscuro (en Outlook se lee aunque quite los colores al pegar).
   const G = '#136c34', G1 = '#D7EBDD', G2 = '#E6F3EA', HB = '#D7EBDD', ON = '#0F3D22';
-  const tierra = soloTierra(r), dos = !!(r.ci && r.cr && r.ci !== r.cr), C = !!enPDF; // C: PDF compacto
+  const tierra = soloTierra(r), dos = !!(r.ci && r.cr && r.ci !== r.cr), WEB = enPDF === 'web', C = enPDF === true; // C: PDF compacto · WEB: solo el itinerario para la página
   const fs = C ? 12 : 14, pv = C ? 4 : 8; // tamaño de texto y espacio vertical
   // Además del estilo, cada texto va dentro de <font color/face/size>: Outlook conserva esas etiquetas al pegar aunque quite los estilos.
   const fsz = px => px >= 20 ? 5 : px >= 17 ? 4 : px >= 14 ? 3 : px >= 12 ? 2 : 1;
@@ -1205,6 +1203,7 @@ function mailHTML(r, enPDF){
   b += p(`${T('Estimado(a)', C ? 13 : 15, MUT)} ${T(esc(r.n.toUpperCase()), C ? 15 : 17, INK, 'bold')}`, C ? 'padding-top:6px' : 'padding-top:12px');
   b += p(T(esc(INTRO_TXT).replace('Segunda Cumbre Universales', `<b style="color:${INK}">Segunda Cumbre Universales</b>`), C ? 12 : fs, INK), C ? 'padding-top:2px;padding-bottom:2px' : 'padding-top:4px;padding-bottom:4px');
   /* Itinerario en orden cronológico, agrupado por día */
+  const b0 = b.length;
   if(!tierra){ const u = claveUna(r); b += p(T('Datos de su reservación aérea', C ? 14 : 16, G, 'bold'), C ? 'padding-top:8px;padding-bottom:2px' : 'padding-top:14px;padding-bottom:4px');
     if(dos) b += p(T('Su viaje tiene dos claves de reserva distintas: la clave de ida aparece en su vuelo de ida y la clave de regreso en su vuelo de regreso.', C ? 11 : fs, INK)); else b += key(u.lab, u.k); }
   { const blkRows = rows => (rows || []).map(([k, v]) => `<tr><td valign="top" width="${C ? 104 : 120}" style="width:${C ? 104 : 120}px;padding:${C ? '0 6px 0 0' : '1px 8px 1px 0'}">${T(esc(k), C ? 10 : 12, MUT, 'bold')}</td><td style="padding:${C ? '0;line-height:1.25' : '1px 0;line-height:1.35'}">${T(esc(v).replace(B_HL, x => `<b style="color:${INK}">${x}</b>`), C ? 11 : 13, INK)}</td></tr>`).join('');
@@ -1221,6 +1220,7 @@ function mailHTML(r, enPDF){
       else if(x.tipo === 'info') b += blk(x.i, x.t, x.text ? `<tr><td colspan="2">${T(esc(x.text), C ? 11 : 13, INK)}</td></tr>` : '');
       else b += blk(x.i, x.t, (x.rows ? blkRows(x.rows) : `<tr><td colspan="2">${T(esc(x.text), C ? 11 : 13, INK)}</td></tr>`) + (x.nb ? `<tr><td colspan="2" style="padding-top:3px">${T(esc(x.nb), C ? 11 : 13, INK, 'bold')}</td></tr>` : '')); });
     if(!tierra) b += p(T('Horarios de vuelo en hora local de cada aeropuerto.', C ? 10 : 11, MUT)); }
+  if(WEB) return `<table width="100%" cellpadding="4" cellspacing="0" style="width:100%;font-family:Arial,sans-serif;background:#ffffff">${b.slice(b0)}</table>`;
   if(!tierra){ b += h2('Puntos importantes de su vuelo');
     const pts = [...document.querySelectorAll('section.important li')].map(li => `<tr><td valign="top" style="padding:${C ? '1px 6px 1px 0' : '3px 6px 3px 0'}">${T('•', C ? 11 : fs, G, 'bold')}</td><td style="padding:${C ? '1px 0;line-height:1.25' : '3px 0'}">${T(li.innerHTML.replace(/<b>/g, `<b style="color:${INK}">`), C ? 11 : fs)}</td></tr>`).join('');
     b += `<tr><td bgcolor="#F0F8F2" style="background:#F0F8F2;border-left:4px solid ${G};padding:${C ? '5px 12px' : '10px 14px'}"><table cellpadding="0" cellspacing="0">${pts}</table></td></tr>`; }
@@ -2259,7 +2259,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 288;
+const APP_V = 289;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

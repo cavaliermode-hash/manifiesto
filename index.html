@@ -2203,6 +2203,13 @@ async function conGate(msg){
   return true;
 }
 let TEL = {}, MAIL = {}, REP = null;
+/* Reporte: datos cifrados aparte con su propia contraseña; se pide al entrar y queda abierto hasta recargar la página */
+async function repGate(){
+  if(REP) return true; if(!PACK || !PACK.rep) return false;
+  const pw = await askPw('Para abrir el Reporte escribe la contraseña:'); if(pw === null) return false;
+  try{ REP = (await Cifra.descifrar(PACK.rep, pw.trim().toLowerCase())).rep || null; return !!REP; }
+  catch(e){ alert('Contraseña incorrecta.'); return false; }
+}
 /* ---------- Reporte de telemarketing y presupuesto (solo VECI) ---------- */
 const REP_ST = [['PENDIENTE POR MANDAR LA INFORMACIÓN','#DDEBF7','#16301F'],['PENDIENTE CONFIRMAR PARTICIPANTE O INVITADO','#C9C400','#16301F'],['CONFIRMADO EMITIDO OK','#70AD47','#0F2A12'],['BLOQUEO AEROMEXICO OK','#D9CCB0','#16301F'],['TERRESTRE CONFIRMADO','#9C5B2E','#FFFFFF'],['CANCELADO','#C00000','#FFFFFF']];
 const RV = {v:'tot', st:'', q:'', sort:'n', dir:1};
@@ -2271,7 +2278,8 @@ async function veciVence(){
 setInterval(() => { if(!document.hidden) veciVence(); }, 20000);
 document.querySelectorAll('.tabs button[data-tab]').forEach(b => b.addEventListener('click', async () => {
   // dentro de VECI se cambia de sección sin volver a pedir contraseña
-  if(!['man', 'rep'].includes(b.dataset.tab) && ['man', 'rep'].includes(CTL.tab) && !(await conGate())) return; ctlTab(b.dataset.tab); }));
+  if(b.dataset.tab === 'rep'){ if(!(await repGate())) return; }
+  else if(b.dataset.tab !== 'man' && ['man', 'rep'].includes(CTL.tab) && !(await conGate())) return; ctlTab(b.dataset.tab); }));
 /* VECI: una sola pestaña con contraseña que agrupa Llegadas, Salidas, Traslados y pernoctas, Concentrado y Claves. */
 document.querySelector('.tabs [data-veci]').addEventListener('click', async () => {
   if(CTL.tab !== 'man' && CTL.tab !== 'rep') return; if(!(await conGate())) return; ctlTab('lle'); });
@@ -2339,7 +2347,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 296;
+const APP_V = 297;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');
@@ -2359,7 +2367,7 @@ window.addEventListener('pagehide', e => { if(e.persisted) lockNow(); });
 async function unlock(pin, fromSaved){
   try{ const d = await Cifra.descifrar(PACK.enc, pin);
     if(UNLOCKED){ gate.hidden = true; document.body.classList.remove('locked'); return; } // re-entrada tras salir de la app
-    UNLOCKED = true; DATA = d.filas; REP = d.rep || null; gate.hidden = true; $('#upd').textContent = 'Actualizado: ' + PACK.actualizado + ' · v' + APP_V; { const vv = document.getElementById('verv'); if(vv) vv.textContent = 'Versión ' + APP_V + ' · datos actualizados ' + PACK.actualizado; } init(); syncStart(pin); if(!pdfDirecto()) restoreView(); }
+    UNLOCKED = true; DATA = d.filas; gate.hidden = true; $('#upd').textContent = 'Actualizado: ' + PACK.actualizado + ' · v' + APP_V; { const vv = document.getElementById('verv'); if(vv) vv.textContent = 'Versión ' + APP_V + ' · datos actualizados ' + PACK.actualizado; } init(); syncStart(pin); if(!pdfDirecto()) restoreView(); }
   catch(e){ showGate('PIN incorrecto. Revísalo e intenta de nuevo.'); }
 }
 $('#gate-form').addEventListener('submit', e => { e.preventDefault(); const v = gin.value.trim();

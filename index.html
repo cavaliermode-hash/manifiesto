@@ -798,7 +798,7 @@ button.ptile{font:inherit;cursor:pointer;width:100%;transition:transform .08s,bo
     </div>
   </section>
   <section class="agenda ag-compact" id="agenda" aria-labelledby="ag-t">
-    <div class="ag-head"><div><h2 id="ag-t">Agenda del evento</h2><p>Segunda Cumbre Universales · San Carlos, Sonora · Horarios en hora local de Sonora</p></div><a class="ag-pdf" href="agenda-cumbre.jpg?v=305" id="ag-open">📄 Ver agenda completa</a></div>
+    <div class="ag-head"><div><h2 id="ag-t">Agenda del evento</h2><p>Segunda Cumbre Universales · San Carlos, Sonora · Horarios en hora local de Sonora</p></div><a class="ag-pdf" href="agenda-cumbre.jpg?v=306" id="ag-open">📄 Ver agenda completa</a></div>
     <div class="ag-tabs" role="tablist" aria-label="Días del evento">
       <button role="tab" id="tab-3" aria-controls="day-3" data-day="3"><b>3</b><span>Martes</span></button>
       <button role="tab" id="tab-4" aria-controls="day-4" data-day="4"><b>4</b><span>Miércoles</span></button>
@@ -1315,7 +1315,7 @@ function waTxt(r){
   if(!tierra) L.push('_Horarios de vuelo en hora local de cada aeropuerto._');
   if(!tierra){ L.push('', '📌 *PUNTOS IMPORTANTES DE SU VUELO*'); document.querySelectorAll('section.important li').forEach(li => L.push('• ' + li.innerText.trim())); }
   L.push('',
-    '🗓️ *Agenda del evento:*', base + 'agenda-cumbre.jpg?v=305', '',
+    '🗓️ *Agenda del evento:*', base + 'agenda-cumbre.jpg?v=306', '',
     '🔎 *Consulta tu reserva cuando quieras:*', base, '',
     '*Importante.-* Le recordamos que *MetLife* cubre únicamente las noches de hotel y traslados terrestres que estén dentro del evento o por ruta.', '',
     'Le enviamos un cordial saludo deseándole un buen viaje y nos reiteramos a sus órdenes.', '', '*_Viajes El Corte Inglés_*');
@@ -1717,7 +1717,7 @@ window.addEventListener('popstate', e => { if(!$('#agv').hidden){ agvClose(); re
 /* ---------- Visor de agenda con botón Regresar ---------- */
 function agvClose(){ $('#agv').hidden = true; document.body.style.overflow = ''; const o = $('#ag-open'); if(o) o.focus({preventScroll:true}); }
 document.addEventListener('click', e => { const a = e.target.closest('#ag-open, [data-agv]'); if(!a) return; e.preventDefault();
-  const img = $('#agv-img'); if(!img.src) img.src = 'agenda-cumbre.jpg?v=305';
+  const img = $('#agv-img'); if(!img.src) img.src = 'agenda-cumbre.jpg?v=306';
   $('.agv-body').classList.remove('zoom'); $('#agv').hidden = false; document.body.style.overflow = 'hidden'; $('.agv-body').scrollTop = 0;
   history.pushState(Object.assign({}, history.state, {agv:1}), ''); $('#agv-back').focus(); });
 $('#agv-img').addEventListener('click', e => { const bd = $('.agv-body'), r = e.target.getBoundingClientRect(), fx = (e.clientX - r.left) / r.width, fy = (e.clientY - r.top) / r.height;
@@ -1743,7 +1743,7 @@ const AGENDA = {
     ['17:20','17:50','Fotografía grupal','Mirador San Carlos'],
     ['17:50','18:00','Traslado a cena','',1],
     ['18:00','22:00','Cena de premiación','Boho costero (lino y/o algodón) · considera chamarra ligera'],
-    ['22:00','22:15','Shuttles al hotel','',1]]},
+    ['22:00','22:30','Shuttles al hotel','',1]]},
   5:{d:'Jueves 5 de noviembre', f:'2026-11-05', it:[
     ['','','Desayuno','Hotel sede','', 'Durante la mañana'],
     ['','','Regreso a tu ciudad de origen','Consulta tu vuelo de regreso en el buscador','', 'Durante el día']]}
@@ -2444,7 +2444,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 305;
+const APP_V = 306;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

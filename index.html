@@ -2220,7 +2220,8 @@ const RV = {v:'tot', st:'', q:'', sort:'n', dir:1};
 const mxn = x => '$' + (Math.round(x * 100) / 100).toLocaleString('es-MX', {minimumFractionDigits:2, maximumFractionDigits:2});
 const stKey = t => norm(t).replace(/\s+/g, ' ').trim();
 const grupoRol = x => /^RELLENO$/.test(x.n) ? 'Relleno (bloqueo)' : /^STAFF/i.test(x.rol) ? 'Staff' : 'Invitados';
-const sumR = L => L.reduce((a, x) => ({tarifa:a.tarifa + x.tarifa, iva:a.iva + x.iva, otros:a.otros + x.otros, total:a.total + x.total}), {tarifa:0, iva:0, otros:0, total:0});
+const r2 = x => Math.round(x * 100) / 100;
+const sumR = L => { const t = L.reduce((a, x) => ({tarifa:a.tarifa + x.tarifa, iva:a.iva + x.iva, otros:a.otros + x.otros, total:a.total + x.total}), {tarifa:0, iva:0, otros:0, total:0}); for(const k in t) t[k] = r2(t[k]); return t; };
 function repRender(){
   const el = $('#rout'); if(!el) return;
   document.querySelectorAll('.rmode [data-rv]').forEach(b => b.setAttribute('aria-pressed', b.dataset.rv === RV.v));
@@ -2237,7 +2238,7 @@ function repRender(){
     h += tabla('Por estatus', REP_ST.map(([l]) => [l, F.filter(x => stKey(x.st) === stKey(l))]).filter(([, L]) => L.length));
     h += `<h3 class="rh">Presupuesto aéreo · totales</h3><div class="rkpi"><div><b>${mxn(tot.tarifa)}</b><span>Tarifa</span></div><div><b>${mxn(tot.iva)}</b><span>IVA</span></div><div><b>${mxn(tot.otros)}</b><span>Otros impuestos</span></div><div><b>${mxn(tot.total)}</b><span>Total</span></div></div>`;
     if(REP.totXls && Math.abs(REP.totXls.total - tot.total) > 0.5) h += `<p class="cs">⚠️ El total del Excel (${mxn(REP.totXls.total)}) no coincide con la suma por nombre (${mxn(tot.total)}).</p>`;
-    h += `<div class="ctools"><button type="button" id="rcopy">Copiar resumen</button></div>`;
+    h += `<div class="ctools"><button type="button" class="rdl">⬇️ Descargar reporte en Excel</button></div>`;
   } else {
     const q = norm(RV.q).trim();
     let L = F.filter(x => (!RV.st || stKey(x.st) === stKey(RV.st)) && (!q || norm(x.n + ' ' + x.rol).includes(q)));
@@ -2248,7 +2249,7 @@ function repRender(){
       <div class="ktable-wrap"><table class="rtab"><thead><tr>${th('n', 'Nombre')}${th('tarifa', 'Tarifa', 'hm')}${th('iva', 'IVA', 'hm')}${th('otros', 'Otros imp.', 'hm')}${th('total', 'Total')}</tr></thead>
       <tbody>${L.map(x => { const [, bg, fg] = stc(x.st); return `<tr><td><b>${esc(tcase(x.n))}</b><br><span class="rs" style="background:${bg};color:${fg}">${esc(x.st || 'SIN ESTATUS')}</span> <small style="color:var(--muted)">${esc(x.rol)}</small></td><td class="hm">${mxn(x.tarifa)}</td><td class="hm">${mxn(x.iva)}</td><td class="hm">${mxn(x.otros)}</td><td><b>${mxn(x.total)}</b></td></tr>`; }).join('')}</tbody>
       <tfoot><tr><td>Total (${L.length})</td><td class="hm">${mxn(t.tarifa)}</td><td class="hm">${mxn(t.iva)}</td><td class="hm">${mxn(t.otros)}</td><td>${mxn(t.total)}</td></tr></tfoot></table></div>
-      <div class="ctools"><button type="button" id="rxls">Copiar tabla para Excel</button></div>`;
+      <div class="ctools"><button type="button" class="rdl">⬇️ Descargar reporte en Excel</button></div>`;
   }
   el.innerHTML = h;
 }
@@ -2265,6 +2266,85 @@ document.addEventListener('click', e => {
   const ok = () => { $('#rmsg').textContent = cp.id === 'rxls' ? 'Tabla copiada: pégala en Excel.' : 'Resumen copiado: pégalo en WhatsApp o correo.'; };
   Promise.resolve().then(() => navigator.clipboard.writeText(t)).then(ok).catch(() => { const a = document.createElement('textarea'); a.value = t; document.body.appendChild(a); a.select(); document.execCommand('copy'); a.remove(); ok(); });
 });
+/* ---------- Reporte en Excel (.xlsx) con formato profesional y gráficas ---------- */
+let xlP = null; const loadXL = () => window.ExcelJS ? Promise.resolve(window.ExcelJS) : (xlP = xlP || new Promise((ok, ko) => { const sc = document.createElement('script'); sc.src = 'exceljs.min.js?v=' + APP_V; sc.onload = () => ok(window.ExcelJS); sc.onerror = ko; document.head.appendChild(sc); }));
+function grafPNG(tipo, datos, titulo){ // gráfica en imagen para insertar en el Excel
+  const W = 1200, H = 560, c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d');
+  g.fillStyle = '#fff'; g.fillRect(0, 0, W, H); g.fillStyle = '#136c34'; g.font = 'bold 28px Arial'; g.fillText(titulo, 30, 48);
+  const D = datos.filter(d => d.v > 0), tot = D.reduce((a, d) => a + d.v, 0) || 1;
+  if(tipo === 'dona'){ const cx = 250, cy = 290, R = 190, r = 105; let a0 = -Math.PI / 2;
+    D.forEach(d => { const a1 = a0 + d.v / tot * 2 * Math.PI; g.beginPath(); g.moveTo(cx, cy); g.arc(cx, cy, R, a0, a1); g.closePath(); g.fillStyle = d.c; g.fill(); g.strokeStyle = '#fff'; g.lineWidth = 3; g.stroke(); a0 = a1; });
+    g.beginPath(); g.arc(cx, cy, r, 0, 2 * Math.PI); g.fillStyle = '#fff'; g.fill();
+    g.fillStyle = '#16301F'; g.textAlign = 'center'; g.font = 'bold 54px Arial'; g.fillText(String(tot), cx, cy + 10); g.font = '20px Arial'; g.fillText('personas', cx, cy + 40); g.textAlign = 'left';
+    D.forEach((d, i) => { const y = 170 + i * 80; g.fillStyle = d.c; g.fillRect(500, y - 24, 34, 34); g.strokeStyle = '#999'; g.lineWidth = 1; g.strokeRect(500, y - 24, 34, 34);
+      g.fillStyle = '#16301F'; g.font = 'bold 22px Arial'; g.fillText(d.l, 550, y - 2); g.font = '21px Arial'; g.fillText(`${d.v} personas · ${(d.v * 100 / tot).toFixed(1)}%`, 550, y + 26); }); }
+  else { const x0 = 340, x1 = W - 40, bh = 60, mx = Math.max(...D.map(d => d.v), 1);
+    D.forEach((d, i) => { const y = 100 + i * 90, w = (x1 - x0 - 150) * d.v / mx;
+      g.fillStyle = '#16301F'; g.font = 'bold 18px Arial'; const L = d.l.length > 30 ? d.l.slice(0, 29) + '…' : d.l; g.fillText(L, 30, y + bh / 2 + 6);
+      g.fillStyle = d.c; g.fillRect(x0, y, Math.max(w, 2), bh); g.strokeStyle = '#999'; g.lineWidth = 1; g.strokeRect(x0, y, Math.max(w, 2), bh);
+      g.fillStyle = '#16301F'; g.font = 'bold 19px Arial'; g.fillText(mxn(d.v), x0 + Math.max(w, 2) + 10, y + bh / 2 + 7); }); }
+  return c.toDataURL('image/png');
+}
+async function repExcel(btn){
+  if(!REP) return; const t0 = btn.textContent; btn.disabled = true; btn.textContent = 'Generando Excel…'; DLG = true;
+  try{
+    const XL = await loadXL(), wb = new XL.Workbook(); wb.creator = 'Viajes El Corte Inglés'; wb.created = new Date();
+    const F = REP.filas, tot = sumR(F), n = F.length, G = 'FF136C34', G2 = 'FFEAF5EE', BRD = {style:'thin', color:{argb:'FFCFD8D3'}};
+    const borde = c => { c.border = {top:BRD, left:BRD, bottom:BRD, right:BRD}; }, MON = '"$"#,##0.00', hoy = new Date().toLocaleDateString('es-MX', {day:'2-digit', month:'long', year:'numeric'});
+    const hx = h => 'FF' + h.replace('#', '').toUpperCase();
+    const encab = (ws, cols, tit) => { ws.mergeCells(1, 1, 1, cols); const a = ws.getCell(1, 1); a.value = tit; a.font = {bold:true, size:16, color:{argb:'FFFFFFFF'}}; a.fill = {type:'pattern', pattern:'solid', fgColor:{argb:G}}; a.alignment = {vertical:'middle', horizontal:'left', indent:1}; ws.getRow(1).height = 30;
+      ws.mergeCells(2, 1, 2, cols); const b = ws.getCell(2, 1); b.value = `Segunda Cumbre Universales · MetLife · Hotel Marinaterra, San Carlos, Sonora · 3 al 5 de noviembre de 2026 · Generado el ${hoy}`; b.font = {italic:true, size:10, color:{argb:'FF5C6B80'}}; b.alignment = {indent:1}; };
+    const head = (row, vals) => { vals.forEach((v, j) => { const c = row.getCell(j + 1); c.value = v; c.font = {bold:true, color:{argb:'FFFFFFFF'}}; c.fill = {type:'pattern', pattern:'solid', fgColor:{argb:G}}; c.alignment = {horizontal: j ? 'center' : 'left', vertical:'middle', wrapText:true}; borde(c); }); row.height = 22; };
+    // ===== Hoja 1: Resumen =====
+    const ws = wb.addWorksheet('Resumen', {views:[{showGridLines:false}], pageSetup:{orientation:'landscape', fitToPage:true, fitToWidth:1, fitToHeight:0, paperSize:1}});
+    ws.columns = [{width:46}, {width:13}, {width:13}, {width:17}, {width:16}, {width:17}, {width:18}, {width:16}];
+    encab(ws, 8, 'REPORTE DE TELEMARKETING Y PRESUPUESTO AÉREO');
+    let r = 4; ws.getCell(r, 1).value = 'ESTATUS DE TELEMARKETING'; ws.getCell(r, 1).font = {bold:true, size:12, color:{argb:G}}; r++;
+    head(ws.getRow(r), ['Estatus', 'Cantidad', '% del total']); r++;
+    REP_ST.forEach(([l, bg, fg]) => { const c = F.filter(x => stKey(x.st) === stKey(l)).length, row = ws.getRow(r++);
+      row.values = [l, c, n ? c / n : 0]; [1, 2, 3].forEach(j => { const x = row.getCell(j); x.fill = {type:'pattern', pattern:'solid', fgColor:{argb:hx(bg)}}; x.font = {color:{argb:hx(fg)}, bold: j === 2}; borde(x); });
+      row.getCell(2).alignment = {horizontal:'center'}; row.getCell(3).numFmt = '0.0%'; row.getCell(3).alignment = {horizontal:'center'}; });
+    { const row = ws.getRow(r++); row.values = ['TOTAL DE INVITADOS', n, 1]; [1, 2, 3].forEach(j => { const x = row.getCell(j); x.font = {bold:true}; x.fill = {type:'pattern', pattern:'solid', fgColor:{argb:'FFD9D9D9'}}; borde(x); }); row.getCell(2).alignment = {horizontal:'center'}; row.getCell(3).numFmt = '0%'; row.getCell(3).alignment = {horizontal:'center'}; }
+    r++; ws.getCell(r, 1).value = 'INDICADORES'; ws.getCell(r, 1).font = {bold:true, size:12, color:{argb:G}}; r++;
+    head(ws.getRow(r), ['Concepto', 'Personas']); r++;
+    [['Invitados', F.filter(x => grupoRol(x) === 'Invitados').length], ['Staff', F.filter(x => grupoRol(x) === 'Staff').length], ['Lugares de relleno (bloqueo)', F.filter(x => grupoRol(x) === 'Relleno (bloqueo)').length], ['Con pernocta en Hotel NH', F.filter(x => x.pern).length], ['Con traslado terrestre', F.filter(x => x.tras).length]]
+      .forEach(([l, v]) => { const row = ws.getRow(r++); row.values = [l, v]; [1, 2].forEach(j => { borde(row.getCell(j)); }); row.getCell(2).alignment = {horizontal:'center'}; row.getCell(2).font = {bold:true}; });
+    r++; ws.getCell(r, 1).value = 'PRESUPUESTO AÉREO POR ESTATUS'; ws.getCell(r, 1).font = {bold:true, size:12, color:{argb:G}}; r++;
+    head(ws.getRow(r), ['Estatus', 'Personas', 'Con boleto', 'Tarifa', 'IVA', 'Otros impuestos', 'Total', 'Promedio por boleto']); ws.getRow(r).height = 32; const r1 = r + 1; r++;
+    REP_ST.map(([l]) => [l, F.filter(x => stKey(x.st) === stKey(l))]).filter(([, L]) => L.length).forEach(([l, L]) => { const t = sumR(L), cb = L.filter(x => x.total > 0).length, row = ws.getRow(r);
+      row.values = [l, L.length, cb, t.tarifa, t.iva, t.otros, t.total, cb ? {formula:`G${r}/C${r}`, result: t.total / cb} : '—']; for(let j = 1; j <= 8; j++){ borde(row.getCell(j)); if(j >= 4) row.getCell(j).numFmt = MON; } [2, 3].forEach(j => row.getCell(j).alignment = {horizontal:'center'}); r++; });
+    { const row = ws.getRow(r), cb = F.filter(x => x.total > 0).length; row.values = ['TOTAL', {formula:`SUM(B${r1}:B${r - 1})`, result:n}, {formula:`SUM(C${r1}:C${r - 1})`, result:cb}, {formula:`SUM(D${r1}:D${r - 1})`, result:tot.tarifa}, {formula:`SUM(E${r1}:E${r - 1})`, result:tot.iva}, {formula:`SUM(F${r1}:F${r - 1})`, result:tot.otros}, {formula:`SUM(G${r1}:G${r - 1})`, result:tot.total}, {formula:`G${r}/C${r}`, result: cb ? tot.total / cb : 0}];
+      for(let j = 1; j <= 8; j++){ const x = row.getCell(j); x.font = {bold:true}; x.fill = {type:'pattern', pattern:'solid', fgColor:{argb:G2}}; x.border = {top:{style:'medium', color:{argb:G}}, bottom:{style:'medium', color:{argb:G}}, left:BRD, right:BRD}; if(j >= 4) x.numFmt = MON; } [2, 3].forEach(j => row.getCell(j).alignment = {horizontal:'center'}); r++; }
+    r++; ws.getCell(r, 1).value = 'PRESUPUESTO AÉREO · TOTALES'; ws.getCell(r, 1).font = {bold:true, size:12, color:{argb:G}}; r++;
+    head(ws.getRow(r), ['Concepto', 'Importe']); r++;
+    [['Tarifa', tot.tarifa], ['IVA', tot.iva], ['Otros impuestos', tot.otros]].forEach(([l, v]) => { const row = ws.getRow(r++); row.values = [l, v]; borde(row.getCell(1)); borde(row.getCell(2)); row.getCell(2).numFmt = MON; });
+    { const row = ws.getRow(r++); row.values = ['TOTAL', tot.total]; [1, 2].forEach(j => { const x = row.getCell(j); x.font = {bold:true, size:12, color:{argb:'FFFFFFFF'}}; x.fill = {type:'pattern', pattern:'solid', fgColor:{argb:G}}; borde(x); }); row.getCell(2).numFmt = MON; }
+    // gráficas
+    r++; ws.getCell(r, 1).value = 'GRÁFICAS'; ws.getCell(r, 1).font = {bold:true, size:12, color:{argb:G}}; r++;
+    const im1 = wb.addImage({base64: grafPNG('dona', REP_ST.map(([l, bg]) => ({l, v: F.filter(x => stKey(x.st) === stKey(l)).length, c: bg})), 'Personas por estatus'), extension:'png'});
+    const im2 = wb.addImage({base64: grafPNG('barras', REP_ST.map(([l, bg]) => ({l, v: sumR(F.filter(x => stKey(x.st) === stKey(l))).total, c: bg})), 'Presupuesto aéreo por estatus (total)'), extension:'png'});
+    ws.addImage(im1, {tl:{col:0, row:r}, ext:{width:840, height:392}}); ws.addImage(im2, {tl:{col:0, row:r + 21}, ext:{width:840, height:392}});
+    // ===== Hoja 2: Detalle por nombre =====
+    const wd = wb.addWorksheet('Por nombre', {views:[{state:'frozen', ySplit:4, showGridLines:false}], pageSetup:{orientation:'landscape', fitToPage:true, fitToWidth:1, fitToHeight:0, paperSize:1}});
+    wd.columns = [{width:6}, {width:40}, {width:22}, {width:38}, {width:15}, {width:14}, {width:17}, {width:16}];
+    encab(wd, 8, 'PRESUPUESTO AÉREO POR NOMBRE');
+    head(wd.getRow(4), ['No.', 'Nombre', 'Rol', 'Estatus', 'Tarifa', 'IVA', 'Otros impuestos', 'Total']);
+    const L = F.slice().sort((a, b) => a.n.localeCompare(b.n, 'es')); let k = 5;
+    L.forEach((x, i) => { const row = wd.getRow(k), [, bg, fg] = REP_ST.find(([l]) => stKey(l) === stKey(x.st)) || ['', '#FFFFFF', '#16301F'];
+      row.values = [i + 1, tcase(x.n), x.rol, x.st, x.tarifa, x.iva, x.otros, x.total];
+      for(let j = 1; j <= 8; j++){ const c = row.getCell(j); borde(c); if(j >= 5) c.numFmt = MON; if(i % 2) c.fill = {type:'pattern', pattern:'solid', fgColor:{argb:'FFF7FAF8'}}; }
+      const e = row.getCell(4); e.fill = {type:'pattern', pattern:'solid', fgColor:{argb:hx(bg)}}; e.font = {color:{argb:hx(fg)}, size:10}; row.getCell(1).alignment = {horizontal:'center'}; row.getCell(8).font = {bold:true}; k++; });
+    { const row = wd.getRow(k); row.values = ['', 'TOTAL', '', `${L.length} personas`, {formula:`SUBTOTAL(9,E5:E${k - 1})`, result:tot.tarifa}, {formula:`SUBTOTAL(9,F5:F${k - 1})`, result:tot.iva}, {formula:`SUBTOTAL(9,G5:G${k - 1})`, result:tot.otros}, {formula:`SUBTOTAL(9,H5:H${k - 1})`, result:tot.total}];
+      for(let j = 1; j <= 8; j++){ const x = row.getCell(j); x.font = {bold:true}; x.fill = {type:'pattern', pattern:'solid', fgColor:{argb:G2}}; x.border = {top:{style:'medium', color:{argb:G}}, bottom:{style:'medium', color:{argb:G}}}; if(j >= 5) x.numFmt = MON; } }
+    wd.autoFilter = {from:'A4', to:`H${k - 1}`};
+    const buf = await wb.xlsx.writeBuffer(), blob = new Blob([buf], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    const a = document.createElement('a'), f = new Date(), p2 = x => String(x).padStart(2, '0'); a.href = URL.createObjectURL(blob);
+    a.download = `Reporte Telemarketing Cumbre Universales ${f.getFullYear()}-${p2(f.getMonth() + 1)}-${p2(f.getDate())}.xlsx`; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    $('#rmsg').textContent = '✓ Reporte descargado en Excel.';
+  }catch(e){ $('#rmsg').textContent = 'No se pudo generar el Excel. Revisa tu conexión e inténtalo de nuevo.'; }
+  finally{ btn.disabled = false; btn.textContent = t0; setTimeout(() => { DLG = false; awaySince = 0; }, 1500); }
+}
+document.addEventListener('click', e => { const b = e.target.closest('#rout .rdl'); if(b) repExcel(b); });
 document.addEventListener('input', e => { if(e.target.id !== 'rq') return; RV.q = e.target.value; const pos = e.target.selectionStart; repRender(); const i = $('#rq'); if(i){ i.focus(); try{ i.setSelectionRange(pos, pos); }catch(er){} } });
 // actividad dentro de VECI: renueva los 60 minutos (como mucho una vez cada 15 s)
 let veciTick = 0;
@@ -2348,7 +2428,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 300;
+const APP_V = 301;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

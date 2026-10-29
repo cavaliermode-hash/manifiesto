@@ -637,7 +637,7 @@ button.ptile{font:inherit;cursor:pointer;width:100%;transition:transform .08s,bo
 .dcierre{margin:18px 0 6px}.dcierre .dimp{margin:0;background:#FFF7E6;border-left:4px solid #E0A100;padding:10px 14px;color:var(--ink);line-height:1.45}.dcierre .dbye{margin:12px 2px 0;color:var(--ink)}.dcierre .dbye i{color:#1C6B2E}
 .itinweb{margin:14px 0;background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px 12px;overflow-x:auto}
 .rmode{display:flex;gap:6px;margin:6px 0 10px}.rmode button{flex:1;border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 10px;font:600 14px var(--body);cursor:pointer}.rmode button[aria-pressed="true"]{background:var(--green);color:#fff;border-color:var(--green)}
-.rstw{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;align-items:center;margin:4px 0 12px}@media (min-width:760px){.rstw{grid-template-columns:minmax(0,520px) 320px;justify-content:start;gap:28px}}
+.rstw{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;align-items:center;margin:4px 0 12px}@media (min-width:760px){.rstw{grid-template-columns:minmax(0,560px);justify-content:start}}
 .rstat{width:100%;border-collapse:collapse;font-size:12.5px}.rstat td{padding:3px 8px;border:1px solid #fff;line-height:1.25}.rstat td.n{text-align:right;font:700 13px var(--mono);width:46px}.rstat td.p{text-align:right;width:54px;font-size:12px}
 .rpie{margin:0;display:flex;flex-direction:column;align-items:center;gap:8px}.rpie svg{width:290px;height:290px;max-width:100%;filter:drop-shadow(0 2px 4px rgba(0,0,0,.12))}.rpie figcaption{font:600 13px var(--body);color:var(--ink);letter-spacing:.2px}.rpie figcaption b{color:var(--green)}.rstat tr{cursor:pointer}.rstat tr.on td{outline:2px solid var(--ink);outline-offset:-2px}
 .rstat tr.tt td{background:#D9D9D9;font-weight:700;cursor:default}
@@ -2251,7 +2251,7 @@ function repRender(){
   const F = REP.filas, tot = sumR(F), n = F.length;
   const stRow = ([lab, bg, fg]) => { const c = F.filter(x => stKey(x.st) === stKey(lab)).length; return `<tr data-rst="${esc(lab)}" class="${RV.st === lab ? 'on' : ''}"><td style="background:${bg};color:${fg}">${esc(lab)}</td><td class="n" style="background:${bg};color:${fg}">${c}</td><td class="p" style="background:${bg};color:${fg}">${n ? (c * 100 / n).toFixed(1) : 0}%</td></tr>`; };
   const otros = F.filter(x => !REP_ST.some(([l]) => stKey(l) === stKey(x.st)));
-  let h = `<h3 class="rh">Estatus de telemarketing</h3><div class="rstw"><table class="rstat"><tbody>${REP_ST.map(stRow).join('')}${otros.length ? `<tr><td>Otro / sin estatus</td><td class="n">${otros.length}</td><td class="p">${(otros.length * 100 / n).toFixed(1)}%</td></tr>` : ''}<tr class="tt"><td>TOTAL DE INVITADOS</td><td class="n">${n}</td><td class="p">100%</td></tr></tbody></table>${pastelSVG(REP_ST.map(([l, bg, fg]) => ({l, bg, fg, v: F.filter(x => stKey(x.st) === stKey(l)).length})))}</div>${repConfNota(F)}`;
+  let h = `<h3 class="rh">Estatus de telemarketing</h3><div class="rstw"><table class="rstat"><tbody>${REP_ST.map(stRow).join('')}${otros.length ? `<tr><td>Otro / sin estatus</td><td class="n">${otros.length}</td><td class="p">${(otros.length * 100 / n).toFixed(1)}%</td></tr>` : ''}<tr class="tt"><td>TOTAL DE INVITADOS</td><td class="n">${n}</td><td class="p">100%</td></tr></tbody></table></div>${repConfNota(F)}`;
   if(RV.v === 'tot'){
     const G = ['Invitados', 'Staff', 'Relleno (bloqueo)'].map(g => [g, F.filter(x => grupoRol(x) === g)]).filter(([, L]) => L.length);
     const ep = F.filter(x => /OK/.test(x.ep)).length, inv = F.filter(x => grupoRol(x) === 'Invitados');
@@ -2452,7 +2452,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 310;
+const APP_V = 311;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

@@ -636,6 +636,14 @@ button.ptile{font:inherit;cursor:pointer;width:100%;transition:transform .08s,bo
 .ziproles tr.zall td{background:#F0F8F2;font-weight:800}
 .dcierre{margin:18px 0 6px}.dcierre .dimp{margin:0;background:#FFF7E6;border-left:4px solid #E0A100;padding:10px 14px;color:var(--ink);line-height:1.45}.dcierre .dbye{margin:12px 2px 0;color:var(--ink)}.dcierre .dbye i{color:#1C6B2E}
 .itinweb{margin:14px 0;background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px 12px;overflow-x:auto}
+.rmode{display:flex;gap:6px;margin:6px 0 10px}.rmode button{flex:1;border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 10px;font:600 14px var(--body);cursor:pointer}.rmode button[aria-pressed="true"]{background:var(--green);color:#fff;border-color:var(--green)}
+.rst{width:100%;border-collapse:collapse;margin:6px 0 14px;font-size:14px}.rst td{padding:6px 10px;border:1px solid #fff}.rst td.n{text-align:right;font:700 15px var(--mono);width:70px}.rst td.p{text-align:right;width:70px;font-size:13px}.rst tr{cursor:pointer}.rst tr.on td{outline:2px solid var(--ink);outline-offset:-2px}
+.rst tr.tt td{background:#D9D9D9;font-weight:700;cursor:default}
+.rkpi{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:6px 0 14px}.rkpi div{border:1px solid var(--line);border-radius:10px;padding:8px;text-align:center;background:#fff}.rkpi b{display:block;font:700 17px/1.2 var(--mono);color:var(--green)}.rkpi span{font-size:12px;color:var(--muted)}
+.rh{font:700 15px var(--body);color:var(--green);margin:14px 0 6px;text-transform:uppercase;letter-spacing:.4px}
+.rtab{width:100%;border-collapse:collapse;font-size:13px}.rtab th,.rtab td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}.rtab th:first-child,.rtab td:first-child{text-align:left;white-space:normal}.rtab th{background:#EAF5EE;color:var(--ink);font-weight:700;position:sticky;top:0}.rtab th button{all:unset;cursor:pointer}.rtab tfoot td{font-weight:700;background:#F3F6F4;border-top:2px solid var(--green)}
+.rtab .rs{display:inline-block;font-size:10.5px;padding:1px 6px;border-radius:999px;margin-top:2px;font-weight:600}
+@media (max-width:560px){.rkpi{grid-template-columns:repeat(2,1fr)}.rtab .hm{display:none}.rtab th,.rtab td{padding:5px 4px;font-size:12px}}
 </style>
 </head>
 <body>
@@ -664,6 +672,7 @@ button.ptile{font:inherit;cursor:pointer;width:100%;transition:transform .08s,bo
       <button role="tab" data-tab="pyt" aria-selected="false">Traslados y pernoctas</button>
       <button role="tab" data-tab="con" aria-selected="false">Concentrado</button>
       <button role="tab" data-tab="cla" aria-selected="false">Claves</button>
+      <button role="tab" data-tab="rep" aria-selected="false">Reporte</button>
     </nav>
   </div>
 </header>
@@ -716,6 +725,13 @@ button.ptile{font:inherit;cursor:pointer;width:100%;transition:transform .08s,bo
   <div class="ctools" hidden><button id="clcopy">Copiar resumen</button></div>
   <p id="cmsg2" class="kmsg" role="status"></p>
   <div id="ziproles" class="ziproles"></div>
+</section>
+<section class="wrap ctl" id="rep" hidden>
+  <h2 class="ct">Reporte de telemarketing y presupuesto</h2>
+  <p class="cs">Datos del Excel de telemarketing (todas las filas: invitados, staff y lugares de relleno del bloqueo). Toca un estatus para filtrar la tabla por nombre.</p>
+  <div class="rmode" role="group" aria-label="Vista"><button type="button" data-rv="tot" aria-pressed="true">Por totales</button><button type="button" data-rv="nom" aria-pressed="false">Por nombre</button></div>
+  <div id="rout"></div>
+  <p id="rmsg" class="kmsg" role="status"></p>
 </section>
 <section class="wrap ctl" id="pyt" hidden>
   <h2 class="ct">Traslados y pernoctas</h2>
@@ -2146,10 +2162,10 @@ function ctlTab(t){
   const vb = document.querySelector('.tabs [data-veci]'); if(vb) vb.setAttribute('aria-selected', t !== 'man');
   const vs = document.querySelector('.tabs.vsub'); if(vs) vs.hidden = t === 'man';
   document.querySelectorAll('.cstat').forEach(b => b.setAttribute('aria-pressed', b.dataset.f === 'all'));
-  const on = t !== 'man', con = t === 'con', cla = t === 'cla', pyt = t === 'pyt'; document.body.classList.toggle('vctl', on);
-  $('#ctl').hidden = !on || con || cla || pyt; $('#con').hidden = !con; $('#cla').hidden = !cla; $('#pyt').hidden = !pyt; $('#pmsg').textContent = ''; $('#cmsg2').textContent = ''; $('#cmsg').textContent = ''; $('#kmsg').textContent = '';
+  const on = t !== 'man', con = t === 'con', cla = t === 'cla', pyt = t === 'pyt', rp = t === 'rep'; document.body.classList.toggle('vctl', on);
+  $('#ctl').hidden = !on || con || cla || pyt || rp; $('#con').hidden = !con; $('#cla').hidden = !cla; $('#pyt').hidden = !pyt; $('#rep').hidden = !rp; $('#pmsg').textContent = ''; $('#cmsg2').textContent = ''; $('#cmsg').textContent = ''; $('#kmsg').textContent = '';
   $('#csum').hidden = true; $('#cday').textContent = 'Resumen por día';
-  if(con) konRender(); else if(cla) claRender(); else if(pyt) pytRender(); else if(on) ctlRender();
+  if(con) konRender(); else if(cla) claRender(); else if(pyt) pytRender(); else if(rp) repRender(); else if(on) ctlRender();
 }
 // contraseña del Concentrado: se pide cada vez que se entra a la sección (no se guarda)
 /* Cuadro de contraseña propio: lo que se escribe se ve oculto (••••), no en texto. */
@@ -2172,8 +2188,8 @@ function askPw(msg){
 const VECI_MIN = 60, VECI_MS = VECI_MIN * 60000;
 const veciSes = () => { try{ const v = JSON.parse(sessionStorage.getItem('veci') || 'null'); return v && Date.now() - v.t < VECI_MS ? v : null; }catch(e){ return null; } };
 const veciSave = pw => { try{ sessionStorage.setItem('veci', JSON.stringify({pw: pw || (veciSes() || {}).pw || '', t: Date.now()})); }catch(e){} };
-const veciEnd = () => { try{ sessionStorage.removeItem('veci'); }catch(e){} TEL = {}; MAIL = {}; DATA = DATA.filter(r => !r.staff); };
-async function veciTel(pw){ if(PACK && PACK.tel && !Object.keys(TEL).length){ try{ const c = await Cifra.descifrar(PACK.tel, pw); TEL = c.tel || {}; MAIL = c.mail || {}; staffAdd(c.staff || []); }catch(e){ TEL = {}; MAIL = {}; } } }
+const veciEnd = () => { try{ sessionStorage.removeItem('veci'); }catch(e){} TEL = {}; MAIL = {}; REP = null; DATA = DATA.filter(r => !r.staff); };
+async function veciTel(pw){ if(PACK && PACK.tel && !Object.keys(TEL).length){ try{ const c = await Cifra.descifrar(PACK.tel, pw); TEL = c.tel || {}; MAIL = c.mail || {}; REP = c.rep || null; staffAdd(c.staff || []); }catch(e){ TEL = {}; MAIL = {}; } } }
 /* Staff: viene protegido con la contraseña VECI y solo se agrega a las pestañas de VECI (no al buscador público ni a Traslados y pernoctas) */
 const stTag = n => DATA.some(r => r.staff && r.n === n) ? '<span class="stag">STAFF</span>' : '';
 function staffAdd(L){ DATA = DATA.filter(r => !r.staff); L.forEach(r => { r.staff = true; r._w = new Set(norm(r.n).split(/\s+/).filter(Boolean)); r._n = norm(r.n); DATA.push(r); }); }
@@ -2186,7 +2202,63 @@ async function conGate(msg){
   await veciTel(pw);
   return true;
 }
-let TEL = {}, MAIL = {};
+let TEL = {}, MAIL = {}, REP = null;
+/* ---------- Reporte de telemarketing y presupuesto (solo VECI) ---------- */
+const REP_ST = [['PENDIENTE POR MANDAR LA INFORMACIÓN','#DDEBF7','#16301F'],['PENDIENTE CONFIRMAR PARTICIPANTE O INVITADO','#C9C400','#16301F'],['CONFIRMADO EMITIDO OK','#70AD47','#0F2A12'],['BLOQUEO AEROMEXICO OK','#D9CCB0','#16301F'],['TERRESTRE CONFIRMADO','#9C5B2E','#FFFFFF'],['CANCELADO','#C00000','#FFFFFF']];
+const RV = {v:'tot', st:'', q:'', sort:'n', dir:1};
+const mxn = x => '$' + (Math.round(x * 100) / 100).toLocaleString('es-MX', {minimumFractionDigits:2, maximumFractionDigits:2});
+const stKey = t => norm(t).replace(/\s+/g, ' ').trim();
+const grupoRol = x => /^RELLENO$/.test(x.n) ? 'Relleno (bloqueo)' : /^STAFF/i.test(x.rol) ? 'Staff' : 'Invitados';
+const sumR = L => L.reduce((a, x) => ({tarifa:a.tarifa + x.tarifa, iva:a.iva + x.iva, otros:a.otros + x.otros, total:a.total + x.total}), {tarifa:0, iva:0, otros:0, total:0});
+function repRender(){
+  const el = $('#rout'); if(!el) return;
+  document.querySelectorAll('.rmode [data-rv]').forEach(b => b.setAttribute('aria-pressed', b.dataset.rv === RV.v));
+  if(!REP || !REP.filas){ el.innerHTML = '<p class="cs">No hay datos del reporte. Vuelve a entrar a VECI con la contraseña.</p>'; return; }
+  const F = REP.filas, tot = sumR(F), n = F.length;
+  const stRow = ([lab, bg, fg]) => { const c = F.filter(x => stKey(x.st) === stKey(lab)).length; return `<tr data-rst="${esc(lab)}" class="${RV.st === lab ? 'on' : ''}"><td style="background:${bg};color:${fg}">${esc(lab)}</td><td class="n" style="background:${bg};color:${fg}">${c}</td><td class="p" style="background:${bg};color:${fg}">${n ? (c * 100 / n).toFixed(1) : 0}%</td></tr>`; };
+  const otros = F.filter(x => !REP_ST.some(([l]) => stKey(l) === stKey(x.st)));
+  let h = `<h3 class="rh">Estatus de telemarketing</h3><table class="rst"><tbody>${REP_ST.map(stRow).join('')}${otros.length ? `<tr><td>Otro / sin estatus</td><td class="n">${otros.length}</td><td class="p">${(otros.length * 100 / n).toFixed(1)}%</td></tr>` : ''}<tr class="tt"><td>TOTAL DE INVITADOS</td><td class="n">${n}</td><td class="p">100%</td></tr></tbody></table>`;
+  if(RV.v === 'tot'){
+    const G = ['Invitados', 'Staff', 'Relleno (bloqueo)'].map(g => [g, F.filter(x => grupoRol(x) === g)]).filter(([, L]) => L.length);
+    const ep = F.filter(x => /OK/.test(x.ep)).length, inv = F.filter(x => grupoRol(x) === 'Invitados');
+    h += `<div class="rkpi"><div><b>${inv.length}</b><span>Invitados</span></div><div><b>${F.filter(x => grupoRol(x) === 'Staff').length}</b><span>Staff</span></div><div><b>${ep}</b><span>Envío y pase OK</span></div><div><b>${n - ep}</b><span>Envío y pase pendiente</span></div>
+      <div><b>${F.filter(x => x.pern).length}</b><span>Pernocta NH</span></div><div><b>${F.filter(x => x.tras).length}</b><span>Con traslado</span></div><div><b>${Object.keys(TEL).length}</b><span>Con teléfono</span></div><div><b>${Object.keys(MAIL).length}</b><span>Con correo</span></div></div>`;
+    h += `<h3 class="rh">Presupuesto aéreo · totales</h3><div class="rkpi"><div><b>${mxn(tot.tarifa)}</b><span>Tarifa</span></div><div><b>${mxn(tot.iva)}</b><span>IVA</span></div><div><b>${mxn(tot.otros)}</b><span>Otros impuestos</span></div><div><b>${mxn(tot.total)}</b><span>Total</span></div></div>`;
+    if(REP.totXls && Math.abs(REP.totXls.total - tot.total) > 0.5) h += `<p class="cs">⚠️ El total del Excel (${mxn(REP.totXls.total)}) no coincide con la suma por nombre (${mxn(tot.total)}).</p>`;
+    const tabla = (tit, rows) => `<h3 class="rh">${tit}</h3><div class="ktable-wrap"><table class="rtab"><thead><tr><th></th><th>Personas</th><th class="hm">Tarifa</th><th class="hm">IVA</th><th class="hm">Otros imp.</th><th>Total</th><th>Promedio</th></tr></thead><tbody>${rows.map(([l, L]) => { const t = sumR(L), con = L.filter(x => x.total > 0).length; return `<tr><td>${esc(l)}</td><td>${L.length}</td><td class="hm">${mxn(t.tarifa)}</td><td class="hm">${mxn(t.iva)}</td><td class="hm">${mxn(t.otros)}</td><td>${mxn(t.total)}</td><td>${con ? mxn(t.total / con) : '—'}</td></tr>`; }).join('')}</tbody><tfoot><tr><td>Total</td><td>${n}</td><td class="hm">${mxn(tot.tarifa)}</td><td class="hm">${mxn(tot.iva)}</td><td class="hm">${mxn(tot.otros)}</td><td>${mxn(tot.total)}</td><td>${F.filter(x => x.total > 0).length ? mxn(tot.total / F.filter(x => x.total > 0).length) : '—'}</td></tr></tfoot></table></div>`;
+    h += tabla('Por tipo', G);
+    h += tabla('Por estatus', REP_ST.map(([l]) => [l, F.filter(x => stKey(x.st) === stKey(l))]).filter(([, L]) => L.length));
+    const zs = [...new Set(F.map(x => (/^(0|-|NA)?$/i.test(x.zn || '') ? 'Sin zona (staff / relleno)' : x.zn)))].sort();
+    h += tabla('Por zona', zs.map(z => [z, F.filter(x => ((/^(0|-|NA)?$/i.test(x.zn || '') ? 'Sin zona (staff / relleno)' : x.zn)) === z)]));
+    h += `<div class="ctools"><button type="button" id="rcopy">Copiar resumen</button></div>`;
+  } else {
+    const q = norm(RV.q).trim();
+    let L = F.filter(x => (!RV.st || stKey(x.st) === stKey(RV.st)) && (!q || norm(x.n + ' ' + x.rol).includes(q)));
+    const k = RV.sort; L = L.slice().sort((a, b) => (typeof a[k] === 'number' ? a[k] - b[k] : String(a[k]).localeCompare(String(b[k]), 'es')) * RV.dir);
+    const t = sumR(L), stc = st => (REP_ST.find(([l]) => stKey(l) === stKey(st)) || ['', '#eee', '#333']);
+    const th = (k2, lab, cls = '') => `<th class="${cls}"><button type="button" data-rso="${k2}">${lab}${RV.sort === k2 ? (RV.dir > 0 ? ' ▲' : ' ▼') : ''}</button></th>`;
+    h += `<div class="csearch"><input id="rq" class="vq" type="search" placeholder="🔍 Buscar por nombre o rol" autocomplete="off" value="${esc(RV.q)}" aria-label="Buscar por nombre o rol"><span class="vqn">${L.length} de ${n}</span></div>${RV.st ? `<p class="cs">Filtro: <b>${esc(RV.st)}</b> · <button type="button" class="lnk" data-rst="${esc(RV.st)}" style="all:unset;cursor:pointer;color:var(--green);font-weight:700;text-decoration:underline">quitar filtro</button></p>` : ''}
+      <div class="ktable-wrap"><table class="rtab"><thead><tr>${th('n', 'Nombre')}${th('tarifa', 'Tarifa', 'hm')}${th('iva', 'IVA', 'hm')}${th('otros', 'Otros imp.', 'hm')}${th('total', 'Total')}</tr></thead>
+      <tbody>${L.map(x => { const [, bg, fg] = stc(x.st); return `<tr><td><b>${esc(tcase(x.n))}</b><br><span class="rs" style="background:${bg};color:${fg}">${esc(x.st || 'SIN ESTATUS')}</span> <small style="color:var(--muted)">${esc(x.rol)}${x.zn ? ' · ' + esc(x.zn) : ''}${/OK/.test(x.ep) ? ' · Envío y pase OK' : ''}</small></td><td class="hm">${mxn(x.tarifa)}</td><td class="hm">${mxn(x.iva)}</td><td class="hm">${mxn(x.otros)}</td><td><b>${mxn(x.total)}</b></td></tr>`; }).join('')}</tbody>
+      <tfoot><tr><td>Total (${L.length})</td><td class="hm">${mxn(t.tarifa)}</td><td class="hm">${mxn(t.iva)}</td><td class="hm">${mxn(t.otros)}</td><td>${mxn(t.total)}</td></tr></tfoot></table></div>
+      <div class="ctools"><button type="button" id="rxls">Copiar tabla para Excel</button></div>`;
+  }
+  el.innerHTML = h;
+}
+document.addEventListener('click', e => {
+  const v = e.target.closest('.rmode [data-rv]'); if(v){ RV.v = v.dataset.rv; repRender(); return; }
+  const st = e.target.closest('#rout [data-rst]'); if(st){ RV.st = RV.st === st.dataset.rst ? '' : st.dataset.rst; RV.v = 'nom'; repRender(); return; }
+  const so = e.target.closest('#rout [data-rso]'); if(so){ if(RV.sort === so.dataset.rso) RV.dir *= -1; else { RV.sort = so.dataset.rso; RV.dir = so.dataset.rso === 'n' ? 1 : -1; } repRender(); return; }
+  const cp = e.target.closest('#rcopy, #rxls'); if(!cp || !REP) return;
+  let t;
+  if(cp.id === 'rxls'){ const q = norm(RV.q).trim(); const L = REP.filas.filter(x => (!RV.st || stKey(x.st) === stKey(RV.st)) && (!q || norm(x.n + ' ' + x.rol).includes(q)));
+    t = ['Nombre\tRol\tEstatus\tZona\tTarifa\tIVA\tOtros impuestos\tTotal'].concat(L.map(x => [tcase(x.n), x.rol, x.st, x.zn, x.tarifa, x.iva, x.otros, x.total].join('\t'))).join('\n'); }
+  else { const F = REP.filas, tot = sumR(F);
+    t = ['*Reporte de telemarketing · Segunda Cumbre Universales*', ''].concat(REP_ST.map(([l]) => `${l}: ${F.filter(x => stKey(x.st) === stKey(l)).length}`), [`*TOTAL DE INVITADOS: ${F.length}*`, '', '*Presupuesto aéreo*', `Tarifa: ${mxn(tot.tarifa)}`, `IVA: ${mxn(tot.iva)}`, `Otros impuestos: ${mxn(tot.otros)}`, `*Total: ${mxn(tot.total)}*`]).join('\n'); }
+  const ok = () => { $('#rmsg').textContent = cp.id === 'rxls' ? 'Tabla copiada: pégala en Excel.' : 'Resumen copiado: pégalo en WhatsApp o correo.'; };
+  Promise.resolve().then(() => navigator.clipboard.writeText(t)).then(ok).catch(() => { const a = document.createElement('textarea'); a.value = t; document.body.appendChild(a); a.select(); document.execCommand('copy'); a.remove(); ok(); });
+});
+document.addEventListener('input', e => { if(e.target.id !== 'rq') return; RV.q = e.target.value; const pos = e.target.selectionStart; repRender(); const i = $('#rq'); if(i){ i.focus(); try{ i.setSelectionRange(pos, pos); }catch(er){} } });
 // actividad dentro de VECI: renueva los 60 minutos (como mucho una vez cada 15 s)
 let veciTick = 0;
 ['pointerdown','keydown','scroll','touchstart'].forEach(ev => addEventListener(ev, () => {
@@ -2268,7 +2340,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 294;
+const APP_V = 295;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

@@ -625,7 +625,7 @@ button.ptile{font:inherit;cursor:pointer;width:100%;transition:transform .08s,bo
 .knb{display:inline-flex;gap:3px;margin-left:6px;vertical-align:middle}.knb button{font-size:12px;line-height:1;padding:3px 5px;border:1px solid var(--line);border-radius:6px;background:#fff;cursor:pointer}.knb button:hover{border-color:var(--green);background:var(--green-soft)}
 .aerobox{margin:0 0 12px}.aerobox .hpin{margin:8px 0 0}
 .stag{display:inline-block;margin-left:6px;font:700 9.5px/1 var(--body);letter-spacing:.06em;padding:3px 5px;border-radius:4px;background:#1E5BA8;color:#fff;vertical-align:middle}
-.rtag{display:inline-block;margin-left:6px;font:700 9px/1 var(--body);letter-spacing:.05em;padding:3px 5px;border-radius:4px;background:#E6EAF0;color:#3F4D60;vertical-align:middle;white-space:nowrap}.rtag.rst{background:#1E5BA8;color:#fff}
+.rtag{display:inline-block;margin-left:6px;font:700 9px/1 var(--body);letter-spacing:.05em;padding:3px 5px;border-radius:4px;background:#E6EAF0;color:#3F4D60;vertical-align:middle;white-space:nowrap}
 #cla td.kll{font-size:11.5px;color:var(--muted);white-space:nowrap}
 #cla .kll2{display:none}
 @media (max-width:560px){#cla td.kll,#cla th:nth-child(2){display:none}#cla .ktable td{padding:3px 3px!important}#cla .cpdf button,#cla .cpdf .cwa{width:22px!important;height:24px!important;font-size:12px!important}#cla .ctab td.cc{font-size:11px}#cla .ctab td.cc button{padding:2px 3px}#cla .rtag{font-size:8px;padding:2px 4px;margin-left:3px}#cla .kll2{display:block;font:500 10.5px/1.3 var(--body);color:var(--muted);text-transform:none;margin-top:2px}}
@@ -638,9 +638,9 @@ button.ptile{font:inherit;cursor:pointer;width:100%;transition:transform .08s,bo
 .itinweb{margin:14px 0;background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px 12px;overflow-x:auto}
 .rmode{display:flex;gap:6px;margin:6px 0 10px}.rmode button{flex:1;border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 10px;font:600 14px var(--body);cursor:pointer}.rmode button[aria-pressed="true"]{background:var(--green);color:#fff;border-color:var(--green)}
 .rstw{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;align-items:center;margin:4px 0 12px}@media (min-width:760px){.rstw{grid-template-columns:minmax(0,520px) 260px;justify-content:start;gap:24px}}
-.rst{width:100%;border-collapse:collapse;font-size:12.5px}.rst td{padding:3px 8px;border:1px solid #fff;line-height:1.25}.rst td.n{text-align:right;font:700 13px var(--mono);width:46px}.rst td.p{text-align:right;width:54px;font-size:12px}
-.rpie{margin:0;display:flex;flex-direction:column;align-items:center;gap:6px}.rpie svg{width:200px;height:200px}.rpie figcaption{display:flex;flex-wrap:wrap;justify-content:center;gap:4px 10px;font-size:11.5px;color:var(--muted)}.rpie figcaption span{display:inline-flex;align-items:center;gap:4px}.rpie i{width:10px;height:10px;border-radius:2px;display:inline-block;border:1px solid #bbb}.rst tr{cursor:pointer}.rst tr.on td{outline:2px solid var(--ink);outline-offset:-2px}
-.rst tr.tt td{background:#D9D9D9;font-weight:700;cursor:default}
+.rstat{width:100%;border-collapse:collapse;font-size:12.5px}.rstat td{padding:3px 8px;border:1px solid #fff;line-height:1.25}.rstat td.n{text-align:right;font:700 13px var(--mono);width:46px}.rstat td.p{text-align:right;width:54px;font-size:12px}
+.rpie{margin:0;display:flex;flex-direction:column;align-items:center;gap:6px}.rpie svg{width:200px;height:200px}.rpie figcaption{display:flex;flex-wrap:wrap;justify-content:center;gap:4px 10px;font-size:11.5px;color:var(--muted)}.rpie figcaption span{display:inline-flex;align-items:center;gap:4px}.rpie i{width:10px;height:10px;border-radius:2px;display:inline-block;border:1px solid #bbb}.rstat tr{cursor:pointer}.rstat tr.on td{outline:2px solid var(--ink);outline-offset:-2px}
+.rstat tr.tt td{background:#D9D9D9;font-weight:700;cursor:default}
 .rkpi{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:6px 0 14px}.rkpi div{border:1px solid var(--line);border-radius:10px;padding:8px;text-align:center;background:#fff}.rkpi b{display:block;font:700 17px/1.2 var(--mono);color:var(--green)}.rkpi span{font-size:12px;color:var(--muted)}
 .rh{font:700 15px var(--body);color:var(--green);margin:14px 0 6px;text-transform:uppercase;letter-spacing:.4px}
 .rtab{width:100%;border-collapse:collapse;font-size:13px}.rtab th,.rtab td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}.rtab th:first-child,.rtab td:first-child{text-align:left;white-space:normal}.rtab th{background:#EAF5EE;color:var(--ink);font-weight:700;position:sticky;top:0}.rtab th button{all:unset;cursor:pointer}.rtab tfoot td{font-weight:700;background:#F3F6F4;border-top:2px solid var(--green)}
@@ -1840,7 +1840,7 @@ function ctlRender(){
         const con = cx ? ` · conexión ${esc(cx.v)} ${lle ? 'desde ' + esc(cx.o) : 'a ' + esc(cx.d)}` : '';
         const clave = lle ? (r.ci || r.cr) : (r.cr || r.ci);
         const pern = lle && (r.notas||[]).some(n => n.k === 'pe') ? '<span class="ctag">Hotel NH</span>' : '';
-        return `<li>${esc(r.n)}${r.staff ? '<span class="stag">STAFF</span>' : ''}${kBtns(r.n)}</li>`; }).join('') + '</ul></section>';
+        return `<li>${esc(r.n)}${r.staff ? rolTag(r.rol || 'STAFF') : ''}${kBtns(r.n)}</li>`; }).join('') + '</ul></section>';
   });
   $('#cout').innerHTML = html || '<p class="cnote">No hay invitados en este filtro.</p>';
 }
@@ -1905,7 +1905,7 @@ function llegaDe(r){
   if(m){ const iso = `2026-11-${m[1].padStart(2, '0')}`; return {ll: `${iso} ${m[3].padStart(5, '0')}`, llt: `${fmtDate(iso)} · ${m[3]} h · traslado`}; }
   return {ll: '2026-11-03 99:99', llt: /por tu cuenta/i.test(t) ? 'Llega por su cuenta' : '—'};
 }
-const rolTag = rol => rol ? `<span class="rtag${/^staff/i.test(rol) ? ' rst' : ''}">${esc(rol.toUpperCase())}</span>` : '';
+const rolTag = rol => rol ? `<span class="rtag">${esc(rol.toUpperCase())}</span>` : '';
 function claRows(){
   const rows = DATA.map((r, i) => ({i, n:r.n, ci:r.ci || (!r.cr ? r.cl || '' : ''), cr:r.cr || '', ...llegaDe(r), rol:r.rol || ''}));
   const k = CLA.sort;
@@ -2194,7 +2194,7 @@ const veciSave = pw => { try{ sessionStorage.setItem('veci', JSON.stringify({pw:
 const veciEnd = () => { try{ sessionStorage.removeItem('veci'); }catch(e){} TEL = {}; MAIL = {}; DATA = DATA.filter(r => !r.staff); };
 async function veciTel(pw){ if(PACK && PACK.tel && !Object.keys(TEL).length){ try{ const c = await Cifra.descifrar(PACK.tel, pw); TEL = c.tel || {}; MAIL = c.mail || {}; staffAdd(c.staff || []); }catch(e){ TEL = {}; MAIL = {}; } } }
 /* Staff: viene protegido con la contraseña VECI y solo se agrega a las pestañas de VECI (no al buscador público ni a Traslados y pernoctas) */
-const stTag = n => DATA.some(r => r.staff && r.n === n) ? '<span class="stag">STAFF</span>' : '';
+const stTag = n => { const r = DATA.find(x => x.staff && x.n === n); return r ? rolTag(r.rol || 'STAFF') : ''; }; // staff: mismo formato que los demás roles
 function staffAdd(L){ DATA = DATA.filter(r => !r.staff); L.forEach(r => { r.staff = true; r._w = new Set(norm(r.n).split(/\s+/).filter(Boolean)); r._n = norm(r.n); DATA.push(r); }); }
 async function conGate(msg){
   const ses = veciSes(); if(ses && ses.pw){ await veciTel(ses.pw); veciSave(ses.pw); return true; }
@@ -2243,7 +2243,7 @@ function repRender(){
   const F = REP.filas, tot = sumR(F), n = F.length;
   const stRow = ([lab, bg, fg]) => { const c = F.filter(x => stKey(x.st) === stKey(lab)).length; return `<tr data-rst="${esc(lab)}" class="${RV.st === lab ? 'on' : ''}"><td style="background:${bg};color:${fg}">${esc(lab)}</td><td class="n" style="background:${bg};color:${fg}">${c}</td><td class="p" style="background:${bg};color:${fg}">${n ? (c * 100 / n).toFixed(1) : 0}%</td></tr>`; };
   const otros = F.filter(x => !REP_ST.some(([l]) => stKey(l) === stKey(x.st)));
-  let h = `<h3 class="rh">Estatus de telemarketing</h3><div class="rstw"><table class="rst"><tbody>${REP_ST.map(stRow).join('')}${otros.length ? `<tr><td>Otro / sin estatus</td><td class="n">${otros.length}</td><td class="p">${(otros.length * 100 / n).toFixed(1)}%</td></tr>` : ''}<tr class="tt"><td>TOTAL DE INVITADOS</td><td class="n">${n}</td><td class="p">100%</td></tr></tbody></table>${pastelSVG(REP_ST.map(([l, bg, fg]) => ({l, bg, fg, v: F.filter(x => stKey(x.st) === stKey(l)).length})))}</div>`;
+  let h = `<h3 class="rh">Estatus de telemarketing</h3><div class="rstw"><table class="rstat"><tbody>${REP_ST.map(stRow).join('')}${otros.length ? `<tr><td>Otro / sin estatus</td><td class="n">${otros.length}</td><td class="p">${(otros.length * 100 / n).toFixed(1)}%</td></tr>` : ''}<tr class="tt"><td>TOTAL DE INVITADOS</td><td class="n">${n}</td><td class="p">100%</td></tr></tbody></table>${pastelSVG(REP_ST.map(([l, bg, fg]) => ({l, bg, fg, v: F.filter(x => stKey(x.st) === stKey(l)).length})))}</div>`;
   if(RV.v === 'tot'){
     const G = ['Invitados', 'Staff', 'Relleno (bloqueo)'].map(g => [g, F.filter(x => grupoRol(x) === g)]).filter(([, L]) => L.length);
     const ep = F.filter(x => /OK/.test(x.ep)).length, inv = F.filter(x => grupoRol(x) === 'Invitados');
@@ -2444,7 +2444,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 306;
+const APP_V = 307;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

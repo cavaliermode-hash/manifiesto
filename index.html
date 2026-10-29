@@ -2204,10 +2204,14 @@ async function conGate(msg){
 }
 let TEL = {}, MAIL = {}, REP = null;
 /* Reporte: datos cifrados aparte con su propia contraseña; se pide al entrar y queda abierto hasta recargar la página */
+const repSes = () => { try{ const v = JSON.parse(sessionStorage.getItem('repses') || 'null'); return v && Date.now() - v.t < VECI_MS ? v : null; }catch(e){ return null; } };
+const repSave = pw => { try{ sessionStorage.setItem('repses', JSON.stringify({pw: pw || (repSes() || {}).pw || '', t: Date.now()})); }catch(e){} };
 async function repGate(){
-  if(REP) return true; if(!PACK || !PACK.rep) return false;
-  const pw = await askPw('Para abrir el Reporte escribe la contraseña:'); if(pw === null) return false;
-  try{ REP = (await Cifra.descifrar(PACK.rep, pw.trim().toLowerCase())).rep || null; return !!REP; }
+  if(REP){ repSave(); return true; } if(!PACK || !PACK.rep) return false;
+  const ses = repSes();
+  if(ses && ses.pw){ try{ REP = (await Cifra.descifrar(PACK.rep, ses.pw)).rep || null; if(REP){ repSave(); return true; } }catch(e){} }
+  const pw = await askPw(ses === null && sessionStorage.getItem('repses') ? `Pasaron ${VECI_MIN} minutos sin actividad en el Reporte. Escribe la contraseña:` : 'Para abrir el Reporte escribe la contraseña:'); if(pw === null) return false;
+  try{ const k = pw.trim().toLowerCase(); REP = (await Cifra.descifrar(PACK.rep, k)).rep || null; if(REP) repSave(k); return !!REP; }
   catch(e){ alert('Contraseña incorrecta.'); return false; }
 }
 /* ---------- Reporte de telemarketing y presupuesto (solo VECI) ---------- */
@@ -2268,7 +2272,7 @@ document.addEventListener('input', e => { if(e.target.id !== 'rq') return; RV.q 
 // actividad dentro de VECI: renueva los 60 minutos (como mucho una vez cada 15 s)
 let veciTick = 0;
 ['pointerdown','keydown','scroll','touchstart'].forEach(ev => addEventListener(ev, () => {
-  if(CTL.tab === 'man' || CTL.tab === 'rep' || document.hidden || Date.now() - veciTick < 15000) return; if(!veciSes()) return; veciTick = Date.now(); veciSave(); }, {passive:true}));
+  if(CTL.tab === 'man' || document.hidden || Date.now() - veciTick < 15000) return; if(CTL.tab === 'rep'){ if(repSes()){ veciTick = Date.now(); repSave(); } return; } if(!veciSes()) return; veciTick = Date.now(); veciSave(); }, {passive:true}));
 // si se cumplen los 60 minutos sin actividad estando en VECI, se vuelve a pedir la contraseña
 async function veciVence(){
   if(CTL.tab === 'man' || CTL.tab === 'rep' || DLG || veciSes()) return;
@@ -2347,7 +2351,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 298;
+const APP_V = 299;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');
@@ -2386,12 +2390,14 @@ function freshReload(){
   location.replace(location.pathname + '?v=' + Date.now());
 }
 function leave(){ if(!DLG && PACK) awaySince = awaySince || Date.now(); }
-function back(){ if(DLG || !awaySince) return; const fuera = Date.now() - awaySince; awaySince = 0; if(fuera > 1000) freshReload(); }
+function back(){ if(DLG || !awaySince) return; const fuera = Date.now() - awaySince; awaySince = 0; if(fuera <= 1000) return;
+  if(CTL.tab === 'man') return freshReload();
+  fetch('data.json?v=' + Date.now(), {cache:'no-store'}).then(r => r.json()).then(j => { if(PACK && ((j.app && j.app > APP_V) || (j.actualizado && j.actualizado !== PACK.actualizado))) freshReload(); }).catch(() => {}); }
 document.addEventListener('visibilitychange', () => { if(document.hidden) leave(); else back(); });
 window.addEventListener('blur', leave);
 window.addEventListener('focus', back);
 window.addEventListener('pageshow', e => { if(e.persisted) freshReload(); });
-document.addEventListener('resume', () => freshReload()); // Android: la app vuelve del segundo plano
+document.addEventListener('resume', () => { if(CTL.tab === 'man') freshReload(); else { awaySince = awaySince || Date.now() - 2000; back(); } }); // Android: la app vuelve del segundo plano
 document.addEventListener('freeze', () => { awaySince = awaySince || Date.now(); });
 /* Respaldo: mientras la página está abierta revisa cada minuto si hay versión o datos nuevos; si los hay, recarga. */
 setInterval(async () => {
@@ -2408,7 +2414,8 @@ function restoreView(){
   const i = r.n ? DATA.findIndex(x => x.n === r.n) : -1;
   if(i >= 0 && (!r.tab || r.tab === 'man')) openPax(i);
   // estaba en VECI: sigue ahí si no han pasado 60 minutos; si pasaron, pide la contraseña para volver a entrar
-  if(r.tab && r.tab !== 'man') (async () => { const vencio = !veciSes(); if(vencio) veciEnd();
+  if(r.tab === 'rep') (async () => { if(await repGate()){ ctlTab('rep'); setTimeout(() => window.scrollTo({top: r.y || 0}), 80); } })();
+  else if(r.tab && r.tab !== 'man') (async () => { const vencio = !veciSes(); if(vencio) veciEnd();
     if(await conGate(vencio ? `Pasaron ${VECI_MIN} minutos fuera de VECI. Escribe la contraseña para continuar:` : '')) { ctlTab(r.tab); setTimeout(() => window.scrollTo({top: r.y || 0}), 80); } })();
   setTimeout(() => window.scrollTo({top: r.y || 0}), 60);
 }

@@ -644,6 +644,7 @@ button.ptile{font:inherit;cursor:pointer;width:100%;transition:transform .08s,bo
 .rtab{width:100%;border-collapse:collapse;font-size:13px}.rtab th,.rtab td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}.rtab th:first-child,.rtab td:first-child{text-align:left;white-space:normal}.rtab th{background:#EAF5EE;color:var(--ink);font-weight:700;position:sticky;top:0}.rtab th button{all:unset;cursor:pointer}.rtab tfoot td{font-weight:700;background:#F3F6F4;border-top:2px solid var(--green)}
 .rtab .rs{display:inline-block;font-size:10.5px;padding:1px 6px;border-radius:999px;margin-top:2px;font-weight:600}
 @media (max-width:560px){.rkpi{grid-template-columns:repeat(2,1fr)}.rtab .hm{display:none}.rtab th,.rtab td{padding:5px 4px;font-size:12px}}
+.rnota{margin:10px 0 4px;background:#FFF7E6;border-left:4px solid #E0A100;border-radius:6px;padding:8px 12px;font-size:14px;color:var(--ink)}
 </style>
 </head>
 <body>
@@ -2217,6 +2218,8 @@ async function repGate(){
 /* ---------- Reporte de telemarketing y presupuesto (solo VECI) ---------- */
 const REP_ST = [['PENDIENTE POR MANDAR LA INFORMACIÓN','#DDEBF7','#16301F'],['PENDIENTE CONFIRMAR PARTICIPANTE O INVITADO','#C9C400','#16301F'],['CONFIRMADO EMITIDO OK','#70AD47','#0F2A12'],['BLOQUEO AEROMEXICO OK','#D9CCB0','#16301F'],['TERRESTRE CONFIRMADO','#9C5B2E','#FFFFFF'],['CANCELADO','#C00000','#FFFFFF']];
 const RV = {v:'tot', st:'', q:'', sort:'n', dir:1};
+const REP_NOTA = 'Nota: el presupuesto aéreo incluye asientos y pago de equipaje. No incluye los costos de telemarketing ni de emisión.';
+const repNotaHTML = () => `<p class="rnota">📝 <b>Nota:</b> ${esc(REP_NOTA.replace(/^Nota: /, ''))}</p>`;
 const mxn = x => '$' + (Math.round(x * 100) / 100).toLocaleString('es-MX', {minimumFractionDigits:2, maximumFractionDigits:2});
 const stKey = t => norm(t).replace(/\s+/g, ' ').trim();
 const grupoRol = x => /^RELLENO$/.test(x.n) ? 'Relleno (bloqueo)' : /^STAFF/i.test(x.rol) ? 'Staff' : 'Invitados';
@@ -2238,7 +2241,7 @@ function repRender(){
     h += tabla('Por estatus', REP_ST.map(([l]) => [l, F.filter(x => stKey(x.st) === stKey(l))]).filter(([, L]) => L.length));
     h += `<h3 class="rh">Presupuesto aéreo · totales</h3><div class="rkpi"><div><b>${mxn(tot.tarifa)}</b><span>Tarifa</span></div><div><b>${mxn(tot.iva)}</b><span>IVA</span></div><div><b>${mxn(tot.otros)}</b><span>Otros impuestos</span></div><div><b>${mxn(tot.total)}</b><span>Total</span></div></div>`;
     if(REP.totXls && Math.abs(REP.totXls.total - tot.total) > 0.5) h += `<p class="cs">⚠️ El total del Excel (${mxn(REP.totXls.total)}) no coincide con la suma por nombre (${mxn(tot.total)}).</p>`;
-    h += `<div class="ctools"><button type="button" class="rdl">⬇️ Descargar reporte en Excel</button></div>`;
+    h += repNotaHTML() + `<div class="ctools"><button type="button" class="rdl">⬇️ Descargar reporte en Excel</button></div>`;
   } else {
     const q = norm(RV.q).trim();
     let L = F.filter(x => (!RV.st || stKey(x.st) === stKey(RV.st)) && (!q || norm(x.n + ' ' + x.rol).includes(q)));
@@ -2249,7 +2252,7 @@ function repRender(){
       <div class="ktable-wrap"><table class="rtab"><thead><tr>${th('n', 'Nombre')}${th('tarifa', 'Tarifa', 'hm')}${th('iva', 'IVA', 'hm')}${th('otros', 'Otros imp.', 'hm')}${th('total', 'Total')}</tr></thead>
       <tbody>${L.map(x => { const [, bg, fg] = stc(x.st); return `<tr><td><b>${esc(tcase(x.n))}</b><br><span class="rs" style="background:${bg};color:${fg}">${esc(x.st || 'SIN ESTATUS')}</span> <small style="color:var(--muted)">${esc(x.rol)}</small></td><td class="hm">${mxn(x.tarifa)}</td><td class="hm">${mxn(x.iva)}</td><td class="hm">${mxn(x.otros)}</td><td><b>${mxn(x.total)}</b></td></tr>`; }).join('')}</tbody>
       <tfoot><tr><td>Total (${L.length})</td><td class="hm">${mxn(t.tarifa)}</td><td class="hm">${mxn(t.iva)}</td><td class="hm">${mxn(t.otros)}</td><td>${mxn(t.total)}</td></tr></tfoot></table></div>
-      <div class="ctools"><button type="button" class="rdl">⬇️ Descargar reporte en Excel</button></div>`;
+      ${repNotaHTML()}<div class="ctools"><button type="button" class="rdl">⬇️ Descargar reporte en Excel</button></div>`;
   }
   el.innerHTML = h;
 }
@@ -2319,6 +2322,7 @@ async function repExcel(btn){
     head(ws.getRow(r), ['Concepto', 'Importe']); r++;
     [['Tarifa', tot.tarifa], ['IVA', tot.iva], ['Otros impuestos', tot.otros]].forEach(([l, v]) => { const row = ws.getRow(r++); row.values = [l, v]; borde(row.getCell(1)); borde(row.getCell(2)); row.getCell(2).numFmt = MON; });
     { const row = ws.getRow(r++); row.values = ['TOTAL', tot.total]; [1, 2].forEach(j => { const x = row.getCell(j); x.font = {bold:true, size:12, color:{argb:'FFFFFFFF'}}; x.fill = {type:'pattern', pattern:'solid', fgColor:{argb:G}}; borde(x); }); row.getCell(2).numFmt = MON; }
+    { ws.mergeCells(r, 1, r, 8); const c = ws.getCell(r, 1); c.value = REP_NOTA; c.font = {italic:true, bold:true, size:11, color:{argb:'FF6B4A00'}}; c.fill = {type:'pattern', pattern:'solid', fgColor:{argb:'FFFFF7E6'}}; c.alignment = {wrapText:true, vertical:'middle', indent:1}; ws.getRow(r).height = 24; r++; }
     // gráficas
     r++; ws.getCell(r, 1).value = 'GRÁFICAS'; ws.getCell(r, 1).font = {bold:true, size:12, color:{argb:G}}; r++;
     const im1 = wb.addImage({base64: grafPNG('dona', REP_ST.map(([l, bg]) => ({l, v: F.filter(x => stKey(x.st) === stKey(l)).length, c: bg})), 'Personas por estatus'), extension:'png'});
@@ -2337,6 +2341,7 @@ async function repExcel(btn){
     { const row = wd.getRow(k); row.values = ['', 'TOTAL', '', `${L.length} personas`, {formula:`SUBTOTAL(9,E5:E${k - 1})`, result:tot.tarifa}, {formula:`SUBTOTAL(9,F5:F${k - 1})`, result:tot.iva}, {formula:`SUBTOTAL(9,G5:G${k - 1})`, result:tot.otros}, {formula:`SUBTOTAL(9,H5:H${k - 1})`, result:tot.total}];
       for(let j = 1; j <= 8; j++){ const x = row.getCell(j); x.font = {bold:true}; x.fill = {type:'pattern', pattern:'solid', fgColor:{argb:G2}}; x.border = {top:{style:'medium', color:{argb:G}}, bottom:{style:'medium', color:{argb:G}}}; if(j >= 5) x.numFmt = MON; } }
     wd.autoFilter = {from:'A4', to:`H${k - 1}`};
+    { const rn = k + 2; wd.mergeCells(rn, 1, rn, 8); const c = wd.getCell(rn, 1); c.value = REP_NOTA; c.font = {italic:true, bold:true, size:11, color:{argb:'FF6B4A00'}}; c.fill = {type:'pattern', pattern:'solid', fgColor:{argb:'FFFFF7E6'}}; c.alignment = {wrapText:true, vertical:'middle', indent:1}; wd.getRow(rn).height = 24; }
     const buf = await wb.xlsx.writeBuffer(), blob = new Blob([buf], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
     const a = document.createElement('a'), f = new Date(), p2 = x => String(x).padStart(2, '0'); a.href = URL.createObjectURL(blob);
     a.download = `Reporte Telemarketing Cumbre Universales ${f.getFullYear()}-${p2(f.getMonth() + 1)}-${p2(f.getDate())}.xlsx`; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
@@ -2428,7 +2433,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 302;
+const APP_V = 303;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

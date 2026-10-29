@@ -971,6 +971,9 @@ const rango = (a, b) => { const x = a.match(/^(.+?) de (\w+)$/), y = b.match(/^(
 function notaBloques(r){
   const ida = [], pern = [], reg = [], otros = [];
   (r.notas || []).forEach(n => { const t = n.t; let m;
+    if(n.k === 'tr' && (m = t.match(/^Sin traslado terrestre: llegas por tu cuenta al (.+?) el (.+?) y a tu regreso el (.+?) te trasladas por tu cuenta desde el (.+?)\.$/))){
+      ida.push({i:'🚙', t:'Llegada por su cuenta', rows:[['Fecha', m[2]], ['Llegada', 'Por su cuenta al ' + m[1] + ' (no aplica traslado terrestre)']]});
+      reg.push({i:'🚙', t:'Regreso por su cuenta', rows:[['Fecha', m[3]], ['Regreso', 'Por su cuenta desde el ' + m[4] + ' (no aplica traslado terrestre)']]}); return; }
     if(n.k === 'tr' && /por tu cuenta/i.test(t)){
       ida.push({i:'🚙', t:'Llegada por su cuenta', rows:[['Periodo', 'Del martes 3 al jueves 5 de noviembre'], ['Llegada', 'Martes 3 de noviembre, por su cuenta, directo a la sede del evento (Hotel Marinaterra, San Carlos, Sonora)'], ['Regreso', 'Jueves 5 de noviembre, por su cuenta, al terminar el evento']].concat(/estacionamiento/i.test(t) ? [['Estacionamiento', 'Considerado para usted en el hotel sede del martes 3 al jueves 5 de noviembre']] : [])}); return; }
     if(n.k === 'tr' && (m = t.match(/solo a tu regreso: el (.+?) te llevamos del (.+?) al (aeropuerto de [A-ZÁÉÍÓÚa-záéíóúñ ]+?) para tu vuelo (.+?) \(salida ([\d:]+) h\)\.(?: A tu llegada el (.+?) no aplica traslado (.+?)\.)?/))){
@@ -1012,6 +1015,8 @@ function lineaTiempo(r){
   let regHMO = false;
   notaBloques(r).forEach(b => {
     const R = b.rows || [], sinP = R.filter(x => x[0] !== 'Periodo');
+    if(/por su cuenta$/.test(b.t) && val(R, 'Fecha')){ const f = isoDe(val(R, 'Fecha')), lr = legsR.find(x => x.f === f && x.d === 'MEX');
+      add(f, b.t.startsWith('Llegada') ? '22:00' : (lr ? minDe(lr.l) + 1 : '17:00'), {tipo: 'blk', i: b.i, t: b.t, rows: R}); return; }
     if(b.t === 'Llegada por su cuenta'){
       add(HOTEL.ci, '14:00', {tipo: 'blk', i: '🚙', t: 'Llegada por su cuenta', rows: R.filter(x => x[0] !== 'Regreso')});
       add(HOTEL.co, '12:30', {tipo: 'blk', i: '🚙', t: 'Regreso por su cuenta', rows: [['Regreso', val(R, 'Regreso')]]}); return; }
@@ -1937,8 +1942,9 @@ function claRender(){ rolBar(); zipRoles();
 /* ---------- Traslados y pernoctas ---------- */
 const notaDe = (r, k) => ((r.notas || []).find(n => n.k === k) || {}).t || '';
 /* Quién tiene traslado real: la nota "Llegas por tu cuenta… estacionamiento" NO es traslado (son locales que llegan por su cuenta). */
-const esPorCuenta = r => /por tu cuenta/i.test(notaDe(r, 'tr'));
-const conTraslado = r => !!notaDe(r, 'tr') && !esPorCuenta(r);
+const sinTraslado = r => /^Sin traslado terrestre/i.test(notaDe(r, 'tr')); // vuela y llega/regresa por su cuenta a CDMX (no es local)
+const esPorCuenta = r => /por tu cuenta/i.test(notaDe(r, 'tr')) && !sinTraslado(r);
+const conTraslado = r => !!notaDe(r, 'tr') && !esPorCuenta(r) && !sinTraslado(r);
 const tieneVuelo = r => [r.c1, r.ida, r.reg, r.c2].some(Boolean);
 const EDO = {'Hermosillo':'Sonora', 'Los Mochis':'Sinaloa', 'Puebla':'Puebla', 'Metepec':'Estado de México', 'Ciudad de México':'CDMX', 'Guaymas':'Sonora', 'Toluca':'Estado de México', 'Culiacán':'Sinaloa', 'Culiacan':'Sinaloa'};
 const conEdo = c => EDO[c] && EDO[c] !== 'CDMX' ? `${c}, ${EDO[c]}` : c;
@@ -2262,7 +2268,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 293;
+const APP_V = 294;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');

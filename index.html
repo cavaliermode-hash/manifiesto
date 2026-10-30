@@ -1573,17 +1573,7 @@ async function pdfDirecto2(sp, solo, nn){
 }
 function mailBox(r){
   const i = DATA.indexOf(r);
-  return `<section class="mailbox wa" aria-labelledby="wa-t">
-    <h3 id="wa-t">💬 Envíatelo por WhatsApp</h3>
-    <p>Escribe tu número de celular a 10 dígitos y toca el botón: se abrirá WhatsApp con tu clave, tus vuelos, tus indicaciones y el enlace a la <b>agenda del evento</b>. Si lo dejas vacío, podrás elegir el chat al que quieres mandarlo.</p>
-    <form class="mb-form" data-wa="${i}" novalidate>
-      <label class="sr" for="wa-tel">Tu número de celular (10 dígitos)</label>
-      <input id="wa-tel" type="tel" inputmode="numeric" autocomplete="tel-national" placeholder="10 dígitos (opcional)" maxlength="16">
-      <button class="abtn2 wa-btn" type="submit">Enviar por WhatsApp</button>
-    </form>
-    <p class="mb-msg" id="wa-msg" role="status"></p>
-  </section>
-  ${[r.c1, r.ida, r.reg, r.c2].some(Boolean) ? `<section class="mailbox pdfbox" aria-labelledby="pdf-t">
+  return `  ${[r.c1, r.ida, r.reg, r.c2].some(Boolean) ? `<section class="mailbox pdfbox" aria-labelledby="pdf-t">
     <h3 id="pdf-t">✈️ Ver mis vuelos en PDF</h3>
     <p>Abre en otra pestaña el PDF con <b>tus vuelos</b>: tus claves de reserva, aerolínea, número de vuelo, horarios de salida y llegada, y los puntos importantes de tu vuelo. Desde ahí lo puedes guardar, imprimir o compartir.</p>
     <button class="abtn2" type="button" data-vpdf="${i}" data-solover="1">Ver en PDF</button>
@@ -2447,7 +2437,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 321;
+const APP_V = 322;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

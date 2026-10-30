@@ -716,7 +716,7 @@ button.ptile{font:inherit;cursor:pointer;width:100%;transition:transform .08s,bo
 <section class="wrap ctl" id="rep" hidden>
   <h2 class="ct">Reporte de telemarketing y presupuesto</h2>
   <p class="cs">Datos del Excel de telemarketing (todas las filas: invitados, staff y lugares de relleno del bloqueo). Toca un estatus para filtrar la tabla por nombre.</p>
-  <div class="rmode" role="group" aria-label="Vista"><button type="button" data-rv="tot" aria-pressed="true">Por totales</button><button type="button" data-rv="nom" aria-pressed="false">Por nombre</button></div>
+  <div class="rmode" role="group" aria-label="Vista"><button type="button" data-rv="tot" aria-pressed="true">TOTALES</button><button type="button" data-rv="nom" aria-pressed="false">POR NOMBRE</button></div>
   <div id="rout"></div>
   <p id="rmsg" class="kmsg" role="status"></p>
 </section>
@@ -2276,25 +2276,8 @@ document.addEventListener('click', e => {
   const ok = () => { $('#rmsg').textContent = cp.id === 'rxls' ? 'Tabla copiada: pégala en Excel.' : 'Resumen copiado: pégalo en WhatsApp o correo.'; };
   Promise.resolve().then(() => navigator.clipboard.writeText(t)).then(ok).catch(() => { const a = document.createElement('textarea'); a.value = t; document.body.appendChild(a); a.select(); document.execCommand('copy'); a.remove(); ok(); });
 });
-/* ---------- Reporte en Excel (.xlsx) con formato profesional y gráficas ---------- */
+/* ---------- Reporte en Excel (.xlsx) con formato profesional ---------- */
 let xlP = null; const loadXL = () => window.ExcelJS ? Promise.resolve(window.ExcelJS) : (xlP = xlP || new Promise((ok, ko) => { const sc = document.createElement('script'); sc.src = 'exceljs.min.js?v=' + APP_V; sc.onload = () => ok(window.ExcelJS); sc.onerror = ko; document.head.appendChild(sc); }));
-function grafPNG(tipo, datos, titulo){ // gráfica en imagen para insertar en el Excel
-  const W = 1200, H = 560, c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d');
-  g.fillStyle = '#fff'; g.fillRect(0, 0, W, H); g.fillStyle = '#136c34'; g.font = 'bold 28px Arial'; g.fillText(titulo, 30, 48);
-  const D = datos.filter(d => d.v > 0), tot = D.reduce((a, d) => a + d.v, 0) || 1;
-  if(tipo === 'dona'){ const cx = 250, cy = 290, R = 190, r = 105; let a0 = -Math.PI / 2;
-    D.forEach(d => { const a1 = a0 + d.v / tot * 2 * Math.PI; g.beginPath(); g.moveTo(cx, cy); g.arc(cx, cy, R, a0, a1); g.closePath(); g.fillStyle = d.c; g.fill(); g.strokeStyle = '#fff'; g.lineWidth = 3; g.stroke(); a0 = a1; });
-    g.beginPath(); g.arc(cx, cy, r, 0, 2 * Math.PI); g.fillStyle = '#fff'; g.fill();
-    g.fillStyle = '#16301F'; g.textAlign = 'center'; g.font = 'bold 54px Arial'; g.fillText(String(tot), cx, cy + 10); g.font = '20px Arial'; g.fillText('personas', cx, cy + 40); g.textAlign = 'left';
-    D.forEach((d, i) => { const y = 170 + i * 80; g.fillStyle = d.c; g.fillRect(500, y - 24, 34, 34); g.strokeStyle = '#999'; g.lineWidth = 1; g.strokeRect(500, y - 24, 34, 34);
-      g.fillStyle = '#16301F'; g.font = 'bold 22px Arial'; g.fillText(d.l, 550, y - 2); g.font = '21px Arial'; g.fillText(`${d.v} personas · ${(d.v * 100 / tot).toFixed(1)}%`, 550, y + 26); }); }
-  else { const x0 = 340, x1 = W - 40, bh = 60, mx = Math.max(...D.map(d => d.v), 1);
-    D.forEach((d, i) => { const y = 100 + i * 90, w = (x1 - x0 - 150) * d.v / mx;
-      g.fillStyle = '#16301F'; g.font = 'bold 18px Arial'; const L = d.l.length > 30 ? d.l.slice(0, 29) + '…' : d.l; g.fillText(L, 30, y + bh / 2 + 6);
-      g.fillStyle = d.c; g.fillRect(x0, y, Math.max(w, 2), bh); g.strokeStyle = '#999'; g.lineWidth = 1; g.strokeRect(x0, y, Math.max(w, 2), bh);
-      g.fillStyle = '#16301F'; g.font = 'bold 19px Arial'; g.fillText(mxn(d.v), x0 + Math.max(w, 2) + 10, y + bh / 2 + 7); }); }
-  return c.toDataURL('image/png');
-}
 async function repExcel(btn){
   if(!REP) return; const t0 = btn.textContent; btn.disabled = true; btn.textContent = 'Generando Excel…'; DLG = true;
   try{
@@ -2330,11 +2313,6 @@ async function repExcel(btn){
     [['Tarifa', tot.tarifa], ['IVA', tot.iva], ['Otros impuestos', tot.otros]].forEach(([l, v]) => { const row = ws.getRow(r++); row.values = [l, v]; borde(row.getCell(1)); borde(row.getCell(2)); row.getCell(2).numFmt = MON; });
     { const row = ws.getRow(r++); row.values = ['TOTAL', tot.total]; [1, 2].forEach(j => { const x = row.getCell(j); x.font = {bold:true, size:12, color:{argb:'FFFFFFFF'}}; x.fill = {type:'pattern', pattern:'solid', fgColor:{argb:G}}; borde(x); }); row.getCell(2).numFmt = MON; }
     { ws.mergeCells(r, 1, r, 8); const c = ws.getCell(r, 1); c.value = REP_NOTA; c.font = {italic:true, bold:true, size:11, color:{argb:'FF6B4A00'}}; c.fill = {type:'pattern', pattern:'solid', fgColor:{argb:'FFFFF7E6'}}; c.alignment = {wrapText:true, vertical:'middle', indent:1}; ws.getRow(r).height = 24; r++; }
-    // gráficas
-    r++; ws.getCell(r, 1).value = 'GRÁFICAS'; ws.getCell(r, 1).font = {bold:true, size:12, color:{argb:G}}; r++;
-    const im1 = wb.addImage({base64: grafPNG('dona', REP_ST.map(([l, bg]) => ({l, v: F.filter(x => stKey(x.st) === stKey(l)).length, c: bg})), 'Personas por estatus'), extension:'png'});
-    const im2 = wb.addImage({base64: grafPNG('barras', REP_ST.map(([l, bg]) => ({l, v: sumR(F.filter(x => stKey(x.st) === stKey(l))).total, c: bg})), 'Presupuesto aéreo por estatus (total)'), extension:'png'});
-    ws.addImage(im1, {tl:{col:0, row:r}, ext:{width:840, height:392}}); ws.addImage(im2, {tl:{col:0, row:r + 21}, ext:{width:840, height:392}});
     // ===== Hoja 2: Detalle por nombre =====
     const wd = wb.addWorksheet('Por nombre', {views:[{state:'frozen', ySplit:4, showGridLines:false}], pageSetup:{orientation:'landscape', fitToPage:true, fitToWidth:1, fitToHeight:0, paperSize:1}});
     wd.columns = [{width:6}, {width:40}, {width:22}, {width:38}, {width:15}, {width:14}, {width:17}, {width:16}];
@@ -2442,7 +2420,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 339;
+const APP_V = 340;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

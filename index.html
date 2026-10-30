@@ -652,11 +652,11 @@ button.ptile{font:inherit;cursor:pointer;width:100%;transition:transform .08s,bo
       <button role="tab" data-veci="1" aria-selected="false">VECI</button>
     </nav>
     <nav class="tabs vsub" aria-label="Secciones VECI" hidden>
+      <button role="tab" data-tab="cla" aria-selected="false">Claves</button>
       <button role="tab" data-tab="lle" aria-selected="false">Llegadas</button>
       <button role="tab" data-tab="sal" aria-selected="false">Salidas</button>
       <button role="tab" data-tab="pyt" aria-selected="false">Traslados y pernoctas</button>
       <button role="tab" data-tab="con" aria-selected="false">Concentrado</button>
-      <button role="tab" data-tab="cla" aria-selected="false">Claves</button>
     </nav>
   </div>
 </header>
@@ -2376,7 +2376,7 @@ document.querySelectorAll('.tabs button[data-tab]').forEach(b => b.addEventListe
   else if(b.dataset.tab !== 'man' && ['man', 'rep'].includes(CTL.tab) && !(await conGate())) return; ctlTab(b.dataset.tab); }));
 /* VECI: una sola pestaña con contraseña que agrupa Llegadas, Salidas, Traslados y pernoctas, Concentrado y Claves. */
 document.querySelector('.tabs [data-veci]').addEventListener('click', async () => {
-  if(CTL.tab !== 'man' && CTL.tab !== 'rep') return; if(!(await conGate())) return; ctlTab('lle'); });
+  if(CTL.tab !== 'man' && CTL.tab !== 'rep') return; if(!(await conGate())) return; ctlTab('cla'); }); // VECI abre en Claves
 document.querySelectorAll('.cstat').forEach(b => b.addEventListener('click', () => {
   CTL.filter = b.dataset.f; document.querySelectorAll('.cstat').forEach(x => x.setAttribute('aria-pressed', x === b)); ctlRender(); }));
 $('#cout').addEventListener('click', e => { const b = e.target.closest('button[data-n]'); if(!b) return;
@@ -2441,7 +2441,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 334;
+const APP_V = 335;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

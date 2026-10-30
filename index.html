@@ -2242,7 +2242,6 @@ function repRender(){
   if(RV.v === 'tot'){
     const G = ['Invitados', 'Staff', 'Relleno (bloqueo)'].map(g => [g, F.filter(x => grupoRol(x) === g)]).filter(([, L]) => L.length);
     const ep = F.filter(x => /OK/.test(x.ep)).length, inv = F.filter(x => grupoRol(x) === 'Invitados');
-    h += `<div class="rkpi"><div><b>${inv.length}</b><span>Invitados</span></div><div><b>${F.filter(x => grupoRol(x) === 'Staff').length}</b><span>Staff</span></div><div><b>${F.filter(x => x.pern).length}</b><span>Pernocta NH</span></div><div><b>${F.filter(x => x.tras).length}</b><span>Con traslado</span></div></div>`;
     const tabla = (tit, rows) => `<h3 class="rh">${tit}</h3><div class="ktable-wrap"><table class="rtab"><thead><tr><th></th><th>Personas</th><th class="hm">Tarifa</th><th class="hm">IVA</th><th class="hm">Otros imp.</th><th>Total</th><th>Promedio</th></tr></thead><tbody>${rows.map(([l, L]) => { const t = sumR(L), con = L.filter(x => x.total > 0).length; return `<tr><td>${esc(l)}</td><td>${L.length}</td><td class="hm">${mxn(t.tarifa)}</td><td class="hm">${mxn(t.iva)}</td><td class="hm">${mxn(t.otros)}</td><td>${mxn(t.total)}</td><td>${con ? mxn(t.total / con) : '—'}</td></tr>`; }).join('')}</tbody><tfoot><tr><td>Total</td><td>${n}</td><td class="hm">${mxn(tot.tarifa)}</td><td class="hm">${mxn(tot.iva)}</td><td class="hm">${mxn(tot.otros)}</td><td>${mxn(tot.total)}</td><td>${F.filter(x => x.total > 0).length ? mxn(tot.total / F.filter(x => x.total > 0).length) : '—'}</td></tr></tfoot></table></div>`;
     h += tabla('Por estatus', REP_ST.map(([l]) => [l, F.filter(x => stKey(x.st) === stKey(l))]).filter(([, L]) => L.length));
     h += `<h3 class="rh">Presupuesto aéreo · totales</h3><div class="rkpi"><div><b>${mxn(tot.tarifa)}</b><span>Tarifa</span></div><div><b>${mxn(tot.iva)}</b><span>IVA</span></div><div><b>${mxn(tot.otros)}</b><span>Otros impuestos</span></div><div><b>${mxn(tot.total)}</b><span>Total</span></div></div>`;
@@ -2419,7 +2418,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 341;
+const APP_V = 342;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

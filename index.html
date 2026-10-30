@@ -994,6 +994,8 @@ function notaBloques(r){
       const rest = m[7] || ''; let k, fin = '';
       if((k = rest.match(/A tu regreso el (.+?), al aterrizar en tu vuelo (.+?) \(llegada ([\d:]+ h)\), te esperamos en la salida de vuelos nacionales del (.+?) para trasladarte (?:al mismo punto de encuentro: (.+?)|de vuelta a tu domicilio registrado)\.$/)))
         fin = k[1], reg.push({i:'🚗', t:'Traslado de regreso', rows:[['Fecha', k[1]], ['Vuelo', `${k[2]} · llegada ${k[3]}`], ['Recogida', `Salida de vuelos nacionales del ${k[4]}`], ['Destino', k[5] ? 'Mismo punto de encuentro: ' + k[5] : 'Su domicilio registrado']]});
+      else if((k = rest.match(/A tu regreso el (.+?) a las ([\d:]+ h) te recogemos en el lobby del (.+?) para llevarte de vuelta a (.+?)\./)))
+        fin = k[1], reg.push({i:'🚗', t:'Traslado de regreso', rows:[['Fecha y hora', `${k[1]} · ${k[2]}`], ['Recogida', 'Lobby del ' + k[3]], ['Destino', k[4].replace(/^tu /, 'Su ').replace(/^./, c => c.toUpperCase())]]});
       else if((k = rest.match(/Al terminar el evento, el traslado te lleva de vuelta (a la misma dirección|al mismo aeropuerto)\./)))
         fin = 'jueves 5 de noviembre', reg.push({i:'🚗', t:'Traslado de regreso', rows:[['Fecha', 'Jueves 5 de noviembre, al terminar el evento'], ['Recogida', 'Sede del evento (Hotel Marinaterra)'], ['Destino', /aeropuerto/.test(k[1]) ? 'El mismo aeropuerto de llegada' : 'Su domicilio registrado']]});
       else if(rest) reg.push({i:'🚗', t:'Traslado de regreso', text: rest});
@@ -1023,6 +1025,7 @@ function lineaTiempo(r){
     if(b.t === 'Traslado de ida'){ const fh = val(R, 'Fecha y hora'); add(isoDe(fh), fh.split('·')[1] || '', {tipo: 'blk', i: b.i, t: b.t, rows: R}); return; }
     if(b.t === 'Pernocta a su llegada'){ add(isoDe(val(R, 'Check-in')), '23:00', {tipo: 'blk', i: b.i, t: b.t, rows: R}); return; }
     if(b.t === 'A su llegada'){ const f = isoDe(val(R, 'Fecha')), l = legsI.find(x => x.f === f && x.d === 'HMO'); add(f, l ? minDe(l.l) + 1 : '12:00', {tipo: 'blk', i: b.i, t: b.t, rows: R}); return; }
+    if(/^Traslado de regreso/.test(b.t) && val(R, 'Fecha y hora')){ const fh = val(R, 'Fecha y hora'); add(isoDe(fh) || HOTEL.co, fh.split('·')[1] || '12:30', {tipo: 'blk', i: b.i, t: b.t, rows: R}); return; }
     if(/^Traslado de regreso/.test(b.t)){ const f = isoDe(val(R, 'Fecha')) || HOTEL.co, vu = val(R, 'Vuelo'), dest = val(R, 'Destino');
       if(/salida/.test(vu) && /aeropuerto de Hermosillo/i.test(dest)){ regHMO = true; add(f, minDe(vu.split('salida')[1]) - 1, {tipo: 'blk', i: b.i, t: 'Traslado del hotel al aeropuerto de Hermosillo', rows: R, nb: REGRESO_TXT}); return; }
       if(/llegada/.test(vu)){ add(f, minDe(vu.split('llegada')[1]) + 1, {tipo: 'blk', i: b.i, t: b.t === 'Traslado de regreso' ? 'Traslado de regreso a su ciudad' : b.t, rows: R}); return; }
@@ -1038,6 +1041,8 @@ function lineaTiempo(r){
     add(ci, '15:00', {tipo: 'info', i: '🛎️', t: 'Check-in del ' + HOTEL.n + ' · ' + hci + ' h', text: ''});
     add(HOTEL.co, '12:00', {tipo: 'info', i: '🛎️', t: 'Check-out del ' + HOTEL.n, text: ''}); }
   if(!tierra && aplicaRegreso(r) && !regHMO){ const l = legsR.find(x => x.o === 'HMO'); add(l.f, minDe(l.s) - 1, {tipo: 'verde', i: '🚐', t: 'Traslado del hotel al aeropuerto de Hermosillo', text: REGRESO_TXT}); }
+  { const co = S.find(x => x.tipo === 'info' && /^Check-out/.test(x.t)), sal = S.filter(x => x.f === HOTEL.co && x !== co && (/regreso|aeropuerto/i.test(x.t || '') || x.dir === 'Regreso')).map(x => x.m);
+    if(co && sal.length && Math.min(...sal) <= co.m) co.m = Math.min(...sal) - 1; } // el check-out va antes de salir del hotel
   S.forEach((x, k) => x.k = k);
   return S.sort((a, b) => a.f.localeCompare(b.f) || a.m - b.m || a.k - b.k);
 }
@@ -2442,7 +2447,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 318;
+const APP_V = 319;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

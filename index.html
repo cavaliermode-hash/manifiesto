@@ -395,16 +395,6 @@ body.tierra .solo-vuelo,body.tierra [data-solo-vuelo]{display:none!important}
 .pwm-b{display:flex;gap:8px;justify-content:flex-end;margin-top:10px}
 .pwm-b button{font:600 15px/1 var(--body);padding:11px 16px;border-radius:8px;border:1px solid var(--green);background:var(--green);color:#fff;cursor:pointer}
 .pwm-b .sec{background:#fff;color:var(--green)}
-#gate{position:fixed;inset:0;z-index:999;background:#fff;display:flex;align-items:center;justify-content:center;padding:20px;overflow:auto}
-.gate-box{width:100%;max-width:380px;border:1px solid var(--line);border-top:4px solid var(--green);border-radius:12px;padding:22px 20px}
-.gate-box img{display:block;width:min(260px,70%);height:auto;margin-bottom:14px}
-.gate-box h2{margin:6px 0 16px;font:700 28px/1 var(--display);text-transform:uppercase;color:var(--green)}
-.gate-box label{display:block;font-weight:600;margin-bottom:6px}
-.gate-box input{width:100%;font:500 18px/1.2 var(--mono);padding:12px;border:1px solid var(--green-line);border-radius:8px}
-.gate-box input:focus{outline:2px solid var(--green);outline-offset:1px}
-.gate-box button{width:100%;margin-top:12px;background:var(--green);color:#fff;border:0;border-radius:8px;padding:13px;font:600 16px/1 var(--body);cursor:pointer}
-.gate-box button:hover{background:var(--green-dark)}
-#gate-msg{min-height:1.4em;margin:10px 0 0;color:#A12B1F;font-size:14px}
 .tabs{display:flex;gap:6px;padding-block:10px 0;flex-wrap:wrap}
 .tabs button{font:600 15px/1 var(--body);padding:10px 16px;border-radius:999px;border:1px solid var(--green-line);background:#fff;color:var(--green-dark);cursor:pointer}
 .tabs button[aria-selected="true"]{background:var(--green);border-color:var(--green);color:#fff}
@@ -585,7 +575,7 @@ body.vctl .qhint-w{display:none}
 .agv-body img{display:block;width:100%;max-width:1100px;height:auto;margin:0 auto;border-radius:6px;box-shadow:0 1px 6px rgba(0,0,0,.12);cursor:zoom-in}
 .agv-body.zoom img{width:250%;max-width:none;cursor:zoom-out}
 .agv-tip{margin:0;padding:6px 14px;font-size:12.5px;color:var(--muted);background:#eef1ef;text-align:center}
-body.locked>*:not(#gate){visibility:hidden}
+body.locked>*{visibility:hidden}
 
 /* Contraste claro (igual que el correo y el PDF): fondos verde claro y texto verde oscuro en la reserva */
 .count-card{background:#D7EBDD!important;color:#0F3D22!important;border:1px solid #BFDDC8}
@@ -651,16 +641,6 @@ button.ptile{font:inherit;cursor:pointer;width:100%;transition:transform .08s,bo
 </style>
 </head>
 <body>
-<div id="gate" hidden>
-  <form id="gate-form" class="gate-box" autocomplete="off">
-    <p class="eyebrow">Manifiesto de itinerario</p>
-    <h2>SEGUNDA CUMBRE UNIVERSALES</h2>
-    <label for="gate-pin">Escribe el PIN de acceso que recibiste</label>
-    <input id="gate-pin" type="password" inputmode="text" autocapitalize="off" autocorrect="off" spellcheck="false" aria-describedby="gate-msg">
-    <button type="submit">Entrar</button>
-    <p id="gate-msg" role="alert"></p>
-  </form>
-</div>
 <header class="board">
   <div class="wrap">
     <div class="eyebrow" id="ev">Manifiesto de itinerario</div>
@@ -2462,12 +2442,11 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 317;
+const APP_V = 318;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
-const gate = $('#gate'), gmsg = $('#gate-msg'), gin = $('#gate-pin');
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}
-function showGate(msg){ gate.hidden = false; gmsg.textContent = msg || ''; gin.value = ''; setTimeout(()=>gin.focus(), 50); }
+function showGate(msg){ const o = $('#out'); if(o) o.innerHTML = `<div class="empty">${esc(msg || 'No se pudo cargar la información. Recarga la página.')}</div>`; } // sin formulario de PIN: la página abre directo
 let PACK = null, UNLOCKED = false;
 /* El PIN se pide solo al abrir la página. Mientras siga abierta (aunque cambie de app, bloquee el celular o cambie de pestaña) se queda adentro.
    Al cerrar la página o la app, o al recargar, se pierde el acceso y se vuelve a pedir el PIN. */
@@ -2481,14 +2460,11 @@ function lockNow(){
 window.addEventListener('pagehide', e => { if(e.persisted) lockNow(); });
 async function unlock(pin, fromSaved){
   try{ const d = await Cifra.descifrar(PACK.enc, pin);
-    if(UNLOCKED){ gate.hidden = true; document.body.classList.remove('locked'); return; } // re-entrada tras salir de la app
-    UNLOCKED = true; DATA = d.filas; gate.hidden = true; $('#upd').textContent = 'Actualizado: ' + PACK.actualizado + ' · v' + APP_V; { const vv = document.getElementById('verv'); if(vv) vv.textContent = 'Versión ' + APP_V + ' · datos actualizados ' + PACK.actualizado; } init(); syncStart(pin); if(!pdfDirecto()) restoreView(); }
-  catch(e){ showGate('PIN incorrecto. Revísalo e intenta de nuevo.'); }
+    if(UNLOCKED){ document.body.classList.remove('locked'); return; } // re-entrada tras salir de la app
+    UNLOCKED = true; DATA = d.filas; $('#upd').textContent = 'Actualizado: ' + PACK.actualizado + ' · v' + APP_V; { const vv = document.getElementById('verv'); if(vv) vv.textContent = 'Versión ' + APP_V + ' · datos actualizados ' + PACK.actualizado; } init(); syncStart(pin); if(!pdfDirecto()) restoreView(); }
+  catch(e){ showGate('No se pudo cargar la información. Recarga la página.'); }
 }
-$('#gate-form').addEventListener('submit', e => { e.preventDefault(); const v = gin.value.trim();
-  if(!v){ gmsg.textContent = 'Escribe el PIN.'; return; }
-  if(!PACK){ gmsg.textContent = 'Cargando… intenta de nuevo en un momento.'; return; }
-  gmsg.textContent = 'Verificando…'; unlock(v, false); });
+
 /* Siempre al día: al abrir, al volver a la app/pestaña o al regresar con "Atrás", revisa si hay versión nueva
    de la página o datos nuevos y, si los hay, recarga la página con lo más reciente (sin usar la copia guardada). */
 /* Siempre al día: cada vez que se sale de la página o de la app (otra app, otra ventana u otra pestaña, bloquear el celular)
@@ -2534,7 +2510,7 @@ fetch('data.json?v='+Date.now(), {cache:'no-store'}).then(r=>r.json()).then(j=>{
   if(j.app && j.app > APP_V){ let tried=false; try{ tried=sessionStorage.getItem('reload'+j.app)==='1'; sessionStorage.setItem('reload'+j.app,'1'); }catch(e){}
     if(!tried){ location.replace(location.pathname+'?v='+j.app+Date.now()); return; } }
   PACK = j; if(OPEN_PIN) unlock(OPEN_PIN); else showGate(''); })
-  .catch(()=>{ gate.hidden = true; $('#out').innerHTML='<div class="empty">No se pudo cargar la información. Recarga la página.</div>'; });
+  .catch(()=>{ $('#out').innerHTML='<div class="empty">No se pudo cargar la información. Recarga la página.</div>'; });
 </script>
 </body>
 </html>

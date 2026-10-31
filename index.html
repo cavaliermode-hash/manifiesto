@@ -1812,7 +1812,10 @@ function ctlGroups(){
     const k = l.f + '|' + ctlHora(l) + '|' + l.v; (g[k] = g[k] || {l, pax: []}).pax.push(r);
     // Llegadas: quien vuela desde otra ciudad un día antes y pernocta en México también aparece en la fecha de ese vuelo
     if(CTL.tab === 'lle' && r.c1 && r.c1.f && r.ida && r.c1.f !== r.ida.f){ const c = r.c1, kc = c.f + '|' + ctlHora(c) + '|' + c.v;
-      (g[kc] = g[kc] || {l: c, pax: [], pe: true}).pax.push(r); } });
+      (g[kc] = g[kc] || {l: c, pax: [], pe: true}).pax.push(r); }
+    // Salidas: la conexión a su ciudad de origen también aparece como vuelo (el mismo día o al día siguiente)
+    if(CTL.tab === 'sal' && r.c2 && r.c2.f && r.reg){ const c = r.c2, kc = c.f + '|' + ctlHora(c) + '|' + c.v;
+      (g[kc] = g[kc] || {l: c, pax: [], cx: c.f !== r.reg.f ? 'sig' : 'mismo'}).pax.push(r); } });
   return Object.keys(g).sort().map(k => { g[k].pax.sort((a,b) => a.n.localeCompare(b.n,'es')); return g[k]; });
 }
 function ctlRender(){
@@ -1828,12 +1831,13 @@ function ctlRender(){
     const l = G.l, ok = G.pax.filter(r => ctlSt(r.n) === 'ok').length;
     if(l.f !== day){ html += `<h3 class="cday">${esc(fmtDate(l.f))}</h3>`; day = l.f; }
     html += `<section class="cfl"><div class="cfh"><span class="t">${esc(ctlHora(l))}</span><span class="v">${esc(l.v)}</span>
-      <span class="r">${l.terr ? esc(l.route) : `${esc(l.o)} ${esc(l.s)} → ${esc(l.d)} ${esc(l.l)}`}</span><span class="c">${G.pax.length} ${G.pax.length===1?"pasajero":"pasajeros"}</span>${G.pe ? '<span class="cpe">Llega a México para pernoctar · Hotel NH</span>' : ''}${faUrl(l.v) ? `<a class="fa-link" href="${faUrl(l.v)}" target="_blank" rel="noopener">Estatus ↗</a>` : ''}</div><ul class="cnames">` +
+      <span class="r">${l.terr ? esc(l.route) : `${esc(l.o)} ${esc(l.s)} → ${esc(l.d)} ${esc(l.l)}`}</span><span class="c">${G.pax.length} ${G.pax.length===1?"pasajero":"pasajeros"}</span>${G.pe ? '<span class="cpe">Llega a México para pernoctar · Hotel NH</span>' : G.cx ? `<span class="cpe">${G.cx === 'sig' ? 'Conexión al día siguiente a su ciudad' : 'Conexión a su ciudad de origen'}</span>` : ''}${faUrl(l.v) ? `<a class="fa-link" href="${faUrl(l.v)}" target="_blank" rel="noopener">Estatus ↗</a>` : ''}</div><ul class="cnames">` +
       pax.map(r => { const s = ctlSt(r.n), cx = lle ? r.c1 : r.c2;
         const con = cx ? ` · conexión ${esc(cx.v)} ${lle ? 'desde ' + esc(cx.o) : 'a ' + esc(cx.d)}` : '';
         const clave = lle ? (r.ci || r.cr) : (r.cr || r.ci);
         const pern = lle && (r.notas||[]).some(n => n.k === 'pe') ? '<span class="ctag">Hotel NH</span>' : '';
-        const sig = G.pe && r.ida ? `<small class="csig">sigue ${esc(fmtDate(r.ida.f))} · ${esc(r.ida.v)} ${esc(r.ida.o)} ${esc(r.ida.s)} → ${esc(r.ida.d)}</small>` : '';
+        const sig = G.pe && r.ida ? `<small class="csig">sigue ${esc(fmtDate(r.ida.f))} · ${esc(r.ida.v)} ${esc(r.ida.o)} ${esc(r.ida.s)} → ${esc(r.ida.d)}</small>`
+          : G.cx && r.reg ? `<small class="csig">viene de ${esc(fmtDate(r.reg.f))} · ${esc(r.reg.v)} ${esc(r.reg.o)} → ${esc(r.reg.d)} ${esc(r.reg.l)}</small>` : '';
         return `<li>${esc(r.n)}${rolTag(r.rol || (r.staff ? 'STAFF' : ''))}${sig}</li>`; }).join('') + '</ul></section>';
   });
   $('#cout').innerHTML = html || '<p class="cnote">No hay invitados en este filtro.</p>';
@@ -2423,7 +2427,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 343;
+const APP_V = 344;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

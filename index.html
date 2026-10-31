@@ -641,6 +641,7 @@ button.ptile{font:inherit;cursor:pointer;width:100%;transition:transform .08s,bo
 .rtab th,.rtab td{padding:3px 8px;font-size:12.5px;line-height:1.25}.rtab th{font-size:12px}.rtab .rs{font-size:10px;padding:0 6px;margin:0 2px 0 4px;vertical-align:1px}.rtab td small{font-size:11px}
 #rep .ct{font-size:clamp(20px,5vw,28px);margin-bottom:2px}#rep .rh{margin:10px 0 4px;font-size:14px}#rep .rkpi{gap:5px;margin:4px 0 8px}#rep .rkpi div{padding:5px 6px;border-radius:8px}#rep .rkpi b{font-size:15px}#rep .rkpi span{font-size:11px}#rep .cs{margin:4px 0}#rep .rmode{margin:4px 0 6px}#rep .rmode button{padding:6px 10px;font-size:13px}#rep .rnota{margin:8px 0 2px;padding:6px 10px;font-size:13px}#rep .ctools{margin-top:8px}
 @media (max-width:560px){.rtab th,.rtab td{padding:3px 4px;font-size:11.5px}}
+.cfh .cpe{display:inline-block;font:700 11px/1.2 var(--body);background:#FFF1D6;color:#7A4E00;border:1px solid #EBCB72;border-radius:999px;padding:3px 9px;margin-left:6px}.cnames .csig{display:inline-block;margin-left:8px;font-size:12px;color:var(--muted)}
 </style>
 </head>
 <body>
@@ -1808,7 +1809,10 @@ const ctlSt = n => (CTL.marks[CTL.tab] || {})[n] || 'pe';
 function ctlGroups(){
   const g = {};
   DATA.forEach(r => { const l = ctlLeg(r); if(!l || !l.f) return;
-    const k = l.f + '|' + ctlHora(l) + '|' + l.v; (g[k] = g[k] || {l, pax: []}).pax.push(r); });
+    const k = l.f + '|' + ctlHora(l) + '|' + l.v; (g[k] = g[k] || {l, pax: []}).pax.push(r);
+    // Llegadas: quien vuela desde otra ciudad un día antes y pernocta en México también aparece en la fecha de ese vuelo
+    if(CTL.tab === 'lle' && r.c1 && r.c1.f && r.ida && r.c1.f !== r.ida.f){ const c = r.c1, kc = c.f + '|' + ctlHora(c) + '|' + c.v;
+      (g[kc] = g[kc] || {l: c, pax: [], pe: true}).pax.push(r); } });
   return Object.keys(g).sort().map(k => { g[k].pax.sort((a,b) => a.n.localeCompare(b.n,'es')); return g[k]; });
 }
 function ctlRender(){
@@ -1824,12 +1828,13 @@ function ctlRender(){
     const l = G.l, ok = G.pax.filter(r => ctlSt(r.n) === 'ok').length;
     if(l.f !== day){ html += `<h3 class="cday">${esc(fmtDate(l.f))}</h3>`; day = l.f; }
     html += `<section class="cfl"><div class="cfh"><span class="t">${esc(ctlHora(l))}</span><span class="v">${esc(l.v)}</span>
-      <span class="r">${l.terr ? esc(l.route) : `${esc(l.o)} ${esc(l.s)} → ${esc(l.d)} ${esc(l.l)}`}</span><span class="c">${G.pax.length} ${G.pax.length===1?"pasajero":"pasajeros"}</span>${faUrl(l.v) ? `<a class="fa-link" href="${faUrl(l.v)}" target="_blank" rel="noopener">Estatus ↗</a>` : ''}</div><ul class="cnames">` +
+      <span class="r">${l.terr ? esc(l.route) : `${esc(l.o)} ${esc(l.s)} → ${esc(l.d)} ${esc(l.l)}`}</span><span class="c">${G.pax.length} ${G.pax.length===1?"pasajero":"pasajeros"}</span>${G.pe ? '<span class="cpe">Llega a México para pernoctar · Hotel NH</span>' : ''}${faUrl(l.v) ? `<a class="fa-link" href="${faUrl(l.v)}" target="_blank" rel="noopener">Estatus ↗</a>` : ''}</div><ul class="cnames">` +
       pax.map(r => { const s = ctlSt(r.n), cx = lle ? r.c1 : r.c2;
         const con = cx ? ` · conexión ${esc(cx.v)} ${lle ? 'desde ' + esc(cx.o) : 'a ' + esc(cx.d)}` : '';
         const clave = lle ? (r.ci || r.cr) : (r.cr || r.ci);
         const pern = lle && (r.notas||[]).some(n => n.k === 'pe') ? '<span class="ctag">Hotel NH</span>' : '';
-        return `<li>${esc(r.n)}${rolTag(r.rol || (r.staff ? 'STAFF' : ''))}</li>`; }).join('') + '</ul></section>';
+        const sig = G.pe && r.ida ? `<small class="csig">sigue ${esc(fmtDate(r.ida.f))} · ${esc(r.ida.v)} ${esc(r.ida.o)} ${esc(r.ida.s)} → ${esc(r.ida.d)}</small>` : '';
+        return `<li>${esc(r.n)}${rolTag(r.rol || (r.staff ? 'STAFF' : ''))}${sig}</li>`; }).join('') + '</ul></section>';
   });
   $('#cout').innerHTML = html || '<p class="cnote">No hay invitados en este filtro.</p>';
 }
@@ -2418,7 +2423,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 342;
+const APP_V = 343;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

@@ -1809,9 +1809,35 @@ function tierraLeg(r, lle){
 const ctlLeg = r => { const lle = CTL.tab === 'lle'; return (lle ? r.ida : r.reg) || tierraLeg(r, lle); };
 const ctlHora = l => { const v = String((CTL.tab === 'lle' ? l.l : l.s) || ''); return v === '—' ? '—' : v.padStart(5,'0'); };
 const ctlSt = n => (CTL.marks[CTL.tab] || {})[n] || 'pe';
+/* Traslados terrestres considerados (punto de encuentro, domicilio, aeropuerto, regreso a su ciudad) como "vuelos" de Llegadas/Salidas,
+   con hora de salida y llegada estimada para que también pasen a En ruta y a Llegados. */
+const TR_TZ = t => /san carlos|marinaterra|hermosillo|sede|los mochis/i.test(t) ? -7 : -6;
+function trDur(r, t){ if(/metepec|toluca/i.test(t)) return 120; if(/puebla|triángulo/i.test(t)) return 150; if(/los mochis/i.test(r.cd || '') || /los mochis/i.test(t)) return 300;
+  if(/aeropuerto de hermosillo/i.test(t)) return 120; if(/domicilio/i.test(t)) return 90; return 120; }
+function trLegs(r){ const lle = CTL.tab === 'lle', out = [], val = (R, k) => ((R || []).find(x => x[0] === k) || [])[1] || '';
+  notaBloques(r).forEach(b => { const R = b.rows || [], txt = R.map(x => x[1]).join(' ');
+    let f = '', h = '';
+    if(lle && b.t === 'Traslado de ida'){ const fh = val(R, 'Fecha y hora'); f = isoDe(fh); h = (fh.split('·')[1] || '').trim().replace(/\s*h$/, ''); }
+    else if(!lle && /^Traslado de regreso/.test(b.t)){ const fh = val(R, 'Fecha y hora'), vu = val(R, 'Vuelo');
+      if(fh){ f = isoDe(fh); h = (fh.split('·')[1] || '').trim().replace(/\s*h$/, ''); }
+      else if(/llegada/.test(vu)){ f = isoDe(val(R, 'Fecha')); h = (vu.split('llegada')[1] || '').trim().replace(/\s*h$/, ''); }
+      else if(/salida/.test(vu)) return; // traslado hotel → aeropuerto de Hermosillo: el pick up se publica en sitio
+      else f = isoDe(val(R, 'Fecha')) || HOTEL.co; }
+    else return;
+    if(!f) return;
+    const ori = val(R, 'Punto de encuentro') || val(R, 'Recogida') || 'Recogida', des = val(R, 'Destino').replace(/^Mismo punto de encuentro: /, '').replace(/\s*\([^)]*#[^)]*\)/, '');
+    const m = /^(\d{1,2}):(\d{2})$/.exec(h), tz = TR_TZ(ori), [y, mo, d] = f.split('-').map(Number);
+    const ini = m ? new Date(Date.UTC(y, mo - 1, d, +m[1] - tz, +m[2])) : null, fin = ini ? new Date(ini.getTime() + trDur(r, ori + ' ' + des + ' ' + txt) * 60000) : null;
+    const lleg = fin ? new Date(fin.getTime() + tz * 3600e3) : null, hl = lleg ? String(lleg.getUTCHours()).padStart(2, '0') + ':' + String(lleg.getUTCMinutes()).padStart(2, '0') : '';
+    out.push({terr: true, tr: true, f, l: m ? h.padStart(5, '0') : '—', s: m ? h.padStart(5, '0') : '—', v: '🚐 Traslado terrestre', ini, fin,
+      route: `${ori.replace(/^Salida de vuelos nacionales del /, '')} → ${des}${hl ? ` · llegada estimada ${hl} h` : ''}`}); });
+  return out; }
 function ctlGroups(){
   const g = {};
-  DATA.forEach(r => { const l = ctlLeg(r); if(!l || !l.f) return;
+  DATA.forEach(r => { const TR = trLegs(r);
+    TR.forEach(l => { const k = l.f + '|' + ctlHora(l) + '|' + l.v + '|' + l.route; (g[k] = g[k] || {l, pax: []}).pax.push(r); });
+    let l = ctlLeg(r); if(l && l.terr && TR.length) l = null; // si ya tiene su traslado detallado, no se repite el genérico
+    if(!l || !l.f) return;
     const k = l.f + '|' + ctlHora(l) + '|' + l.v; (g[k] = g[k] || {l, pax: []}).pax.push(r);
     // Llegadas: quien vuela desde otra ciudad un día antes y pernocta en México también aparece en la fecha de ese vuelo
     if(CTL.tab === 'lle' && r.c1 && r.c1.f && r.ida && r.c1.f !== r.ida.f){ const c = r.c1, kc = c.f + '|' + ctlHora(c) + '|' + c.v;
@@ -1825,13 +1851,14 @@ function ctlGroups(){
 const ahora = () => window.__NOW ? new Date(window.__NOW) : new Date();
 function faseVuelo(l){
   const now = ahora();
+  if(l.tr && l.ini){ return now < l.ini ? 'prog' : now < l.fin ? 'ruta' : 'ater'; }
   if(l.terr){ const h = (CTL.tab === 'lle' ? l.l : l.s) || ''; const m = /^(\d{1,2}):(\d{2})$/.exec(h), [y, mo, d] = l.f.split('-').map(Number);
     const t = m ? Date.UTC(y, mo - 1, d, +m[1] + 7, +m[2]) : Date.UTC(y, mo - 1, d, 23 + 7, 59); return now < t ? 'prog' : 'ater'; }
   const dep = l.s ? when(l, 's') : null; let arr = l.l ? when(l, 'l') : null;
   if(dep && arr && arr < dep) arr = new Date(arr.getTime() + 864e5);
   if(dep && now < dep) return 'prog'; if(arr && now < arr) return 'ruta'; return 'ater';
 }
-const FASES = [['prog', '🕒 Programados'], ['ruta', '✈️ En ruta · despegado'], ['ater', '🛬 Aterrizados']];
+const FASES = [['prog', '🕒 Programados'], ['ruta', '✈️ En ruta · despegado'], ['ater', '🛬 Aterrizados · llegados']];
 document.addEventListener('click', e => { const b = e.target.closest('#cfase [data-fase]'); if(!b) return; CTL.fase = b.dataset.fase; ctlRender(); });
 setInterval(() => { if(['lle', 'sal'].includes(CTL.tab) && !document.hidden && !$('#ctl').hidden) ctlRender(); }, 60000); // los vuelos cambian de apartado solos
 function ctlRender(){
@@ -1846,7 +1873,7 @@ function ctlRender(){
   const cnt = k => GR.filter(G => G.fase === k), pp = L => L.reduce((a, G) => a + G.pax.length, 0);
   if(CTL.faseTab !== CTL.tab){ CTL.faseTab = CTL.tab; CTL.fase = (FASES.find(([k]) => cnt(k).length) || FASES[0])[0]; } // al entrar: el primer apartado con vuelos
   $('#cfase').innerHTML = FASES.map(([k, t]) => `<button type="button" role="tab" data-fase="${k}" aria-selected="${CTL.fase === k}"><span>${t}</span><b>${cnt(k).length} ${cnt(k).length === 1 ? 'vuelo' : 'vuelos'} · ${pp(cnt(k))} pax</b></button>`).join('')
-    + '<p class="cfn">Según el horario programado de cada vuelo; los retrasos se confirman en “Estatus ↗”.</p>';
+    + '<p class="cfn">Según el horario programado de cada vuelo y la hora estimada de cada traslado; los retrasos de vuelos se confirman en “Estatus ↗”.</p>';
   GR.filter(G => G.fase === CTL.fase).forEach(G => {
     const pax = G.pax.filter(r => CTL.filter === 'all' || ctlSt(r.n) === CTL.filter); if(!pax.length) return;
     const l = G.l, ok = G.pax.filter(r => ctlSt(r.n) === 'ok').length;
@@ -2448,7 +2475,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 345;
+const APP_V = 346;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

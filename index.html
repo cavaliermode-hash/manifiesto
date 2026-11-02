@@ -2279,7 +2279,8 @@ async function veciTel(pw){ if(PACK && PACK.tel && !Object.keys(TEL).length){ tr
 const stTag = n => { const r = DATA.find(x => x.staff && x.n === n); return r ? rolTag(r.rol || 'STAFF') : ''; }; // staff: mismo formato que los demás roles
 function staffAdd(L){ DATA = DATA.filter(r => !r.staff); L.forEach(r => { r.staff = true; r._w = new Set(norm(r.n).split(/\s+/).filter(Boolean)); r._n = norm(r.n); DATA.push(r); }); }
 async function conGate(msg){
-  const ses = veciSes(); if(ses && ses.pw){ await veciTel(ses.pw); veciSave(ses.pw); return true; }
+  const ses = veciSes(); if(ses && ses.pw && await sha256(ses.pw.trim().toLowerCase()) === RESET_H){ await veciTel(ses.pw); veciSave(ses.pw); return true; }
+  if(ses) veciEnd(); // sesión con la contraseña anterior: se vuelve a pedir
   const pw = await askPw(msg || 'Para abrir esta sección escribe la contraseña:'); if(pw === null) return false;
   if(await sha256(pw.trim().toLowerCase()) !== RESET_H){ alert('Contraseña incorrecta.'); return false; }
   veciSave(pw);
@@ -2498,7 +2499,7 @@ $('#ccopy').addEventListener('click', async () => { const t = ctlResumen();
   catch(e){ const a = document.createElement('textarea'); a.value = t; document.body.appendChild(a); a.select(); document.execCommand('copy'); a.remove(); }
   $('#cmsg').textContent = 'Resumen copiado. Pégalo en WhatsApp.'; });
 $('#cprint').addEventListener('click', () => window.print());
-const RESET_H = 'b657566bf67734e25c3c22b2750003d3b4655b05c8e0524d511847b214e97b73'; // contraseña del equipo VECI (se compara sin mayúsculas)
+const RESET_H = '08eefd8fb75d26d53d50caa85b482d550ce8122d405b632294102ddd4f0e6f35'; // contraseña del equipo VECI (se compara sin mayúsculas)
 async function sha256(t){ const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(t)); return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2,'0')).join(''); }
 $('#creset').addEventListener('click', async () => {
   const pw = await askPw('Para borrar las marcas de ' + (CTL.tab === 'lle' ? 'Llegadas' : 'Salidas') + ' escribe la contraseña:');
@@ -2512,7 +2513,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 350;
+const APP_V = 351;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

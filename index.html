@@ -764,7 +764,7 @@ button.ptile{font:inherit;cursor:pointer;width:100%;transition:transform .08s,bo
   <div class="wrap">
     <div class="search">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-      <input id="q" type="search" placeholder="Escribe tu nombre…" autocomplete="off" aria-label="Buscar por nombre">
+      <input id="q" type="search" placeholder="Escribe tu nombre…" autocomplete="off" enterkeyhint="go" aria-label="Buscar por nombre">
       <button class="clear" id="clear" aria-label="Borrar búsqueda" hidden>×</button>
     </div>
     <div class="row" hidden>
@@ -1695,6 +1695,11 @@ async function findKeys(q){
   if(my!==seq) return; state.hits=hits; render();
 }
 $('#q').addEventListener('input', e=>{clearTimeout(t); t=setTimeout(()=>{state.q=e.target.value.trim(); state.hits=new Map(); render();},150)});
+/* Enter (o "Ir" en el teclado del celular): abre la reserva que aparece en el resultado */
+$('#q').addEventListener('keydown', e => { if(e.key !== 'Enter' || e.isComposing) return; e.preventDefault();
+  const v = e.target.value.trim(); if(!v) return;
+  if(v !== state.q){ clearTimeout(t); state.q = v; state.hits = new Map(); render(); }
+  let n = 0; (function abre(){ const o = document.querySelector('#out [data-open]'); if(o){ e.target.blur(); openPax(+o.dataset.open); return; } if(++n < 20) setTimeout(abre, 100); })(); });
 $('#clear').addEventListener('click', ()=>{$('#q').value=''; state.q=''; state.hits=new Map(); seq++; render(); $('#q').focus()});
 $('#fida').addEventListener('change', e=>{state.ida=e.target.value; render()});
 $('#freg').addEventListener('change', e=>{state.reg=e.target.value; render()});
@@ -2507,7 +2512,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 349;
+const APP_V = 350;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

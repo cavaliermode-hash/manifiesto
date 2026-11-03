@@ -1959,7 +1959,7 @@ function alCheck(silencio){
 function alUI(){ const el = document.getElementById('calert'); if(!el) return;
   const sop = 'Notification' in window, perm = sop ? Notification.permission : 'no', ios = /iPhone|iPad/i.test(navigator.userAgent), pwa = matchMedia('(display-mode: standalone)').matches || navigator.standalone;
   el.innerHTML = AL.on
-    ? `<span>🔔 <b>Alertas activadas</b> en este dispositivo${perm === 'granted' ? '' : ' (solo dentro de la página)'}</span><button type="button" class="off" data-al="off">Desactivar</button><button type="button" class="off" data-al="test">Probar</button>`
+    ? `<span>🔔 <b>Alertas activadas</b> en este dispositivo${perm === 'granted' ? '' : ' (solo dentro de la página)'}</span>`
     : `<span>🔕 <b>Alertas desactivadas</b></span><button type="button" data-al="on">🔔 Activar alertas</button>`;
   if(perm === 'denied') el.innerHTML += '<small>Las notificaciones están bloqueadas: permítelas en los ajustes del navegador para este sitio.</small>'; }
 document.addEventListener('click', async e => { const b = e.target.closest('[data-al]'); if(!b) return; const a = b.dataset.al;
@@ -2603,7 +2603,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 358;
+const APP_V = 359;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

@@ -2331,7 +2331,7 @@ function konRender(){
   const rows = all.filter(x => KON.filter === 'all' || x.s === KON.filter);
   $('#kbody').innerHTML = rows.map(x => { const l = x.l;
     return `<tr class="st-${x.s}${x.tag ? ' kx' : ''}"><td class="kn">${esc(x.n)}${rolTag((DATA.find(r => r.n === x.n) || {}).rol || (stTag(x.n) ? 'STAFF' : ''))}${x.tag ? `<small class="ktag">${esc(x.tag)}</small>` : ''}</td>${l ? `<td class="kf">${esc(fmtDate(l.f))}<small>${esc(lle ? l.l : l.s)} · ${esc(l.o)}→${esc(l.d)}</small></td>
-      <td class="kv">${esc(l.v)}</td>` : `<td class="kf">${esc(x.lab)}<small>${x.v === 'Por su cuenta' ? '🚗' : '🚐'} ${esc(x.det)}</small></td><td class="kv">${esc(x.v)}</td>`}<td><div class="kb">${lle ? `<span class="kauto ${x.s}">${x.s === 'ns' ? '✗ No show' : x.s === 'ok' ? '✓ Check-in automático' : x.fase === 'ruta' ? '✈️ En camino' : '🕒 Por llegar'}</span>
+      <td class="kv">${esc(l.v)}</td>` : `<td class="kf">${esc(x.lab)}<small>${x.v === 'Por su cuenta' ? '🚗' : '🚐'} ${esc(x.det)}</small></td><td class="kv">${esc(x.v)}</td>`}<td><div class="kb">${lle ? `<span class="kauto ${x.s}">${x.s === 'ns' ? '✗ No show' : x.s === 'ok' ? '✓ Check-in' : x.fase === 'ruta' ? '✈️ En camino' : '🕒 Por llegar'}</span>
       <button class="bns" data-n="${esc(x.k || x.n)}" data-s="ns" aria-pressed="${x.s==='ns'}">${x.s === 'ns' ? '↺ Quitar no show' : '✗ No show'}</button>` : `<button class="bok" data-n="${esc(x.k || x.n)}" data-s="ok" aria-pressed="${x.s==='ok'}">✓ Check-in</button>
       <button class="bns" data-n="${esc(x.k || x.n)}" data-s="ns" aria-pressed="${x.s==='ns'}">✗ No show</button>
       <button class="bpe" data-n="${esc(x.k || x.n)}" data-s="pe" aria-pressed="${x.s==='pe'}">⏳ Pendiente</button>`}</div></td></tr>`; }).join('')
@@ -2630,7 +2630,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 361;
+const APP_V = 362;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

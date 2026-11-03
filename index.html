@@ -1961,7 +1961,7 @@ function alUI(){ const el = document.getElementById('calert'); if(!el) return;
   el.innerHTML = AL.on
     ? `<span>🔔 <b>Alertas activadas</b> en este dispositivo${perm === 'granted' ? '' : ' (solo dentro de la página)'}</span><button type="button" class="off" data-al="off">Desactivar</button><button type="button" class="off" data-al="test">Probar</button>`
     : `<span>🔕 <b>Alertas desactivadas</b></span><button type="button" data-al="on">🔔 Activar alertas</button>`;
-  el.innerHTML += `<small>Avisa con notificación: resumen de programados del día, 60 min antes de cada salida, cuando despega o sale el traslado y cuando aterriza o llega. Funcionan con la página o la app abierta.${sop || !ios ? '' : pwa ? '' : ' En iPhone: toca Compartir → “Agregar a inicio”, abre la app desde ese ícono y activa las alertas ahí.'}${perm === 'denied' ? ' Las notificaciones están bloqueadas: permítelas en los ajustes del navegador para este sitio.' : ''}</small>`; }
+  if(perm === 'denied') el.innerHTML += '<small>Las notificaciones están bloqueadas: permítelas en los ajustes del navegador para este sitio.</small>'; }
 document.addEventListener('click', async e => { const b = e.target.closest('[data-al]'); if(!b) return; const a = b.dataset.al;
   if(a === 'off'){ AL.on = false; alSave(); alUI(); return; }
   if(a === 'test'){ alNotif('🔔 Prueba de alerta', 'Así llegarán los avisos de Llegadas y Salidas.', CTL.tab, 'prueba'); return; }
@@ -2603,7 +2603,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 357;
+const APP_V = 358;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

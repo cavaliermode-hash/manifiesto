@@ -483,6 +483,7 @@ body.vctl .controls, body.vctl main.wrap{display:none}
 .kb button{font:600 12px/1 var(--body);border-radius:7px;padding:7px 8px;cursor:pointer;border:1px solid var(--line);background:#fff;color:var(--ink);white-space:nowrap}
 .kb .bok[aria-pressed="true"]{background:var(--green);border-color:var(--green);color:#fff}
 .kb .bns[aria-pressed="true"]{background:#B3261E;border-color:#B3261E;color:#fff}
+.kb .bpe[aria-pressed="true"]{background:#F2B233;border-color:#E0A100;color:#3A2600}
 .ksync{font-size:13px;color:var(--muted);margin:4px 0 0}
 .kmsg{color:var(--green-dark);font-weight:600;min-height:1.2em;margin-top:8px}
 @media (max-width:560px){#con .ktable th:nth-child(3),.ktable td.kv{display:none}.kb{flex-direction:column}.kb button{padding:6px 6px}}
@@ -563,6 +564,7 @@ header.board #upd:not(:empty)::before{content:" · "}
 #con .ktable td{padding:4px 6px}
 #con .ktable td.kn{font-size:12.5px;line-height:1.25}
 #con .ktable td.kf{font-size:11.5px;line-height:1.25}#con .ktable td.kf small{font-size:10.5px}
+#con .ktable td.kf small{white-space:normal;min-width:110px;max-width:340px}@media (max-width:560px){#con .ktable td.kf small{min-width:0}}
 #con .ktable td.kv{font-size:11.5px}
 #con .kb{gap:3px}#con .kb button{font-size:11px;padding:4px 6px;border-radius:6px}
 #con .ctools button{font-size:13px;padding:7px 12px}
@@ -2304,7 +2306,8 @@ function konRender(){
   $('#kbody').innerHTML = rows.map(x => { const l = x.l;
     return `<tr class="st-${x.s}${x.tag ? ' kx' : ''}"><td class="kn">${esc(x.n)}${rolTag((DATA.find(r => r.n === x.n) || {}).rol || (stTag(x.n) ? 'STAFF' : ''))}${x.tag ? `<small class="ktag">${esc(x.tag)}</small>` : ''}</td>${l ? `<td class="kf">${esc(fmtDate(l.f))}<small>${esc(lle ? l.l : l.s)} · ${esc(l.o)}→${esc(l.d)}</small></td>
       <td class="kv">${esc(l.v)}</td>` : `<td class="kf">${esc(x.lab)}<small>${x.v === 'Por su cuenta' ? '🚗' : '🚐'} ${esc(x.det)}</small></td><td class="kv">${esc(x.v)}</td>`}<td><div class="kb"><button class="bok" data-n="${esc(x.k || x.n)}" data-s="ok" aria-pressed="${x.s==='ok'}">✓ Check-in</button>
-      <button class="bns" data-n="${esc(x.k || x.n)}" data-s="ns" aria-pressed="${x.s==='ns'}">✗ No show</button></div></td></tr>`; }).join('')
+      <button class="bns" data-n="${esc(x.k || x.n)}" data-s="ns" aria-pressed="${x.s==='ns'}">✗ No show</button>
+      <button class="bpe" data-n="${esc(x.k || x.n)}" data-s="pe" aria-pressed="${x.s==='pe'}">⏳ Pendiente</button></div></td></tr>`; }).join('')
     || '<tr><td colspan="4" class="cnote">No hay invitados en este filtro.</td></tr>';
 }
 document.querySelectorAll('#con .ktable th button').forEach(b => b.addEventListener('click', () => {
@@ -2314,7 +2317,7 @@ document.querySelectorAll('.kmode button').forEach(b => b.addEventListener('clic
 document.querySelectorAll('.kstat').forEach(b => b.addEventListener('click', () => {
   KON.filter = b.dataset.f; document.querySelectorAll('.kstat').forEach(x => x.setAttribute('aria-pressed', x === b)); konRender(); }));
 $('#kbody').addEventListener('click', e => { const b = e.target.closest('button[data-n]'); if(!b) return;
-  const t = KON.m, m = CTL.marks[t], n = b.dataset.n; if(m[n] === b.dataset.s) delete m[n]; else m[n] = b.dataset.s; ctlSave(); konRender(); syncPush({op:'set', t, n, s:m[n]||''}); });
+  const t = KON.m, m = CTL.marks[t], n = b.dataset.n; if(b.dataset.s === 'pe' || m[n] === b.dataset.s) delete m[n]; else m[n] = b.dataset.s; ctlSave(); konRender(); syncPush({op:'set', t, n, s:m[n]||''}); });
 $('#kcopy').addEventListener('click', async () => {
   const all = kRows(), c = {ok:0, ns:0, pe:0}; all.forEach(x => c[x.s]++);
   const rows = all.filter(x => KON.filter === 'all' || x.s === KON.filter);
@@ -2600,7 +2603,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 356;
+const APP_V = 357;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

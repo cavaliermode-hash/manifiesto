@@ -2347,8 +2347,9 @@ document.addEventListener('change', e => { if(e.target.id === 'kfv'){ KON.fv = e
 function konRender(){
   const lle = KON.m === 'lle'; $('#k-t').textContent = lle ? 'Concentrado de llegadas' : 'Concentrado de regresos (salidas)'; $('#k-fh').textContent = lle ? 'Llegada' : 'Salida'; $('#k-s').textContent = lle ? 'Todos los invitados en una sola lista. El check-in se marca solo cuando aterriza el vuelo o llega el traslado (según su horario); marca No show únicamente si aplica.' : 'Todos los invitados en una sola lista, sin importar la fecha. Marca Check-in o No show y ordena tocando el encabezado de cada columna.';
   document.querySelectorAll('.kmode button').forEach(b => b.setAttribute('aria-pressed', b.dataset.m === KON.m));
+  if(KON.filter !== 'ok') KON.fd = KON.ft = KON.fv = ''; // los filtros por fecha, tipo y vuelo solo están en Check-in
   const all0 = kRows(), all = kFiltra(all0), c = {ok:0, ns:0, pe:0}; all.forEach(x => c[x.s]++);
-  kFilUI(all0.filter(x => KON.filter === 'all' || x.s === KON.filter));
+  $('#kfil').hidden = KON.filter !== 'ok'; if(KON.filter === 'ok') kFilUI(all0.filter(x => x.s === 'ok'));
   $('#ks-all').textContent = all.length; $('#ks-ok').textContent = c.ok; $('#ks-ns').textContent = c.ns; $('#ks-pe').textContent = c.pe;
   document.querySelectorAll('#con .ktable th button').forEach(b => { if(b.dataset.sort === KON.sort){ b.setAttribute('aria-sort', KON.dir>0?'ascending':'descending'); b.querySelector('span').dataset.a = KON.dir>0?'▲':'▼'; } else b.removeAttribute('aria-sort'); });
   const rows = all.filter(x => KON.filter === 'all' || x.s === KON.filter);
@@ -2653,7 +2654,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 363;
+const APP_V = 364;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

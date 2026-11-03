@@ -483,6 +483,8 @@ body.vctl .controls, body.vctl main.wrap{display:none}
 .kb button{font:600 12px/1 var(--body);border-radius:7px;padding:7px 8px;cursor:pointer;border:1px solid var(--line);background:#fff;color:var(--ink);white-space:nowrap}
 .kb .bok[aria-pressed="true"]{background:var(--green);border-color:var(--green);color:#fff}
 .kb .bns[aria-pressed="true"]{background:#B3261E;border-color:#B3261E;color:#fff}
+.kauto{font:700 11.5px/1.2 var(--body);border-radius:6px;padding:5px 7px;white-space:normal;text-align:center}.kauto.ok{background:#E3F3E8;color:var(--green)}.kauto.pe{background:#FFF4D6;color:#7A5200}.kauto.ns{background:#FBE3E1;color:#B3261E}
+#con .kb .bns[aria-pressed="true"]{background:#fff;color:#B3261E;border-color:#B3261E}
 .kb .bpe[aria-pressed="true"]{background:#F2B233;border-color:#E0A100;color:#3A2600}
 .ksync{font-size:13px;color:var(--muted);margin:4px 0 0}
 .kmsg{color:var(--green-dark);font-weight:600;min-height:1.2em;margin-top:8px}
@@ -694,7 +696,7 @@ button.ptile{font:inherit;cursor:pointer;width:100%;transition:transform .08s,bo
     <button data-m="lle" aria-pressed="true">Llegadas</button>
     <button data-m="sal" aria-pressed="false">Regresos (Salidas)</button>
   </div>
-  <p class="cs">Todos los invitados en una sola lista, sin importar la fecha. Marca Check-in o No show y ordena tocando el encabezado de cada columna.</p>
+  <p class="cs" id="k-s">Todos los invitados en una sola lista, sin importar la fecha. Marca Check-in o No show y ordena tocando el encabezado de cada columna.</p>
   <div class="csearch"><input id="kq" class="vq" type="search" placeholder="🔍 Buscar por nombre o apellido" autocomplete="off" aria-label="Buscar por nombre o apellido"><button type="button" class="cx" aria-label="Borrar búsqueda" title="Borrar">✕</button><span class="vqn"></span></div>
   <div class="cstats" role="group" aria-label="Filtrar">
     <button class="kstat" data-f="all" aria-pressed="true"><b id="ks-all">0</b><span>Total</span></button>
@@ -1979,7 +1981,7 @@ if(navigator.serviceWorker) navigator.serviceWorker.addEventListener('message', 
 setInterval(() => alCheck(), 30000);
 document.addEventListener('visibilitychange', () => { if(!document.hidden) alCheck(); });
 document.addEventListener('click', e => { const b = e.target.closest('#cfase [data-fase]'); if(!b) return; CTL.fase = b.dataset.fase; ctlRender(); });
-setInterval(() => { if(['lle', 'sal'].includes(CTL.tab) && !document.hidden && !$('#ctl').hidden) ctlRender(); }, 60000); // los vuelos cambian de apartado solos
+setInterval(() => { if(['lle', 'sal'].includes(CTL.tab) && !document.hidden && !$('#ctl').hidden) ctlRender(); if(CTL.tab === 'con' && KON.m === 'lle' && !document.hidden) konRender(); }, 60000); // los vuelos cambian de apartado solos
 /* Vista de Llegadas/Salidas: con nombres o solo vuelos; tocar el encabezado de un vuelo despliega u oculta sus nombres */
 const CV = {solo: false, tg: new Set()};
 try{ CV.solo = localStorage.getItem('ctl-solo') === '1'; }catch(e){}
@@ -2291,7 +2293,7 @@ function kRows(){
      · vuelo por ruta un día antes para pernoctar en México (llegadas) y conexión a su ciudad (salidas). */
   const lle = KON.m === 'lle', t0 = CTL.tab; CTL.tab = KON.m; const extra = [];
   try{ rows.forEach(x => { const r = x.r;
-    trLegs(r).forEach((l, i) => { const y = {r, l:null, n:r.n, k:r.n + '#tr' + i, f:l.f + ' ' + (l.l === '—' ? '99:99' : l.l), v:'Traslado terrestre', lab:fmtDate(l.f), det:(l.l === '—' ? '' : l.l + ' h · ') + l.route, tag:'🚐 Traslado terrestre'};
+    trLegs(r).forEach((l, i) => { const y = {r, l:null, n:r.n, k:r.n + '#tr' + i, f:l.f + ' ' + (l.l === '—' ? '99:99' : l.l), v:'Traslado terrestre', lab:fmtDate(l.f), det:(l.l === '—' ? '' : l.l + ' h · ') + l.route, tag:'🚐 Traslado terrestre', tl:l};
       if(!x.l && !x.k && x.v === 'Terrestre' && !x.rep){ Object.assign(x, y, {k:r.n, tag:''}); x.rep = 1; } else extra.push(y); });
     const c = lle ? r.c1 : r.c2, base = lle ? r.ida : r.reg;
     if(c && c.f && base && (lle ? c.f !== base.f : true)) extra.push({r, l:c, n:r.n, k:r.n + (lle ? '#pe' : '#cx'), f:c.f + ' ' + kHora(c), v:c.v,
@@ -2299,6 +2301,11 @@ function kRows(){
   finally{ CTL.tab = t0; }
   extra.forEach(x => { x.s = kSt(x.k); rows.push(x); });
   rows.forEach(x => { if(!x.k){ x.k = x.n; } if(x.k === x.n) x.s = kSt(x.n); });
+  /* Llegadas: el check-in es automático al aterrizar el vuelo o llegar el traslado (según horario); solo el No show se marca a mano */
+  if(lle){ CTL.tab = 'lle';
+    try{ rows.forEach(x => { const l = x.l || x.tl || tierraLeg(x.r, true); x.fase = l && l.f ? faseVuelo(l) : 'prog';
+      x.s = (CTL.marks.lle || {})[x.k] === 'ns' ? 'ns' : x.fase === 'ater' ? 'ok' : 'pe'; }); }
+    finally{ CTL.tab = t0; } }
   const k = KON.sort;
   rows.sort((a,b) => { let c = k==='s' ? kRank[a.s]-kRank[b.s] : String(a[k]).localeCompare(String(b[k]),'es');
     if(!c) c = a.f.localeCompare(b.f) || a.n.localeCompare(b.n,'es'); return c * KON.dir; });
@@ -2316,7 +2323,7 @@ document.addEventListener('click', e => {
     Promise.resolve().then(() => navigator.clipboard.writeText(n)).then(ok).catch(() => { const ta = document.createElement('textarea'); ta.value = n; document.body.appendChild(ta); ta.select(); try{ document.execCommand('copy'); ok(); }catch(err){} ta.remove(); }); }
 });
 function konRender(){
-  const lle = KON.m === 'lle'; $('#k-t').textContent = lle ? 'Concentrado de llegadas' : 'Concentrado de regresos (salidas)'; $('#k-fh').textContent = lle ? 'Llegada' : 'Salida';
+  const lle = KON.m === 'lle'; $('#k-t').textContent = lle ? 'Concentrado de llegadas' : 'Concentrado de regresos (salidas)'; $('#k-fh').textContent = lle ? 'Llegada' : 'Salida'; $('#k-s').textContent = lle ? 'Todos los invitados en una sola lista. El check-in se marca solo cuando aterriza el vuelo o llega el traslado (según su horario); marca No show únicamente si aplica.' : 'Todos los invitados en una sola lista, sin importar la fecha. Marca Check-in o No show y ordena tocando el encabezado de cada columna.';
   document.querySelectorAll('.kmode button').forEach(b => b.setAttribute('aria-pressed', b.dataset.m === KON.m));
   const all = kRows(), c = {ok:0, ns:0, pe:0}; all.forEach(x => c[x.s]++);
   $('#ks-all').textContent = all.length; $('#ks-ok').textContent = c.ok; $('#ks-ns').textContent = c.ns; $('#ks-pe').textContent = c.pe;
@@ -2324,9 +2331,10 @@ function konRender(){
   const rows = all.filter(x => KON.filter === 'all' || x.s === KON.filter);
   $('#kbody').innerHTML = rows.map(x => { const l = x.l;
     return `<tr class="st-${x.s}${x.tag ? ' kx' : ''}"><td class="kn">${esc(x.n)}${rolTag((DATA.find(r => r.n === x.n) || {}).rol || (stTag(x.n) ? 'STAFF' : ''))}${x.tag ? `<small class="ktag">${esc(x.tag)}</small>` : ''}</td>${l ? `<td class="kf">${esc(fmtDate(l.f))}<small>${esc(lle ? l.l : l.s)} · ${esc(l.o)}→${esc(l.d)}</small></td>
-      <td class="kv">${esc(l.v)}</td>` : `<td class="kf">${esc(x.lab)}<small>${x.v === 'Por su cuenta' ? '🚗' : '🚐'} ${esc(x.det)}</small></td><td class="kv">${esc(x.v)}</td>`}<td><div class="kb"><button class="bok" data-n="${esc(x.k || x.n)}" data-s="ok" aria-pressed="${x.s==='ok'}">✓ Check-in</button>
+      <td class="kv">${esc(l.v)}</td>` : `<td class="kf">${esc(x.lab)}<small>${x.v === 'Por su cuenta' ? '🚗' : '🚐'} ${esc(x.det)}</small></td><td class="kv">${esc(x.v)}</td>`}<td><div class="kb">${lle ? `<span class="kauto ${x.s}">${x.s === 'ns' ? '✗ No show' : x.s === 'ok' ? '✓ Check-in automático' : x.fase === 'ruta' ? '✈️ En camino' : '🕒 Por llegar'}</span>
+      <button class="bns" data-n="${esc(x.k || x.n)}" data-s="ns" aria-pressed="${x.s==='ns'}">${x.s === 'ns' ? '↺ Quitar no show' : '✗ No show'}</button>` : `<button class="bok" data-n="${esc(x.k || x.n)}" data-s="ok" aria-pressed="${x.s==='ok'}">✓ Check-in</button>
       <button class="bns" data-n="${esc(x.k || x.n)}" data-s="ns" aria-pressed="${x.s==='ns'}">✗ No show</button>
-      <button class="bpe" data-n="${esc(x.k || x.n)}" data-s="pe" aria-pressed="${x.s==='pe'}">⏳ Pendiente</button></div></td></tr>`; }).join('')
+      <button class="bpe" data-n="${esc(x.k || x.n)}" data-s="pe" aria-pressed="${x.s==='pe'}">⏳ Pendiente</button>`}</div></td></tr>`; }).join('')
     || '<tr><td colspan="4" class="cnote">No hay invitados en este filtro.</td></tr>';
 }
 document.querySelectorAll('#con .ktable th button').forEach(b => b.addEventListener('click', () => {
@@ -2622,7 +2630,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 360;
+const APP_V = 361;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

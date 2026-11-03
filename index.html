@@ -657,6 +657,7 @@ button.ptile{font:inherit;cursor:pointer;width:100%;transition:transform .08s,bo
 #atoast div b{display:block;font-weight:700;font-size:15px}
 .cfase{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:8px 0 4px}.cfase button{border:1.5px solid var(--line);background:#fff;border-radius:10px;padding:8px 6px;cursor:pointer;font:600 14px var(--body);color:var(--ink);display:flex;flex-direction:column;align-items:center;gap:2px}.cfase button b{font:600 12px var(--body);color:var(--muted)}.cfase button[aria-selected="true"]{background:var(--green);border-color:var(--green);color:#fff}.cfase button[aria-selected="true"] b{color:#D7EBDD}.cfase .cfn{grid-column:1/-1;margin:2px 0 0;font-size:12px;color:var(--muted)}
 @media (max-width:560px){.cfase button{font-size:12.5px;padding:7px 4px}.cfase button b{font-size:11px}}
+.ktag{display:block;margin-top:3px;font:600 11.5px var(--body);color:#8A5A00}
 </style>
 </head>
 <body>
@@ -2264,6 +2265,19 @@ function kRows(){
     const lab = m ? fmtDate(f.slice(0,10)) : (lle ? 'Mar 3 nov' : 'Jue 5 nov');
     const det = cuenta ? (lle ? (/estacionamiento/i.test(t) ? 'Llega por su cuenta · estacionamiento' : 'Llega por su cuenta') : 'Regresa por su cuenta') : tierra ? (m ? `${m[3]} h · traslado terrestre` : 'Traslado terrestre') : 'Sin vuelo asignado';
     return {r, l:null, n:r.n, f, v, s:kSt(r.n), lab, det}; });
+  /* Registros adicionales, cada uno con su propio check-in / no show:
+     · traslados terrestres considerados (Metepec, Toluca, Puebla, Cuernavaca, domicilio…) con su hora;
+     · vuelo por ruta un día antes para pernoctar en México (llegadas) y conexión a su ciudad (salidas). */
+  const lle = KON.m === 'lle', t0 = CTL.tab; CTL.tab = KON.m; const extra = [];
+  try{ rows.forEach(x => { const r = x.r;
+    trLegs(r).forEach((l, i) => { const y = {r, l:null, n:r.n, k:r.n + '#tr' + i, f:l.f + ' ' + (l.l === '—' ? '99:99' : l.l), v:'Traslado terrestre', lab:fmtDate(l.f), det:(l.l === '—' ? '' : l.l + ' h · ') + l.route, tag:'🚐 Traslado terrestre'};
+      if(!x.l && !x.k && x.v === 'Terrestre' && !x.rep){ Object.assign(x, y, {k:r.n, tag:''}); x.rep = 1; } else extra.push(y); });
+    const c = lle ? r.c1 : r.c2, base = lle ? r.ida : r.reg;
+    if(c && c.f && base && (lle ? c.f !== base.f : true)) extra.push({r, l:c, n:r.n, k:r.n + (lle ? '#pe' : '#cx'), f:c.f + ' ' + kHora(c), v:c.v,
+      tag: lle ? '🏨 Por ruta · pernocta en México (Hotel NH)' : (c.f !== base.f ? '✈️ Conexión al día siguiente a su ciudad' : '✈️ Conexión a su ciudad')}); }); }
+  finally{ CTL.tab = t0; }
+  extra.forEach(x => { x.s = kSt(x.k); rows.push(x); });
+  rows.forEach(x => { if(!x.k){ x.k = x.n; } if(x.k === x.n) x.s = kSt(x.n); });
   const k = KON.sort;
   rows.sort((a,b) => { let c = k==='s' ? kRank[a.s]-kRank[b.s] : String(a[k]).localeCompare(String(b[k]),'es');
     if(!c) c = a.f.localeCompare(b.f) || a.n.localeCompare(b.n,'es'); return c * KON.dir; });
@@ -2288,9 +2302,9 @@ function konRender(){
   document.querySelectorAll('#con .ktable th button').forEach(b => { if(b.dataset.sort === KON.sort){ b.setAttribute('aria-sort', KON.dir>0?'ascending':'descending'); b.querySelector('span').dataset.a = KON.dir>0?'▲':'▼'; } else b.removeAttribute('aria-sort'); });
   const rows = all.filter(x => KON.filter === 'all' || x.s === KON.filter);
   $('#kbody').innerHTML = rows.map(x => { const l = x.l;
-    return `<tr class="st-${x.s}"><td class="kn">${esc(x.n)}${rolTag((DATA.find(r => r.n === x.n) || {}).rol || (stTag(x.n) ? 'STAFF' : ''))}</td>${l ? `<td class="kf">${esc(fmtDate(l.f))}<small>${esc(lle ? l.l : l.s)} · ${esc(l.o)}→${esc(l.d)}</small></td>
-      <td class="kv">${esc(l.v)}</td>` : `<td class="kf">${esc(x.lab)}<small>${x.v === 'Por su cuenta' ? '🚗' : '🚐'} ${esc(x.det)}</small></td><td class="kv">${esc(x.v)}</td>`}<td><div class="kb"><button class="bok" data-n="${esc(x.n)}" data-s="ok" aria-pressed="${x.s==='ok'}">✓ Check-in</button>
-      <button class="bns" data-n="${esc(x.n)}" data-s="ns" aria-pressed="${x.s==='ns'}">✗ No show</button></div></td></tr>`; }).join('')
+    return `<tr class="st-${x.s}${x.tag ? ' kx' : ''}"><td class="kn">${esc(x.n)}${rolTag((DATA.find(r => r.n === x.n) || {}).rol || (stTag(x.n) ? 'STAFF' : ''))}${x.tag ? `<small class="ktag">${esc(x.tag)}</small>` : ''}</td>${l ? `<td class="kf">${esc(fmtDate(l.f))}<small>${esc(lle ? l.l : l.s)} · ${esc(l.o)}→${esc(l.d)}</small></td>
+      <td class="kv">${esc(l.v)}</td>` : `<td class="kf">${esc(x.lab)}<small>${x.v === 'Por su cuenta' ? '🚗' : '🚐'} ${esc(x.det)}</small></td><td class="kv">${esc(x.v)}</td>`}<td><div class="kb"><button class="bok" data-n="${esc(x.k || x.n)}" data-s="ok" aria-pressed="${x.s==='ok'}">✓ Check-in</button>
+      <button class="bns" data-n="${esc(x.k || x.n)}" data-s="ns" aria-pressed="${x.s==='ns'}">✗ No show</button></div></td></tr>`; }).join('')
     || '<tr><td colspan="4" class="cnote">No hay invitados en este filtro.</td></tr>';
 }
 document.querySelectorAll('#con .ktable th button').forEach(b => b.addEventListener('click', () => {
@@ -2305,7 +2319,7 @@ $('#kcopy').addEventListener('click', async () => {
   const all = kRows(), c = {ok:0, ns:0, pe:0}; all.forEach(x => c[x.s]++);
   const rows = all.filter(x => KON.filter === 'all' || x.s === KON.filter);
   const L = [KON.m === 'lle' ? '*Concentrado de llegadas · Cumbre Universales*' : '*Concentrado de regresos (salidas) · Cumbre Universales*', `Total ${all.length} · Check-in ${c.ok} · No show ${c.ns} · Pendientes ${c.pe}`, ''];
-  rows.forEach(x => L.push(`${x.s==='ok'?'✅':x.s==='ns'?'❌':'⏳'} ${tcase(x.n)}`));
+  rows.forEach(x => L.push(`${x.s==='ok'?'✅':x.s==='ns'?'❌':'⏳'} ${tcase(x.n)}${x.tag ? ' · ' + x.tag.replace(/^\S+ /, '') : ''}`));
   const t = L.join('\n');
   try{ await navigator.clipboard.writeText(t); }
   catch(e){ const a = document.createElement('textarea'); a.value = t; document.body.appendChild(a); a.select(); document.execCommand('copy'); a.remove(); }
@@ -2586,7 +2600,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 355;
+const APP_V = 356;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

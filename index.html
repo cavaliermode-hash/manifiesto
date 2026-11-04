@@ -686,6 +686,14 @@ header.board .tabs button[aria-selected="true"]{background:var(--teal);border-co
 header.board .tabs.vsub{border-top-color:rgba(255,255,255,.2)}
 header.board .tabs.vsub button[aria-selected="true"]{background:var(--sun);border-color:var(--sun);color:var(--sea)}
 header.board.solid{padding-block:6px 6px!important}
+.sr{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+header.board{padding-block:10px 10px!important}
+.hbar{display:flex;align-items:center;gap:10px 14px;min-width:0}
+.hbar .tabs{padding-top:0!important;min-width:0}
+.hlogo{flex:none;display:block;max-width:170px;overflow:hidden;opacity:1;transition:max-width .35s ease,opacity .3s ease;border-radius:8px}
+.hlogo img{display:block;height:44px;width:auto;-webkit-mask-image:radial-gradient(130% 125% at 50% 50%,#000 60%,transparent 100%);mask-image:radial-gradient(130% 125% at 50% 50%,#000 60%,transparent 100%)}
+body.heroon .hlogo{max-width:0;opacity:0}
+@media (max-width:440px){.hlogo img{height:34px}.hbar{gap:8px}}
 header.board.solid .eyebrow{display:none}
 /* Héroe */
 .hero2{position:relative;color:var(--ondk);background:radial-gradient(120% 100% at 85% 0%,#1B5F86 0%,var(--sea2) 40%,var(--sea) 78%);overflow:hidden;isolation:isolate}
@@ -758,14 +766,17 @@ body:not(.vctl) .svc-k{color:var(--coral)!important}
 <body>
 <header class="board">
   <div class="wrap">
-    <div class="eyebrow" id="ev">Manifiesto de itinerario</div>
-    <h1>SEGUNDA CUMBRE <span class="g">UNIVERSALES</span></h1>
+    <div class="eyebrow sr" id="ev">Manifiesto de itinerario</div>
+    <h1 class="sr">Segunda Cumbre Universales</h1>
     <div class="sub" id="upd" hidden></div>
+    <div class="hbar">
+    <a class="hlogo" href="#" id="hlogo" aria-label="Ir al inicio"><img src="cumbre-logo.jpg?v=366" alt="Segunda Cumbre Universales" width="649" height="178"></a>
     <nav class="tabs" role="tablist" aria-label="Apartados">
       <button role="tab" data-tab="man" aria-selected="true">Manifiesto</button>
       <button role="tab" data-tab="rep" aria-selected="false">Reporte</button>
       <button role="tab" data-veci="1" aria-selected="false">VECI</button>
     </nav>
+    </div>
     <nav class="tabs vsub" aria-label="Secciones VECI" hidden>
       <button role="tab" data-tab="cla" aria-selected="false">Claves</button>
       <button role="tab" data-tab="lle" aria-selected="false">Llegadas</button>
@@ -2750,7 +2761,11 @@ $('#creset').addEventListener('click', async () => {
 /* ---------- Diseño visual: héroe animado, contadores, entrada al hacer scroll, agenda deslizable, preguntas ---------- */
 (function(){
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const hb = document.querySelector('header.board'), onS = () => hb.classList.toggle('solid', scrollY > 40);
+  const hb = document.querySelector('header.board'), onS = () => { hb.classList.toggle('solid', scrollY > 40);
+    const hz = document.getElementById('hero2'); document.body.classList.toggle('heroon', !!hz && !hz.hidden && !document.body.classList.contains('vctl') && hz.getBoundingClientRect().bottom > hb.offsetHeight + 60); };
+  new MutationObserver(onS).observe(document.body, {attributes:true, attributeFilter:['class']});
+  { const hz = document.getElementById('hero2'); if(hz) new MutationObserver(onS).observe(hz, {attributes:true, attributeFilter:['hidden']}); }
+  { const lg = document.getElementById('hlogo'); if(lg) lg.addEventListener('click', e => { e.preventDefault(); if(CTL.tab !== 'man') ctlTab('man'); if(state.sel != null) closePax(); window.scrollTo({top:0, behavior:'smooth'}); }); }
   addEventListener('scroll', onS, {passive:true}); onS();
   const cta = document.getElementById('h2cta');
   if(cta) cta.addEventListener('click', () => { const q = document.getElementById('q'); const c = document.querySelector('.controls');
@@ -2788,7 +2803,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 366;
+const APP_V = 367;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

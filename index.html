@@ -703,6 +703,20 @@ body.vctl .hero2{display:none}
 @keyframes solflota{50%{transform:translateY(12px)}}
 .hero2 .wrap{padding-block:34px 30px;display:grid;gap:16px}
 .h2logo{display:block;width:min(560px,100%);height:auto;border-radius:16px;-webkit-mask-image:radial-gradient(130% 120% at 50% 50%,#000 62%,transparent 100%);mask-image:radial-gradient(130% 120% at 50% 50%,#000 62%,transparent 100%);animation:logoentra .9s cubic-bezier(.2,.8,.2,1) both}
+@media (min-width:900px){
+  .hero2{min-height:calc(100vh - var(--hh,70px));display:flex;flex-direction:column}
+  .hero2 .wrap{margin-block:auto}
+  .hero2 .ola{flex:none}
+  header.board .wrap{max-width:1320px}
+  .hero2 .wrap{max-width:1320px;width:100%;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);column-gap:clamp(28px,4vw,64px);row-gap:16px;align-items:center;padding-block:clamp(30px,5vh,64px) clamp(26px,4vh,48px);
+    grid-template-areas:"eye logo" "tit logo" "txt logo" "chi logo" "cta logo" "num num"}
+  .hero2 .h2eye{grid-area:eye}.hero2 h2{grid-area:tit;font-size:clamp(48px,5.6vw,88px)}.hero2 .wrap>p{grid-area:txt}.hero2 .h2chips{grid-area:chi}.hero2 .h2cta{grid-area:cta}
+  .hero2 .h2num{grid-area:num;margin-top:clamp(14px,3vh,34px)}
+  .hero2 .h2logo{grid-area:logo;width:100%;max-width:700px;justify-self:end;border-radius:22px;box-shadow:0 30px 80px rgba(3,15,28,.45),0 0 0 1px rgba(255,255,255,.08);-webkit-mask-image:none;mask-image:none;transform:perspective(1200px) rotateY(-6deg);transition:transform .6s cubic-bezier(.2,.8,.2,1)}
+  .hero2 .h2logo:hover{transform:perspective(1200px) rotateY(0deg) scale(1.02)}
+  .hero2 .sol{width:clamp(220px,24vw,380px);right:2%;top:8%}
+  .hero2 h2 span{display:block}
+}
 @keyframes logoentra{from{opacity:.35;transform:translateY(10px) scale(.98)}}
 .h2eye{display:inline-flex;align-items:center;gap:10px;font:600 12.5px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--sun)}
 .h2eye::before{content:"";width:26px;height:2px;background:currentColor}
@@ -2803,7 +2817,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 368;
+const APP_V = 369;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

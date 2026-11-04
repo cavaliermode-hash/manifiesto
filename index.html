@@ -1146,6 +1146,7 @@ function detailView(r){
     </div>
     ${countdownHTML(r)}
     <section class="itinweb" aria-label="Su itinerario día por día">${mailHTML(r, 'web')}</section>
+    <div id="agslot"></div>
     ${tripSteps(r)}
     ${appBoxWeb(r)}
   </div>`;
@@ -1207,8 +1208,8 @@ function tripSteps(r){
   const a = stepBlock('Tu viaje de ida, paso a paso', [r.c1, r.ida]);
   const b = stepBlock('Tu regreso, paso a paso', [r.reg, r.c2]);
   if(!a && !b) return '';
-  return `<div class="guide">${a}${b}</div>
-    ${mailBox(r)}`;
+  return `${mailBox(r)}
+    <div class="guide">${a}${b}</div>`;
 }
 /* ---------- Enviar a mi correo ---------- */
 function resumenTxt(r){
@@ -1713,11 +1714,16 @@ function filtered(){
     (!state.reg || (r.reg&&r.reg.v===state.reg) || (r.c2&&r.c2.v===state.reg)) &&
     (!terms.length || (new Set(terms).size === r._w.size && terms.every(t => r._w.has(t)))));
 }
+/* En la reserva, la agenda y la información general van después del itinerario (antes del PDF, el paso a paso y la app) */
+function agMover(dentro){ const ag = document.getElementById('agenda'), inf = document.getElementById('info'), sv = document.getElementById('services');
+  if(!ag || !inf || !sv) return;
+  if(dentro){ const sl = document.getElementById('agslot'); if(sl){ sl.appendChild(ag); sl.appendChild(inf); } }
+  else if(ag.parentNode !== sv.parentNode){ sv.after(ag); ag.after(inf); } }
 function render(){
-  const ctrl = document.querySelector('.controls');
+  const ctrl = document.querySelector('.controls'); agMover(false);
   if(typeof renderAgenda === 'function' && document.getElementById('ag-days')) renderAgenda(AG_DAY);
   if(state.sel != null && DATA[state.sel]){
-    ctrl.hidden = true; $('#qhint').hidden = true; $('#out').innerHTML = detailView(DATA[state.sel]); return;
+    ctrl.hidden = true; $('#qhint').hidden = true; $('#out').innerHTML = detailView(DATA[state.sel]); agMover(true); return;
   }
   ctrl.hidden = false;
   if(!qTerms().length){ $('#clear').hidden = !state.q;
@@ -2689,7 +2695,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 371;
+const APP_V = 372;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

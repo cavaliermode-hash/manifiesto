@@ -671,6 +671,9 @@ button.ptile{font:inherit;cursor:pointer;width:100%;transition:transform .08s,bo
 .wpass-w{margin-top:16px;background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--green);border-radius:12px;padding:14px 16px}
 .wpass-w h3{margin:0 0 6px;font:700 18px var(--display);color:var(--green);text-transform:uppercase;letter-spacing:.03em}
 .wpass-w>p{margin:0 0 12px}
+.wpasses{display:grid;gap:14px;justify-items:center;padding:6px 4px}
+.wpe{margin:10px 16px 0;padding:5px 10px;border-radius:8px;background:rgba(255,255,255,.12);font-size:12px;font-weight:700}
+@media (min-width:900px) and (pointer:fine){.wpass-w{display:none!important}}
 .wpass{width:min(360px,100%);margin:0 auto;border-radius:16px;background:linear-gradient(180deg,#136c34,#0C4F23);color:#fff;box-shadow:0 12px 28px rgba(0,0,0,.22);overflow:hidden;font-family:Arial,Helvetica,sans-serif}
 .wpass small{display:block;font-size:10px;letter-spacing:.08em;text-transform:uppercase;opacity:.75}
 .wpass span{display:block;font-size:15px;font-weight:700}
@@ -1152,19 +1155,19 @@ function appBoxPDF(r){ const A = appsDe(r); if(!A.length) return ''; const G = '
 const fCorta = iso => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || ''); return m ? `${m[3]} ${['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'][m[2] - 1]}` : ''; };
 const vCorto = v => String(v || '').replace(/^AEROMEXICO\s*/i, 'AM ').replace(/^VOLARIS\s*/i, 'Y4 ').replace(/^VIVA AEROBUS\s*/i, 'VB ');
 function passBox(r){
-  const ida = r.ida || r.c1, reg = r.reg || r.c2; if(!ida && !reg) return '';
-  const l = ida || reg, cl = ida ? (r.ci || r.cr) : (r.cr || r.ci), i = DATA.indexOf(r);
+  const IDA = [r.c1, r.ida].filter(x => x && x.f), REG = [r.reg, r.c2].filter(x => x && x.f); if(!IDA.length && !REG.length) return '';
+  const i = DATA.indexOf(r);
+  const card = (L, t, cl) => { const a = L[0], z = L[L.length - 1];
+    return `<div class="wpass"><div class="wtop"><b>✈️ ${t}</b><div><small>Clave</small><span>${esc(cl || '—')}</span></div></div>
+      <div class="wrt"><div><small>${esc(cityOf(a.o))}</small><strong>${esc(a.o)}</strong></div><i aria-hidden="true">✈</i><div><small>${esc(cityOf(z.d))}</small><strong>${esc(z.d)}</strong></div></div>
+      ${L.map((l, k) => { const pern = k > 0 && L[k - 1].f !== l.f;
+        return `${pern ? '<div class="wpe">🏨 Pernocta en Hotel NH Collection México T2</div>' : k > 0 ? '<div class="wpe">🔁 Conexión</div>' : ''}
+        <div class="wrow"><div><small>Vuelo</small><span>${esc(vCorto(l.v))}</span></div><div><small>Fecha</small><span>${esc(fCorta(l.f))}</span></div><div><small>Sale ${esc(l.o)}</small><span>${esc(l.s || '—')}</span></div><div><small>Llega ${esc(l.d)}</small><span>${esc(l.l || '—')}</span></div></div>`; }).join('')}
+      <div class="wrow w2"><div><small>Pasajero</small><span>${esc(tcase(r.n))}</span></div><div><small>Evento</small><span>Cumbre Universales</span></div></div>
+      <div class="wcut"></div><p class="wfoot">No es pase de abordar. Haz tu check-in en la app de la aerolínea.</p></div>`; };
   return `<section class="wpass-w" aria-labelledby="wp-t"><h3 id="wp-t">🎫 Mi pase de viaje</h3>
     <p>Guárdalo en tu celular para tenerlo a la mano sin internet, y agrega tus vuelos a tu calendario con aviso 24 horas antes para tu check-in.</p>
-    <div class="wpass" id="wpass">
-      <div class="wtop"><b>✈️ Cumbre Universales</b><div><small>Clave</small><span>${esc(cl || '—')}</span></div></div>
-      <div class="wrt"><div><small>${esc(cityOf(l.o))}</small><strong>${esc(l.o)}</strong></div><i aria-hidden="true">✈</i><div><small>${esc(cityOf(l.d))}</small><strong>${esc(l.d)}</strong></div></div>
-      <div class="wrow"><div><small>Vuelo</small><span>${esc(vCorto(l.v))}</span></div><div><small>Fecha</small><span>${esc(fCorta(l.f))}</span></div><div><small>Sale</small><span>${esc(l.s || '—')}</span></div><div><small>Llega</small><span>${esc(l.l || '—')}</span></div></div>
-      <div class="wrow w2"><div><small>Pasajero</small><span>${esc(tcase(r.n))}</span></div>${reg && ida ? `<div><small>Regreso</small><span>${esc(fCorta(reg.f))} · ${esc(vCorto(reg.v))}</span></div>` : ''}</div>
-      ${reg && ida ? `<div class="wrow w2"><div><small>Vuelo de regreso</small><span>${esc(reg.o)} ${esc(reg.s || '')} → ${esc(reg.d)} ${esc(reg.l || '')}</span></div>${r.cr && r.ci && r.cr !== r.ci ? `<div><small>Clave regreso</small><span>${esc(r.cr)}</span></div>` : ''}</div>` : ''}
-      <div class="wcut"></div>
-      <p class="wfoot">No es pase de abordar. Haz tu check-in en la app de la aerolínea.</p>
-    </div>
+    <div class="wpasses" id="wpass">${IDA.length ? card(IDA, 'Ida', r.ci || r.cr) : ''}${REG.length ? card(REG, 'Regreso', r.cr || r.ci) : ''}</div>
     <div class="wbtns"><button type="button" class="abtn2" data-wpass="${i}">⬇️ Guardar mi itinerario</button><button type="button" class="abtn2 wsec" data-ics="${i}">📅 Agregar a mi calendario</button></div>
     <p class="wmsg" id="wmsg" role="status"></p></section>`; }
 document.addEventListener('click', async e => { const b = e.target.closest('[data-wpass]'); if(!b || b.disabled) return;
@@ -2744,7 +2747,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 386;
+const APP_V = 387;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

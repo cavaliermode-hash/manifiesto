@@ -1163,7 +1163,7 @@ function passBox(r){
       ${L.map((l, k) => { const pern = k > 0 && L[k - 1].f !== l.f;
         return `${pern ? '<div class="wpe">🏨 Pernocta en Hotel NH Collection México T2</div>' : k > 0 ? '<div class="wpe">🔁 Conexión</div>' : ''}
         <div class="wrow"><div><small>Vuelo</small><span>${esc(vCorto(l.v))}</span></div><div><small>Fecha</small><span>${esc(fCorta(l.f))}</span></div><div><small>Sale ${esc(l.o)}</small><span>${esc(l.s || '—')}</span></div><div><small>Llega ${esc(l.d)}</small><span>${esc(l.l || '—')}</span></div></div>`; }).join('')}
-      <div class="wrow w2"><div><small>Pasajero</small><span>${esc(tcase(r.n))}</span></div><div><small>Evento</small><span>Cumbre Universales</span></div></div>
+      <div class="wrow w2"><div><small>Pasajero</small><span>${esc(tcase(r.n))}</span></div></div>
       <div class="wcut"></div><p class="wfoot">No es pase de abordar. Haz tu check-in en la app de la aerolínea.</p></div>`; };
   return `<section class="wpass-w" aria-labelledby="wp-t"><h3 id="wp-t">🎫 Mi pase de viaje</h3>
     <p>Guárdalo en tu celular para tenerlo a la mano sin internet, y agrega tus vuelos a tu calendario con aviso 24 horas antes para tu check-in.</p>
@@ -2747,7 +2747,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 387;
+const APP_V = 388;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

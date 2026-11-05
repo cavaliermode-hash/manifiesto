@@ -2030,7 +2030,7 @@ setInterval(() => { if(['lle', 'sal'].includes(CTL.tab) && !document.hidden && !
 /* Vista de Llegadas/Salidas: con nombres o solo vuelos; tocar el encabezado de un vuelo despliega u oculta sus nombres */
 const CV = {solo: false, modo: 'todo', tg: new Set()}; // modo: todo (con nombres) · vue (solo vuelos) · tra (solo traslados)
 try{ const m = localStorage.getItem('ctl-modo'); CV.modo = ['all', 'todo', 'vue', 'tra', 'dir', 'cx'].includes(m) ? m : (localStorage.getItem('ctl-solo') === '1' ? 'vue' : 'todo'); }catch(e){}
-CV.solo = !['todo', 'cx', 'dir'].includes(CV.modo);
+CV.solo = CV.modo !== 'todo';
 /* Solo conexiones: vuelos de conexión (llegadas: el vuelo de su ciudad a México; salidas: de México a su ciudad), un grupo por vuelo */
 function cxGroups(){ const g = {}, lle = CTL.tab === 'lle';
   DATA.forEach(r => { const l = lle ? r.c1 : r.c2, base = lle ? r.ida : r.reg; if(!l || !l.f) return;
@@ -2041,7 +2041,7 @@ const cvPasa = G => CV.modo === 'todo' || CV.modo === 'all' || (CV.modo === 'tra
 function cvApply(){ const c = $('#cout'); if(c){ c.classList.toggle('solo', CV.solo); const q = $('#lq'); c.classList.toggle('q', !!(q && q.value.trim())); }
   document.querySelectorAll('#cview [data-cv]').forEach(b => b.setAttribute('aria-pressed', b.dataset.cv === CV.modo)); }
 document.addEventListener('click', e => { const b = e.target.closest('#cview [data-cv]');
-  if(b){ CV.modo = b.dataset.cv; CV.solo = !['todo', 'cx', 'dir'].includes(CV.modo); CV.tg.clear(); try{ localStorage.setItem('ctl-modo', CV.modo); }catch(er){} CV.faseAuto = true; ctlRender(); return; }
+  if(b){ CV.modo = b.dataset.cv; CV.solo = CV.modo !== 'todo'; CV.tg.clear(); try{ localStorage.setItem('ctl-modo', CV.modo); }catch(er){} CV.faseAuto = true; ctlRender(); return; }
   const h = e.target.closest('#cout .cfh'); if(!h || e.target.closest('a, button')) return;
   const sc = h.parentNode, k = sc.dataset.gk; sc.classList.toggle('tg'); if(sc.classList.contains('tg')) CV.tg.add(k); else CV.tg.delete(k); });
 document.addEventListener('input', e => { if(e.target.id === 'lq') cvApply(); });
@@ -2702,7 +2702,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 383;
+const APP_V = 384;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

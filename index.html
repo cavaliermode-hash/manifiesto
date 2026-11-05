@@ -1124,14 +1124,12 @@ const APP_PTS = ['Consultar tu reserva <b>en tiempo real</b>.', 'Hacer tu <b>che
 function appBoxWeb(r){ const A = appsDe(r); if(!A.length) return '';
   return `<section class="appbox" aria-labelledby="app-t"><h3 id="app-t">📲 Descarga la app de tu aerolínea</h3>
     <p>Para tener tu reserva siempre a la mano, descarga en tu celular la <b>app oficial de tu aerolínea</b> (App Store o Google Play) y agrega tu reserva con tu <b>clave</b> y tu <b>apellido</b>.</p>
-    ${A.map(a => `<div class="appal"><span class="appic" aria-hidden="true">✈️</span><div><b>${esc(a.nom)}</b>${a.cl ? `<small>Agrega tu reserva con la clave <span class="appk">${esc(a.cl)}</span></small>` : ''}</div></div>`).join('')}
     <p class="appd"><b>Desde la app podrás:</b></p><ul>${APP_PTS.map(t => `<li>${t}</li>`).join('')}</ul>
     <p class="apptip">💡 Activa las <b>notificaciones</b> de la app para no perderte ningún aviso de tu vuelo.</p></section>`; }
 function appBoxPDF(r){ const A = appsDe(r); if(!A.length) return ''; const G = '#136c34';
   return `<div style="margin-top:16px;border-left:4px solid ${G};padding-left:9px;font:bold 15px Arial,sans-serif;color:${G};letter-spacing:.4px">📲 DESCARGA LA APP DE TU AEROLÍNEA</div>
     <div style="margin-top:6px;border:1px solid #D5DCE6;border-radius:8px;padding:10px 14px;font:13px/1.5 Arial,sans-serif;color:#16301F">
       <div>Para tener tu reserva siempre a la mano, descarga en tu celular la <b>app oficial de tu aerolínea</b> (App Store o Google Play) y agrega tu reserva con tu <b>clave</b> y tu <b>apellido</b>.</div>
-      ${A.map(a => `<div style="margin-top:8px;background:#E6F2EA;border-radius:6px;padding:6px 10px"><b style="font-size:14px">${esc(a.nom)}</b>${a.cl ? ` &nbsp;·&nbsp; clave <b style="font-family:'Courier New',monospace;letter-spacing:2px;border:1.5px solid ${G};border-radius:4px;padding:0 5px">${esc(a.cl)}</b>` : ''}</div>`).join('')}
       <div style="margin-top:8px"><b>Desde la app podrás:</b></div>
       ${APP_PTS.map(t => `<div style="display:flex;gap:8px;padding:1px 0"><span style="color:${G};font-weight:bold">•</span><span>${t}</span></div>`).join('')}
       <div style="margin-top:8px;background:#FFF7E6;border-left:4px solid #E0A100;padding:6px 10px">💡 Activa las <b>notificaciones</b> de la app para no perderte ningún aviso de tu vuelo.</div>
@@ -2695,7 +2693,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 372;
+const APP_V = 373;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

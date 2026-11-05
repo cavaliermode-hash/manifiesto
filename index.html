@@ -2025,7 +2025,7 @@ if(navigator.serviceWorker) navigator.serviceWorker.addEventListener('message', 
 setInterval(() => alCheck(), 30000);
 document.addEventListener('visibilitychange', () => { if(!document.hidden) alCheck(); });
 document.addEventListener('click', e => { const b = e.target.closest('#cfase [data-fase]'); if(!b) return; CTL.fase = b.dataset.fase; ctlRender(); });
-setInterval(() => { if(['lle', 'sal'].includes(CTL.tab) && !document.hidden && !$('#ctl').hidden) ctlRender(); if(CTL.tab === 'con' && KON.m === 'lle' && !document.hidden) konRender(); }, 60000); // los vuelos cambian de apartado solos
+setInterval(() => { if(['lle', 'sal'].includes(CTL.tab) && !document.hidden && !$('#ctl').hidden) ctlRender(); if(CTL.tab === 'con' && !document.hidden) konRender(); }, 60000); // los vuelos cambian de apartado solos
 /* Vista de Llegadas/Salidas: con nombres o solo vuelos; tocar el encabezado de un vuelo despliega u oculta sus nombres */
 const CV = {solo: false, tg: new Set()};
 try{ CV.solo = localStorage.getItem('ctl-solo') === '1'; }catch(e){}
@@ -2346,9 +2346,9 @@ function kRows(){
   extra.forEach(x => { x.s = kSt(x.k); rows.push(x); });
   rows.forEach(x => { if(!x.k){ x.k = x.n; } if(x.k === x.n) x.s = kSt(x.n); });
   /* Llegadas: el check-in es automático al aterrizar el vuelo o llegar el traslado (según horario); solo el No show se marca a mano */
-  if(lle){ CTL.tab = 'lle';
-    try{ rows.forEach(x => { const l = x.l || x.tl || tierraLeg(x.r, true); x.fase = l && l.f ? faseVuelo(l) : 'prog';
-      x.s = (CTL.marks.lle || {})[x.k] === 'ns' ? 'ns' : x.fase === 'ater' ? 'ok' : 'pe'; }); }
+  { CTL.tab = KON.m; // llegadas y regresos: check-in automático al aterrizar o llegar
+    try{ rows.forEach(x => { const l = x.l || x.tl || tierraLeg(x.r, lle); x.fase = l && l.f ? faseVuelo(l) : 'prog';
+      x.s = (CTL.marks[KON.m] || {})[x.k] === 'ns' ? 'ns' : x.fase === 'ater' ? 'ok' : 'pe'; }); }
     finally{ CTL.tab = t0; } }
   const k = KON.sort;
   rows.sort((a,b) => { let c = k==='s' ? kRank[a.s]-kRank[b.s] : String(a[k]).localeCompare(String(b[k]),'es');
@@ -2384,7 +2384,7 @@ function kFilUI(base){
 document.addEventListener('click', e => { const b = e.target.closest('#kfil [data-kf]'); if(!b || b.disabled) return; KON[b.dataset.kf] = b.dataset.v; konRender(); });
 document.addEventListener('change', e => { if(e.target.id === 'kfv'){ KON.fv = e.target.value; konRender(); } });
 function konRender(){
-  const lle = KON.m === 'lle'; $('#k-t').textContent = lle ? 'Concentrado de llegadas' : 'Concentrado de regresos (salidas)'; $('#k-fh').textContent = lle ? 'Llegada' : 'Salida'; $('#k-s').textContent = lle ? 'Todos los invitados en una sola lista. El check-in se marca solo cuando aterriza el vuelo o llega el traslado (según su horario); marca No show únicamente si aplica.' : 'Todos los invitados en una sola lista, sin importar la fecha. Marca Check-in o No show y ordena tocando el encabezado de cada columna.';
+  const lle = KON.m === 'lle'; $('#k-t').textContent = lle ? 'Concentrado de llegadas' : 'Concentrado de regresos (salidas)'; $('#k-fh').textContent = lle ? 'Llegada' : 'Salida'; $('#k-s').textContent = 'Todos los invitados en una sola lista. El check-in se marca solo cuando aterriza el vuelo o llega el traslado (según su horario); marca No show únicamente si aplica.';
   document.querySelectorAll('.kmode button').forEach(b => b.setAttribute('aria-pressed', b.dataset.m === KON.m));
   if(KON.filter !== 'ok') KON.fd = KON.ft = KON.fv = ''; // los filtros por fecha, tipo y vuelo solo están en Check-in
   const all0 = kRows(), all = kFiltra(all0), c = {ok:0, ns:0, pe:0}; all.forEach(x => c[x.s]++);
@@ -2394,7 +2394,7 @@ function konRender(){
   const rows = all.filter(x => KON.filter === 'all' || x.s === KON.filter);
   $('#kbody').innerHTML = rows.map(x => { const l = x.l;
     return `<tr class="st-${x.s}${x.tag ? ' kx' : ''}"><td class="kn">${esc(x.n)}${rolTag((DATA.find(r => r.n === x.n) || {}).rol || (stTag(x.n) ? 'STAFF' : ''))}${x.tag ? `<small class="ktag">${esc(x.tag)}</small>` : ''}</td>${l ? `<td class="kf">${esc(fmtDate(l.f))}<small>${esc(lle ? l.l : l.s)} · ${esc(l.o)}→${esc(l.d)}</small></td>
-      <td class="kv">${esc(l.v)}</td>` : `<td class="kf">${esc(x.lab)}<small>${x.v === 'Por su cuenta' ? '🚗' : '🚐'} ${esc(x.det)}</small></td><td class="kv">${esc(x.v)}</td>`}<td><div class="kb">${lle ? `<span class="kauto ${x.s}">${x.s === 'ns' ? '✗ No show' : x.s === 'ok' ? '✓ Check-in' : x.fase === 'ruta' ? '✈️ En camino' : '🕒 Por llegar'}</span>
+      <td class="kv">${esc(l.v)}</td>` : `<td class="kf">${esc(x.lab)}<small>${x.v === 'Por su cuenta' ? '🚗' : '🚐'} ${esc(x.det)}</small></td><td class="kv">${esc(x.v)}</td>`}<td><div class="kb">${true ? `<span class="kauto ${x.s}">${x.s === 'ns' ? '✗ No show' : x.s === 'ok' ? '✓ Check-in' : x.fase === 'ruta' ? '✈️ En camino' : lle ? '🕒 Por llegar' : '🕒 Por salir'}</span>
       <button class="bns" data-n="${esc(x.k || x.n)}" data-s="ns" aria-pressed="${x.s==='ns'}">${x.s === 'ns' ? '↺ Quitar no show' : '✗ No show'}</button>` : `<button class="bok" data-n="${esc(x.k || x.n)}" data-s="ok" aria-pressed="${x.s==='ok'}">✓ Check-in</button>
       <button class="bns" data-n="${esc(x.k || x.n)}" data-s="ns" aria-pressed="${x.s==='ns'}">✗ No show</button>
       <button class="bpe" data-n="${esc(x.k || x.n)}" data-s="pe" aria-pressed="${x.s==='pe'}">⏳ Pendiente</button>`}</div></td></tr>`; }).join('')
@@ -2693,7 +2693,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 373;
+const APP_V = 374;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

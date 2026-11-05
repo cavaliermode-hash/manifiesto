@@ -1185,7 +1185,7 @@ function detailView(r){
   return `<div class="detail">
     <button class="back" id="back"><span aria-hidden="true">‹</span> ${VOLVER_A ? 'Volver a ' + ({con:'Concentrado', lle:'Llegadas', sal:'Salidas'}[VOLVER_A.tab] || 'VECI') : 'Volver a la búsqueda'}</button>
     <div class="dhello">
-      <p class="dname"><span class="est">Estimado(a)</span> <b>${esc(r.n)}</b></p><p class="dsub dintro">${esc(INTRO_TXT)}</p>
+      <p class="dname"><span class="est">Estimado(a)</span> <b>${esc(r.n)}</b></p><p class="dsub dintro">${esc(INTRO_TXT).replace('Segunda Cumbre Universales', '<b>Segunda Cumbre Universales</b>')}</p>
     </div>
     <section class="itinweb" aria-label="Su itinerario día por día">${mailHTML(r, 'web')}</section>
     <div id="agslot"></div>
@@ -2746,7 +2746,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 390;
+const APP_V = 391;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

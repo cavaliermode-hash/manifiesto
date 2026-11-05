@@ -1165,7 +1165,7 @@ function passBox(r){
       <div class="wcut"></div>
       <p class="wfoot">No es pase de abordar. Haz tu check-in en la app de la aerolínea.</p>
     </div>
-    <div class="wbtns"><button type="button" class="abtn2" data-wpass="${i}">⬇️ Guardar mi pase</button><button type="button" class="abtn2 wsec" data-ics="${i}">📅 Agregar a mi calendario</button></div>
+    <div class="wbtns"><button type="button" class="abtn2" data-wpass="${i}">⬇️ Guardar mi itinerario</button><button type="button" class="abtn2 wsec" data-ics="${i}">📅 Agregar a mi calendario</button></div>
     <p class="wmsg" id="wmsg" role="status"></p></section>`; }
 document.addEventListener('click', async e => { const b = e.target.closest('[data-wpass]'); if(!b || b.disabled) return;
   const r = DATA[+b.dataset.wpass], el = document.getElementById('wpass'), msg = document.getElementById('wmsg'); if(!r || !el) return;
@@ -2744,7 +2744,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 385;
+const APP_V = 386;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

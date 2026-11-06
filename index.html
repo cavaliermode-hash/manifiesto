@@ -684,6 +684,7 @@ button.ptile{font:inherit;cursor:pointer;width:100%;transition:transform .08s,bo
 .wfoot{margin:0;padding:0 14px 14px;font-size:11px;text-align:center;opacity:.85}
 .wbtns{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:14px}.wbtns .wsec{background:#fff;color:var(--green);border:1.5px solid var(--green)}
 .wmsg{margin:8px 0 0;text-align:center;font-size:13.5px;color:var(--green);font-weight:600}
+.dhl{background:linear-gradient(transparent 12%,#FFE38A 12%,#FFE38A 88%,transparent 88%);color:var(--ink);font-weight:700;padding:0 3px;border-radius:3px;-webkit-box-decoration-break:clone;box-decoration-break:clone}
 .appbox{margin-top:16px;background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--green);border-radius:12px;padding:14px 16px}
 .appbox h3{margin:0 0 6px;font:700 18px var(--display);color:var(--green);text-transform:uppercase;letter-spacing:.03em}
 .appbox p{margin:0 0 8px}.appbox .appd{margin:4px 0 2px}
@@ -1006,7 +1007,7 @@ const HOTEL_EXC = {
     nota: 'Su llegada a Hermosillo es el lunes 2 de noviembre a las 10:31 h. A su llegada no aplica traslado del aeropuerto al hotel; su traslado aplica únicamente de regreso, del hotel al aeropuerto de Hermosillo, el jueves 5 de noviembre.'}
 };
 /* Recepción en el aeropuerto de Hermosillo (logo de MetLife): solo si su vuelo llega a Hermosillo dentro de las fechas del evento (3 al 5 nov). */
-const INTRO_TXT = 'En seguimiento a su confirmación de asistencia a la Segunda Cumbre Universales, nos complace compartirle los detalles de su itinerario de viaje.';
+const INTRO_TXT = 'Nos complace compartirle los detalles de su itinerario de viaje y asistencia a la Segunda Cumbre Universales.';
 const LLEGA_TXT = 'A tu llegada al aeropuerto de Hermosillo te pedimos localizar el logo de MetLife para trasladarte al hotel sede Marinaterra.';
 /* Claves: si la ida y el regreso tienen la misma clave se muestra una sola vez; si son distintas, se separan y se hace énfasis */
 const dosClaves = r => !!(r.ci && r.cr && r.ci !== r.cr);
@@ -1185,7 +1186,7 @@ function detailView(r){
   return `<div class="detail">
     <button class="back" id="back"><span aria-hidden="true">‹</span> ${VOLVER_A ? 'Volver a ' + ({con:'Concentrado', lle:'Llegadas', sal:'Salidas'}[VOLVER_A.tab] || 'VECI') : 'Volver a la búsqueda'}</button>
     <div class="dhello">
-      <p class="dname"><span class="est">Estimado(a)</span> <b>${esc(r.n)}</b></p><p class="dsub dintro">${esc(INTRO_TXT).replace('Segunda Cumbre Universales', '<b>Segunda Cumbre Universales</b>')}</p>
+      <p class="dname"><span class="est">Estimado(a)</span> <b>${esc(r.n)}</b></p><p class="dsub dintro">${esc(INTRO_TXT).replace('Segunda Cumbre Universales', '<mark class="dhl">Segunda Cumbre Universales</mark>')}</p>
     </div>
     <section class="itinweb" aria-label="Su itinerario día por día">${mailHTML(r, 'web')}</section>
     <div id="agslot"></div>
@@ -1348,7 +1349,14 @@ function mailHTML(r, enPDF){
     const dia = f => `<tr><td style="padding:${C ? '8px 0 2px' : '14px 0 4px'}"><table width="100%" cellpadding="0" cellspacing="0"><tr><td bgcolor="#EAF5EE" style="background:#EAF5EE;border-left:5px solid ${G};border-radius:6px;padding:${C ? '4px 10px' : '7px 12px'}">${T('📅 ' + (f ? fLarga(f).toUpperCase() : 'INDICACIONES'), C ? 13 : 15, ON, 'bold', 'Arial,sans-serif', 'letter-spacing:.6px')}</td></tr></table></td></tr>`;
     b += h2('Su itinerario día por día');
     let fa = null;
-    lineaTiempo(r).forEach(x => { if(x.f !== fa){ fa = x.f; b += dia(x.f); }
+    /* En la página: solo lo que está sucediendo hoy o por suceder (los días pasados y los vuelos de hoy que ya aterrizaron se quitan) */
+    const nw = ahora(), p2 = n => String(n).padStart(2, '0'), hoy = `${nw.getFullYear()}-${p2(nw.getMonth() + 1)}-${p2(nw.getDate())}`;
+    const vigente = x => { if(!WEB || !x.f || x.f > hoy) return true; if(x.f < hoy) return false;
+      if(x.tipo === 'vuelo' && x.leg && x.leg.l){ const d = x.leg.s ? when(x.leg, 's') : null; let a = when(x.leg, 'l'); if(d && a && a < d) a = new Date(a.getTime() + 864e5); return !a || a > nw; }
+      return true; };
+    const TL = lineaTiempo(r).filter(vigente);
+    if(WEB && !TL.length) b += p(T('Su itinerario de viaje ya concluyó. ¡Gracias por acompañarnos en la <b>Segunda Cumbre Universales</b>!', fs, INK));
+    TL.forEach(x => { if(x.f !== fa){ fa = x.f; b += dia(x.f); }
       if(x.tipo === 'vuelo' && dos && x.pk) b += key(x.dir === 'Ida' ? 'Clave de reserva de ida' : 'Clave de reserva de regreso', x.dir === 'Ida' ? r.ci : r.cr);
       if(x.tipo === 'vuelo') b += C ? cardC(x.dir, [x.leg], x.dir === 'Ida' ? G1 : G2, '') : card(x.dir, [x.leg], x.dir === 'Ida' ? G1 : G2, false);
       else if(x.tipo === 'verde') b += verde(x.i + ' ' + esc(x.t), x.text === REGRESO_TXT ? `<b>${esc(x.text)}</b>` : esc(x.text).replace('MetLife', '<b>MetLife</b>'));
@@ -2746,7 +2754,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 392;
+const APP_V = 393;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

@@ -1369,7 +1369,7 @@ function mailHTML(r, enPDF){
       else if(x.tipo === 'hotel') b += blk(x.i, x.t, `<tr><td colspan="2">${x.lines.map(t => T('• ' + esc(t).replace(HOTEL.n, `<b style="color:${INK}">${HOTEL.n}</b>`), C ? 11 : 13, INK)).join('<br>')}${x.nota ? '<br>' + T('⚠️ ' + esc(x.nota), C ? 11 : 13, INK, 'bold') : ''}</td></tr>`);
       else if(x.tipo === 'info') b += blk(x.i, x.t, x.text ? `<tr><td colspan="2">${T(esc(x.text), C ? 11 : 13, INK)}</td></tr>` : '');
       else b += blk(x.i, x.t, (x.rows ? blkRows(x.rows) : `<tr><td colspan="2">${T(esc(x.text), C ? 11 : 13, INK)}</td></tr>`) + (x.nb ? `<tr><td colspan="2" style="padding-top:3px">${T(esc(x.nb), C ? 11 : 13, INK, 'bold')}</td></tr>` : '')); });
-    if(!tierra) b += p(T('Horarios de vuelo en hora local de cada aeropuerto.', C ? 10 : 11, MUT)); }
+    if(!tierra && TL.length) b += p(T('Horarios de vuelo en hora local de cada aeropuerto.', C ? 10 : 11, MUT)); }
   if(WEB) return `<table width="100%" cellpadding="4" cellspacing="0" style="width:100%;font-family:Arial,sans-serif;background:#ffffff">${b.slice(b0)}</table>`;
   if(!tierra){ b += h2('Puntos importantes de su vuelo');
     const pts = [...document.querySelectorAll('section.important li')].map(li => `<tr><td valign="top" style="padding:${C ? '1px 6px 1px 0' : '3px 6px 3px 0'}">${T('•', C ? 11 : fs, G, 'bold')}</td><td style="padding:${C ? '1px 0;line-height:1.25' : '3px 0'}">${T(li.innerHTML.replace(/<b>/g, `<b style="color:${INK}">`), C ? 11 : fs)}</td></tr>`).join('');
@@ -1780,8 +1780,10 @@ function agMover(dentro){ const ag = document.getElementById('agenda'), inf = do
     const r = DATA[state.sel], hoy = hoyISO(), vis = [3, 4, 5].filter(d => `2026-11-0${d}` >= hoy), fin = !r || viajeHecho(r) || !vis.length;
     tabs.querySelectorAll('[data-day]').forEach(b => b.hidden = !vis.includes(+b.dataset.day)); tabs.style.gridTemplateColumns = `repeat(${Math.max(1, vis.length)},1fr)`;
     if(!fin && !vis.includes(+AG_DAY)) renderAgenda(vis[0]);
-    ag.hidden = fin; inf.hidden = fin; if(imp && r) imp.hidden = viajeHecho(r); }
-  else { ag.hidden = false; tabs.querySelectorAll('[data-day]').forEach(b => b.hidden = false); tabs.style.gridTemplateColumns = '';
+    ag.hidden = fin; inf.hidden = fin; if(imp && r) imp.hidden = viajeHecho(r);
+    const vh = !!r && viajeHecho(r), ci = document.getElementById('cierre'), fq = document.querySelector('section.faq'); // viaje concluido: sin Importante, despedida ni preguntas
+    if(ci) ci.hidden = vh; if(fq) fq.hidden = vh; }
+  else { ag.hidden = false; tabs.querySelectorAll('[data-day]').forEach(b => b.hidden = false); tabs.style.gridTemplateColumns = ''; { const fq = document.querySelector('section.faq'); if(fq) fq.hidden = false; }
     if(ag.parentNode !== sv.parentNode){ sv.after(ag); ag.after(inf); } } }
 function render(){
   const ctrl = document.querySelector('.controls'); agMover(false);
@@ -2767,7 +2769,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 395;
+const APP_V = 396;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

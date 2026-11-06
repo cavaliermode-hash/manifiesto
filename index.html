@@ -685,6 +685,7 @@ button.ptile{font:inherit;cursor:pointer;width:100%;transition:transform .08s,bo
 .wbtns{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:14px}.wbtns .wsec{background:#fff;color:var(--green);border:1.5px solid var(--green)}
 .wmsg{margin:8px 0 0;text-align:center;font-size:13.5px;color:var(--green);font-weight:600}
 .dhl{background:none;color:inherit;font-weight:700;padding:0}
+.dfin{margin:6px 2px 18px;font-size:16px;line-height:1.5}
 .appbox{margin-top:16px;background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--green);border-radius:12px;padding:14px 16px}
 .appbox h3{margin:0 0 6px;font:700 18px var(--display);color:var(--green);text-transform:uppercase;letter-spacing:.03em}
 .appbox p{margin:0 0 8px}.appbox .appd{margin:4px 0 2px}
@@ -1192,9 +1193,10 @@ function detailView(r){
   return `<div class="detail">
     <button class="back" id="back"><span aria-hidden="true">‹</span> ${VOLVER_A ? 'Volver a ' + ({con:'Concentrado', lle:'Llegadas', sal:'Salidas'}[VOLVER_A.tab] || 'VECI') : 'Volver a la búsqueda'}</button>
     <div class="dhello">
-      <p class="dname"><span class="est">Estimado(a)</span> <b>${esc(r.n)}</b></p><p class="dsub dintro">${esc(INTRO_TXT).replace('Segunda Cumbre Universales', '<mark class="dhl">Segunda Cumbre Universales</mark>')}</p>
+      <p class="dname"><span class="est">Estimado(a)</span> <b>${esc(r.n)}</b></p>${viajeHecho(r) ? '' : `<p class="dsub dintro">${esc(INTRO_TXT).replace('Segunda Cumbre Universales', '<mark class="dhl">Segunda Cumbre Universales</mark>')}</p>`}
     </div>
-    <section class="itinweb" aria-label="Su itinerario día por día">${mailHTML(r, 'web')}</section>
+    ${viajeHecho(r) ? `<p class="dbye dfin">Gracias por acompañarnos en la <b>Segunda Cumbre Universales</b>. Le enviamos un cordial saludo y nos reiteramos a sus órdenes.&nbsp;&nbsp;<b><i>Viajes El Corte Inglés</i></b></p>`
+      : `<section class="itinweb" aria-label="Su itinerario día por día">${mailHTML(r, 'web')}</section>`}
     <div id="agslot"></div>
     ${tripSteps(r)}
     ${appBoxWeb(r)}
@@ -2769,7 +2771,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 396;
+const APP_V = 397;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

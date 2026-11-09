@@ -1,0 +1,33 @@
+name: Avisar al .net
+
+# Cada vez que cambia este sitio, le avisa a cavaliermode-hash/manifiesto1
+# (www.manifiestodevuelos.net) para que se sincronice al momento.
+# Requiere el secreto SYNC_TOKEN: token de GitHub con permiso
+# "Actions: Read and write" solo sobre el repositorio manifiesto1.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  avisar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Disparar la sincronización de manifiesto1
+        env:
+          TOKEN: ${{ secrets.SYNC_TOKEN }}
+        run: |
+          if [ -z "$TOKEN" ]; then
+            echo "Falta el secreto SYNC_TOKEN; el .net se sincronizará con su horario normal."
+            exit 0
+          fi
+          code=$(curl -sS -o resp.txt -w '%{http_code}' -X POST \
+            -H "Authorization: Bearer $TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            https://api.github.com/repos/cavaliermode-hash/manifiesto1/actions/workflows/sincronizar.yml/dispatches \
+            -d '{"ref":"main"}')
+          cat resp.txt
+          if [ "$code" != "204" ]; then
+            echo "No se pudo avisar a manifiesto1 (HTTP $code)"; exit 1
+          fi
+          echo "Listo: manifiesto1 se está sincronizando."

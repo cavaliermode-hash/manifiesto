@@ -996,11 +996,13 @@ function legBlock(cls, title, main, conn, connFirst){
   return `<div class="leg ${cls}"><h4>${title}</h4>${parts.join('')}</div>`;
 }
 /* Invitados que viajan solo por tierra (sin vuelos): se muestran como traslado, sin "Sin vuelo asignado". */
-const porCuentaR = r => (r.notas || []).some(n => n.k === 'tr' && /por tu cuenta/i.test(n.t));
+const porCuentaR = r => !!r.loc || (r.notas || []).some(n => n.k === 'tr' && /por tu cuenta/i.test(n.t));
 const viajeTxt = r => porCuentaR(r) ? 'Llega por su cuenta a la sede del evento.' : 'Viaje por traslado terrestre.';
-const soloTierra = r => !r.ida && !r.reg && !r.c1 && !r.c2 && (/TERRESTRE/.test(r.st || '') || (r.notas || []).some(n => n.k === 'tr'));
+const soloTierra = r => !r.ida && !r.reg && !r.c1 && !r.c2 && !r.vu && (r.loc || r.tc || /TERRESTRE/.test(r.st || '') || (r.notas || []).some(n => n.k === 'tr'));
+/* Hotel del evento: solo foráneos (con vuelo o con pernocta indicada en el Excel); los locales no llevan hospedaje */
+const tieneHotel = r => !r.loc && !!(r.vu || r.ida || r.reg || r.c1 || r.c2 || (r.notas || []).some(n => n.k === 'pe'));
 function tierraBlock(r){
-  const det = porCuentaR(r) ? 'Llegas por tu cuenta a la sede del evento; revisa tus indicaciones especiales.' : (r.notas || []).some(n => n.k === 'tr') ? 'Revisa los detalles en tus indicaciones especiales.' : 'Tu viaje al evento es por traslado terrestre.';
+  const det = r.loc ? 'Participante local: llegas por tu cuenta a la sede del evento, MetLife Torre Manacar, piso 7.' + (r.est ? ' Tienes estacionamiento considerado en Torre Manacar.' : '') : porCuentaR(r) ? 'Llegas por tu cuenta a la sede del evento; revisa tus indicaciones especiales.' : (r.notas || []).some(n => n.k === 'tr') ? 'Revisa los detalles en tus indicaciones especiales.' : 'Tu viaje al evento es por traslado terrestre.';
   return `<div class="leg ida"><h4>${porCuentaR(r) ? 'Llega por su cuenta' : 'Traslado terrestre'}</h4><div class="none">${det}</div></div>`;
 }
 /* Tarjetas de vuelo: Ida / Regreso con horas grandes, duración y conexión. */
@@ -1058,7 +1060,7 @@ const MESL = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto',
 const fLarga = iso => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || ''); if(!m) return iso || ''; const d = new Date(Date.UTC(+m[1], m[2]-1, +m[3])); return `${DIAL[d.getUTCDay()]} ${+m[3]} de ${MESL[m[2]-1]}`; };
 /* Locales de Hermosillo que llegan por su cuenta (con estacionamiento): MetLife solo cubre las noches de hotel */
 const esLocal = r => (r.notas || []).some(n => n.k === 'tr' && /por tu cuenta/i.test(n.t) && /estacionamiento/i.test(n.t));
-const impTxt = r => esLocal(r) ? 'Le recordamos que MetLife cubre únicamente las noches de hotel.' : 'Le recordamos que MetLife cubre únicamente las noches de hotel y traslados terrestres que estén dentro del evento o por ruta.';
+const impTxt = r => r.loc ? 'Le recordamos que su llegada y regreso a la sede del evento son por su cuenta.' : esLocal(r) ? 'Le recordamos que MetLife cubre únicamente las noches de hotel.' : 'Le recordamos que MetLife cubre únicamente las noches de hotel y traslados terrestres que estén dentro del evento o por ruta.';
 const MET = 'Le recordamos que MetLife cubre únicamente las noches de hotel y traslados terrestres que estén dentro del evento.';
 // Excepciones confirmadas por el equipo (noches adicionales pagadas por el invitado, etc.)
 const HOTEL_EXC = {};
@@ -1077,6 +1079,7 @@ function aplicaRegreso(r){ const reg = [r.reg, r.c2].filter(Boolean), l = reg.fi
 function aplicaLlegada(r){ const ida = [r.c1, r.ida].filter(Boolean), l = ida.find(x => x.d === EV_AP); return !!l && l.f >= HOTEL.ci && l.f <= HOTEL.co; }
 function hotelInfo(r){
   if(HOTEL_EXC[r.n]) return HOTEL_EXC[r.n];
+  if(!tieneHotel(r)) return {lines: [], nota: ''};
   const lines = [`Reservación por 1 noche en el ${HOTEL.n}. Dirección: ${HOTEL.dir}`, 'Check in: 03 diciembre, 15:00 hrs.', 'Check out: 04 diciembre, 12:00 hrs.'];
   const ida = [r.c1, r.ida].filter(Boolean), reg = [r.reg, r.c2].filter(Boolean);
   const lleg = ida.find(l => l.d === EV_AP) || ida[ida.length - 1], sal = reg.find(l => l.o === EV_AP) || reg[0];
@@ -1086,7 +1089,7 @@ function hotelInfo(r){
   // dentro de las fechas del evento (3 al 5 nov) todo aplica: solo se avisa si llega antes del 3 o regresa después del 5
   return {lines, nota: notas.length ? notas.join(' ') + ' ' + (esLocal(r) ? impTxt(r) : MET) : ''};
 }
-function hotelHTML(r){ const h = hotelInfo(r);
+function hotelHTML(r){ const h = hotelInfo(r); if(!h.lines.length) return '';
   return `<section class="notas hotelbox" aria-label="Hospedaje"><h3>🏨 Hospedaje en el hotel sede</h3><ul>${h.lines.map(t => `<li>${esc(t).replace(HOTEL.n, `<b class="sede">${HOTEL.n}</b>`)}</li>`).join('')}</ul>${h.nota ? `<p class="hnota">⚠️ ${esc(h.nota)}</p>` : ''}</section>`; }
 // Recepción y traslado de regreso al aeropuerto: van debajo de los vuelos
 function aeroHTML(r){ if(soloTierra(r)) return ''; let x = '';
@@ -1102,6 +1105,10 @@ function notaBloques(r){
     if(n.k === 'tr' && (m = t.match(/^Sin traslado terrestre: llegas por tu cuenta al (.+?) el (.+?) y a tu regreso el (.+?) te trasladas por tu cuenta desde el (.+?)\.$/))){
       ida.push({i:'🚙', t:'Llegada por su cuenta', rows:[['Fecha', m[2]], ['Llegada', 'Por su cuenta al ' + m[1] + ' (no aplica traslado terrestre)']]});
       reg.push({i:'🚙', t:'Regreso por su cuenta', rows:[['Fecha', m[3]], ['Regreso', 'Por su cuenta desde el ' + m[4] + ' (no aplica traslado terrestre)']]}); return; }
+    if(n.k === 'tr' && (m = t.match(/^Traslado terrestre desde (.+?) a la sede del evento\. Te compartiremos/))){
+      ida.push({i:'🚐', t:'Traslado terrestre', rows:[['Fecha', 'Jueves 3 de diciembre'], ['Desde', m[1]], ['Destino', 'Sede del evento: MetLife Torre Manacar, piso 7'], ['Punto de encuentro y horario', 'Se los compartiremos próximamente']]}); return; }
+    if(n.k === 'tr' && r.loc){
+      ida.push({i:'🚙', t:'Llegada por su cuenta', rows:[['Fecha', 'Jueves 3 de diciembre'], ['Llegada', 'Por su cuenta a la sede del evento: MetLife Torre Manacar, piso 7 (Av. Insurgentes Sur 1457, esquina Río Mixcoac)'], ['Cita', '12:00 h · participantes locales'], ['Regreso', 'Por su cuenta, al terminar el evento']].concat(r.est ? [['Estacionamiento', 'Considerado para usted en Torre Manacar']] : [])}); return; }
     if(n.k === 'tr' && /por tu cuenta/i.test(t)){
       ida.push({i:'🚙', t:'Llegada por su cuenta', rows:[['Periodo', 'Jueves 3 de diciembre'], ['Llegada', 'Jueves 3 de diciembre, por su cuenta, directo a la sede del evento (MetLife Torre Manacar, piso 7, Ciudad de México)'], ['Regreso', 'Jueves 3 de diciembre, por su cuenta, al terminar el evento']]}); return; }
     if(n.k === 'tr' && (m = t.match(/solo a tu regreso: el (.+?) te llevamos del (.+?) al (aeropuerto de [A-ZÁÉÍÓÚa-záéíóúñ ]+?) para tu vuelo (.+?) \(salida ([\d:]+) h\)\.(?: A tu llegada el (.+?) no aplica traslado (.+?)\.)?/))){
@@ -1147,6 +1154,10 @@ function lineaTiempo(r){
     const R = b.rows || [], sinP = R.filter(x => x[0] !== 'Periodo');
     if(/por su cuenta$/.test(b.t) && val(R, 'Fecha')){ const f = isoDe(val(R, 'Fecha')), lr = legsR.find(x => x.f === f && x.d === 'MEX');
       add(f, b.t.startsWith('Llegada') ? '22:00' : (lr ? minDe(lr.l) + 1 : '17:00'), {tipo: 'blk', i: b.i, t: b.t, rows: R}); return; }
+    if(b.t === 'Traslado terrestre'){ add(HOTEL.ci, '08:00', {tipo: 'blk', i: b.i, t: b.t, rows: R}); return; }
+    if(b.t === 'Llegada por su cuenta' && r.loc){
+      add(HOTEL.ci, '11:59', {tipo: 'blk', i: '🚙', t: 'Llegada por su cuenta', rows: R.filter(x => x[0] !== 'Regreso')});
+      add(HOTEL.ci, '23:01', {tipo: 'blk', i: '🚙', t: 'Regreso por su cuenta', rows: [['Regreso', val(R, 'Regreso')]]}); return; }
     if(b.t === 'Llegada por su cuenta'){
       add(HOTEL.ci, '14:00', {tipo: 'blk', i: '🚙', t: 'Llegada por su cuenta', rows: R.filter(x => x[0] !== 'Regreso')});
       add(HOTEL.co, '12:30', {tipo: 'blk', i: '🚙', t: 'Regreso por su cuenta', rows: [['Regreso', val(R, 'Regreso')]]}); return; }
@@ -1163,7 +1174,7 @@ function lineaTiempo(r){
   legsI.forEach((l, j) => add(l.f, l.s, {tipo: 'vuelo', leg: l, dir: 'Ida', con: j < legsI.length - 1, pk: !j}));
   legsR.forEach((l, j) => add(l.f, l.s, {tipo: 'vuelo', leg: l, dir: 'Regreso', pk: !j}));
   if(!tierra && aplicaLlegada(r)){ const l = legsI.find(x => x.d === EV_AP); add(l.f, minDe(l.l) + 1, {tipo: 'verde', i: '📍', t: 'Recepción en el Aeropuerto de la Ciudad de México', text: LLEGA_TXT}); }
-  { const h = hotelInfo(r), ci = isoDe(((h.lines.find(t => /^Check in/i.test(t)) || '').replace(/(\d+) (noviembre|diciembre)/, '$1 de $2'))) || HOTEL.ci;
+  if(tieneHotel(r)){ const h = hotelInfo(r), ci = isoDe(((h.lines.find(t => /^Check in/i.test(t)) || '').replace(/(\d+) (noviembre|diciembre)/, '$1 de $2'))) || HOTEL.ci;
     const hci = ((h.lines.find(t => /^Check in/i.test(t)) || '').match(/(\d{1,2}:\d{2})/) || [])[1] || '15:00';
     add(ci, '15:00', {tipo: 'hotel', i: '🏨', t: 'Hospedaje en el hotel sede', lines: h.lines.filter(t => !/^Check (out|in)/i.test(t)), nota: h.nota});
     add(ci, '15:00', {tipo: 'info', i: '🛎️', t: 'Check-in del ' + HOTEL.n + ' · ' + hci + ' h', text: ''});
@@ -1338,7 +1349,7 @@ function resumenTxt(r){
   const first = r.c1 || r.ida;
   if(first){ const d = when(first,'s'); L.push('', `Check-in en línea: abre ${fmtAt(new Date(d-24*36e5), first.o)} (24 h antes).`, `Llega al aeropuerto a más tardar: ${fmtAt(new Date(d-2*36e5), first.o)}.`); }
   { const B = notaBloques(r); if(B.length){ L.push('', 'INDICACIONES ESPECIALES PARA TI'); B.forEach(bl => { L.push(`${bl.t.toUpperCase()}`); if(bl.rows) bl.rows.forEach(([k, v]) => L.push(`- ${k}: ${v}`)); else L.push(bl.text); }); } }
-  { const h = hotelInfo(r); L.push('', 'HOSPEDAJE EN EL HOTEL SEDE'); h.lines.forEach(t => L.push('- ' + t)); if(!soloTierra(r) && aplicaLlegada(r)) L.push('', '📍 RECEPCIÓN EN EL AEROPUERTO DE HERMOSILLO', LLEGA_TXT); if(!soloTierra(r) && aplicaRegreso(r)) L.push('', '🚐 TRASLADO DE REGRESO AL AEROPUERTO DE HERMOSILLO', REGRESO_TXT); if(h.nota) L.push('', 'IMPORTANTE: ' + h.nota); }
+  { const h = hotelInfo(r); if(h.lines.length) L.push('', 'HOSPEDAJE EN EL HOTEL SEDE'); h.lines.forEach(t => L.push('- ' + t)); if(!soloTierra(r) && aplicaLlegada(r)) L.push('', '📍 RECEPCIÓN EN EL AEROPUERTO DE LA CIUDAD DE MÉXICO', LLEGA_TXT); if(!soloTierra(r) && aplicaRegreso(r)) L.push('', '✈️ TU VUELO DE REGRESO', REGRESO_TXT); if(h.nota) L.push('', 'IMPORTANTE: ' + h.nota); }
   L.push('', 'PUNTOS IMPORTANTES',
     '- El check-in podrá realizarse 24 horas antes de la salida, si la aerolínea lo permite. De lo contrario, preséntate 2 horas antes en los mostradores.',
     '- Para administrar tu reserva usa únicamente las 6 letras de la clave en la página de la aerolínea.',
@@ -1352,7 +1363,8 @@ function mailTxt(r){
   const L = [], tierra = soloTierra(r);
   const seg = (lab, l) => l && L.push(`${lab}: ${l.v} · ${fmtDate(l.f)} · ${l.o} ${l.s} > ${l.d} ${l.l} (hora local)`);
   L.push(`Estimado(a) ${r.n.toUpperCase()}:`, '', INTRO_TXT, '');
-  if(!tierra){ L.push('DATOS DE SU RESERVACIÓN AÉREA'); const u = claveUna(r);
+  if(!tierra && !r.ida && !r.reg && !r.c1 && !r.c2) L.push('DATOS DE SU RESERVACIÓN AÉREA', 'Sus vuelos están en proceso de emisión.', '');
+  else if(!tierra){ L.push('DATOS DE SU RESERVACIÓN AÉREA'); const u = claveUna(r);
     if(dosClaves(r)) L.push('Su viaje tiene dos claves de reserva distintas: la clave de ida aparece en su vuelo de ida y la clave de regreso en su vuelo de regreso.'); else L.push(`${u.lab.toUpperCase()}: [ ${u.k} ]`); L.push(''); }
   L.push('SU ITINERARIO DÍA POR DÍA'); let fa = null;
   lineaTiempo(r).forEach(x => { if(x.f !== fa){ fa = x.f; L.push('', '📅 ' + (x.f ? fLarga(x.f).toUpperCase() : 'INDICACIONES')); } else L.push('');
@@ -1413,7 +1425,7 @@ function mailHTML(r, enPDF){
   /* Itinerario en orden cronológico, agrupado por día */
   const b0 = b.length;
   if(!tierra && !(WEB && viajeHecho(r))){ const u = claveUna(r); b += p(T('Datos de su reservación aérea', C ? 14 : 16, G, 'bold'), C ? 'padding-top:8px;padding-bottom:2px' : 'padding-top:14px;padding-bottom:4px');
-    if(dos) b += p(T('Su viaje tiene dos claves de reserva distintas: la clave de ida aparece en su vuelo de ida y la clave de regreso en su vuelo de regreso.', C ? 11 : fs, INK)); else b += key(u.lab, u.k); }
+    if(dos) b += p(T('Su viaje tiene dos claves de reserva distintas: la clave de ida aparece en su vuelo de ida y la clave de regreso en su vuelo de regreso.', C ? 11 : fs, INK)); else if(!r.ida && !r.reg && !r.c1 && !r.c2) b += p(T('Sus vuelos están en proceso de emisión. En cuanto estén confirmados verá aquí su clave de reserva y sus horarios.', C ? 11 : fs, INK)); else b += key(u.lab, u.k); }
   { const blkRows = rows => (rows || []).map(([k, v]) => `<tr><td valign="top" width="${C ? 104 : 120}" style="width:${C ? 104 : 120}px;padding:${C ? '0 6px 0 0' : '1px 8px 1px 0'}">${T(esc(k), C ? 10 : 12, MUT, 'bold')}</td><td style="padding:${C ? '0;line-height:1.25' : '1px 0;line-height:1.35'}">${T(esc(v).replace(B_HL, x => `<b style="color:${INK}">${x}</b>`), C ? 11 : 13, INK)}</td></tr>`).join('');
     const blk = (ic, t, inner) => `<tr><td style="padding:${C ? '3px 0' : '5px 0'}"><table width="100%" cellpadding="0" cellspacing="0"><tr><td bgcolor="#FFFFFF" style="background:#FFFFFF;border:1.5px solid #EBCB72;border-left:5px solid #E0A100;border-radius:8px;padding:${C ? '3px 9px' : '6px 11px'}">${T(ic + ' ' + esc(t.toUpperCase()), C ? 10 : 12, '#6B4A00', 'bold', 'Arial,sans-serif', 'letter-spacing:.5px')}<table cellpadding="0" cellspacing="0" style="margin-top:${C ? 1 : 2}px">${inner}</table></td></tr></table></td></tr>`;
     const verde = (tit, txt) => `<tr><td style="padding:${C ? '3px 0' : '5px 0'}"><table width="100%" cellpadding="0" cellspacing="0"><tr><td bgcolor="#E3F1E7" style="background:#E3F1E7;border:2px solid ${G};border-radius:8px;padding:${C ? '4px 10px;line-height:1.3' : '8px 12px;line-height:1.4'}">${T(tit, C ? 12 : 14, G, 'bold')}<br>${T(txt, C ? 12 : fs, INK)}</td></tr></table></td></tr>`;
@@ -1622,7 +1634,7 @@ async function itinPDFtexto(r){
     if(tr) bul(tr); else if(soloTierra(r)) bul('Traslado terrestre.');
     if(pe) bul(pe); }
   // Sede y agenda
-  head('Hospedaje en el hotel sede'); { const h = hotelInfo(r); h.lines.forEach(t => bul(t)); if(!soloTierra(r) && aplicaLlegada(r)) para('Recepción en el Aeropuerto de la Ciudad de México: ' + LLEGA_TXT, {b:1}); if(!soloTierra(r) && aplicaRegreso(r)) para('Tu vuelo de regreso: ' + REGRESO_TXT, {b:1}); if(h.nota) para(h.nota, {b:1}); }
+  { const h = hotelInfo(r); if(h.lines.length) head('Hospedaje en el hotel sede'); h.lines.forEach(t => bul(t)); if(!soloTierra(r) && aplicaLlegada(r)) para('Recepción en el Aeropuerto de la Ciudad de México: ' + LLEGA_TXT, {b:1}); if(!soloTierra(r) && aplicaRegreso(r)) para('Tu vuelo de regreso: ' + REGRESO_TXT, {b:1}); if(h.nota) para(h.nota, {b:1}); }
   const tierra = soloTierra(r);
   // Sin clima, código de vestimenta ni hotel sede (ya va en Sede del evento): solo lo útil para el viaje.
   const cards = [...document.querySelectorAll('#info .icard')].filter(c => !c.classList.contains('solo-vuelo') && !/clima|vestimenta|hotel sede/i.test((c.querySelector('.ik') || {}).textContent || ''));
@@ -1984,6 +1996,7 @@ function agItems(D){
             out.push([x[0], x[1], x[2], `Tu vuelo: ${v.v} · sale de ${AP[v.o] || v.o} a las ${v.s} h`, x[4], x[5]]); }
       else out.push(x); });
     return out; }
+  if(sel && sel.loc) return D.it.filter(x => !/^Llegadas for/.test(x[2]));
   if(!tierra) return D.it;
   return D.it.filter(x => !/aeropuerto/i.test(x[2] + ' ' + x[3]) && !/^Llegadas$/.test(x[2]))
     .map(x => /^Regreso a tu ciudad/.test(x[2]) ? [x[0], x[1], 'Regreso a tu ciudad de origen', 'Traslado terrestre: revisa tus indicaciones especiales', x[4], x[5]] : x);
@@ -2824,7 +2837,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 407;
+const APP_V = 408;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

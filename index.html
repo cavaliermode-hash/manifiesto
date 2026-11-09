@@ -904,7 +904,7 @@ main a:not([class]):hover,.foot a:hover{color:var(--acc)!important;text-decorati
     </div>
   </section>
   <section class="agenda ag-compact" id="agenda" aria-labelledby="ag-t">
-    <div class="ag-head"><div><h2 id="ag-t">Agenda del evento</h2><p>ConoceMet by MetLife · Torre Manacar, CDMX · Horarios en hora del centro de México · Clima 🌦️ 24° / 8°–9° · Dress code: smart casual</p></div></div>
+    <div class="ag-head"><div><h2 id="ag-t">Agenda del evento</h2><p>ConoceMet by MetLife · Torre Manacar, CDMX · Horarios en hora del centro de México · Clima 🌦️ 24° / 8°–9° · Dress code: smart casual</p></div><div class="ag-btns"><a class="ag-pdf" href="agenda-conocemet.jpg?v=409" id="ag-open">📄 Ver agenda completa</a><a class="ag-pdf" href="dresscode-conocemet.jpg?v=409" data-agv="dc">👕 Dress code y recomendaciones</a></div></div>
     <div class="ag-tabs" role="tablist" aria-label="Días del evento">
       <button role="tab" id="tab-3" aria-controls="day-3" data-day="3"><b>3</b><span>Jueves</span></button>
     </div>
@@ -916,7 +916,8 @@ main a:not([class]):hover,.foot a:hover{color:var(--acc)!important;text-decorati
       <div class="icard"><span class="ii" aria-hidden="true">📍</span><div><p class="ik">Sede</p><p class="iv">MetLife · Torre Manacar, piso 7 · Av. Insurgentes Sur 1457, esquina Río Mixcoac, Ciudad de México</p></div></div>
       <div class="icard"><span class="ii" aria-hidden="true">🏨</span><div><p class="ik">Hotel foráneos</p><p class="iv">Hotel NH T2 Aeropuerto (Terminal 2 del Aeropuerto de la Ciudad de México) · Check in 03 dic 15:00 hrs · Check out 04 dic 12:00 hrs</p></div></div>
       <div class="icard"><span class="ii" aria-hidden="true">🌦️</span><div><p class="ik">Clima</p><p class="iv"><b class="tmax">24°</b> máxima · <b class="tmin">8°–9°</b> mínima</p></div></div>
-      <div class="icard dress"><span class="ii" aria-hidden="true">👔</span><div><p class="ik">Código de vestimenta</p><p class="iv"><b>Smart casual</b></p></div></div>
+      <div class="icard dress"><span class="ii" aria-hidden="true">👔</span><div><p class="ik">Código de vestimenta y recomendaciones</p>
+        <ul><li><b>Smart casual:</b> pantalón de vestir o chino, camisa, blusa o polo; saco o blazer opcional; zapato cerrado cómodo. Evita shorts, sandalias y ropa deportiva.</li><li><b>Por la noche:</b> lleva chamarra o abrigo; la mínima es de 8°–9°.</li><li><b>Lluvia:</b> considera paraguas o impermeable.</li><li>Ten a la mano tu <b>identificación oficial</b>.</li></ul></div></div>
     </div>
   </section>
   <section data-solo-vuelo class="important" aria-labelledby="imp-t" hidden>
@@ -1515,7 +1516,8 @@ function waTxt(r){
   if(!tierra) L.push('_Horarios de vuelo en hora local de cada aeropuerto._');
   if(!tierra){ L.push('', '📌 *PUNTOS IMPORTANTES DE SU VUELO*'); document.querySelectorAll('section.important li').forEach(li => L.push('• ' + li.innerText.trim())); }
   L.push('',
-    '👔 *Dress code:* smart casual', '',
+    '🗓️ *Agenda del evento:*', base + 'agenda-conocemet.jpg?v=409', '',
+    '👕 *Dress code y recomendaciones:*', base + 'dresscode-conocemet.jpg?v=409', '',
     '🔎 *Consulta tu reserva cuando quieras:*', base, '',
     '*Importante.-* ' + impTxt(r).replace('MetLife', '*MetLife*'), '',
     'Le enviamos un cordial saludo deseándole un buen viaje y nos reiteramos a sus órdenes.', '', '*_Equipo de Coordinación de Viajes_*');
@@ -1957,8 +1959,8 @@ $('#agv-dl').addEventListener('click', async () => { const r = AGV_R, b = $('#ag
 function agvClose(){ AGV_R = null; $('#agv').classList.remove('vue'); $('#agv').hidden = true; $('#agv-dl').hidden = true; $('#agv-wait').hidden = true; $('#agv-img').hidden = false; document.body.style.overflow = ''; const o = $('#ag-open'); if(o) o.focus({preventScroll:true}); }
 document.addEventListener('click', e => { const a = e.target.closest('#ag-open, [data-agv]'); if(!a) return; e.preventDefault();
   const img = $('#agv-img'), dc = a.dataset.agv === 'dc'; AGV_R = null; $('#agv').classList.remove('vue'); $('#agv-dl').hidden = true; $('#agv-wait').hidden = true; img.hidden = false;
-  img.alt = 'Agenda del evento';
-  img.src = dc ? 'dresscode-cumbre.jpg?v=349' : 'agenda-cumbre.jpg?v=349';
+  img.alt = dc ? 'Dress code y recomendaciones de ConoceMet by MetLife' : 'Agenda de ConoceMet by MetLife, jueves 3 de diciembre';
+  img.src = dc ? 'dresscode-conocemet.jpg?v=409' : 'agenda-conocemet.jpg?v=409';
   agvShow(dc ? 'Dress code y recomendaciones' : 'Agenda del evento'); });
 $('#agv-img').addEventListener('click', e => { const bd = $('.agv-body'), r = e.target.getBoundingClientRect(), fx = (e.clientX - r.left) / r.width, fy = (e.clientY - r.top) / r.height;
   bd.classList.toggle('zoom'); if(bd.classList.contains('zoom')){ const im = e.target; bd.scrollLeft = fx * im.offsetWidth - bd.clientWidth / 2; bd.scrollTop = fy * im.offsetHeight - bd.clientHeight / 2; } });
@@ -1969,14 +1971,14 @@ const AGENDA = {
   3:{d:'Jueves 3 de diciembre', f:'2026-12-03', it:[
     ['','','Llegadas foráneos','Aeropuerto de la Ciudad de México · localiza el logo de MetLife','', 'Por la mañana'],
     ['12:00','','Cita participantes locales','MetLife Torre Manacar'],
-    ['12:00','12:30','Recepción y bienvenida','Piso 7 · Torre Manacar'],
+    ['12:00','12:30','Recepción y bienvenida','Piso 7 · Torre Manacar','','', 'Smart casual: pantalón de vestir o chino, camisa, blusa o polo; saco o blazer opcional.', 'Ten a la mano tu identificación oficial.'],
     ['12:30','15:00','Sesión de trabajo',''],
     ['15:00','16:00','Comida',''],
     ['16:00','18:55','Sesión de trabajo',''],
     ['18:55','19:40','Traslado a la actividad','',1],
-    ['20:00','21:30','Actividad',''],
+    ['20:00','21:30','Actividad','','','', 'Smart casual (la misma ropa del día).', 'Chamarra o abrigo: por la noche la temperatura baja a 8°–9°. Considera paraguas.'],
     ['21:30','21:45','Traslado a cena','',1],
-    ['21:45','23:00','Cena',''],
+    ['21:45','23:00','Cena','','','', 'Smart casual.', 'Chamarra o abrigo.'],
     ['23:00','','Traslados','A Torre Manacar y al Hotel NH T2 Aeropuerto',1]]}
 };
 const ENS = -6; // Ciudad de México: UTC-6 todo el año
@@ -2837,7 +2839,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 408;
+const APP_V = 409;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

@@ -1388,11 +1388,8 @@ function mailHTML(r, enPDF){
   const G = '#136c34', G1 = '#D7EBDD', G2 = '#E6F3EA', HB = '#D7EBDD', ON = '#0F3D22';
   const tierra = soloTierra(r), dos = !!(r.ci && r.cr && r.ci !== r.cr), WEB = enPDF === 'web', C = enPDF === true; // C: PDF compacto · WEB: solo el itinerario para la página
   const fs = C ? 12 : 14, pv = C ? 4 : 8; // tamaño de texto y espacio vertical
-  const EM = !C && !WEB, FF = EM ? 'Calibri,Arial,sans-serif' : FF; // correo: Calibri 11
-  const U = px => EM ? (px === 14 ? '11pt' : Math.round(px * 11 / 14 * 2) / 2 + 'pt') : px + 'px';
   // Además del estilo, cada texto va dentro de <font color/face/size>: Outlook conserva esas etiquetas al pegar aunque quite los estilos.
   const fsz = px => px >= 20 ? 5 : px >= 17 ? 4 : px >= 14 ? 3 : px >= 12 ? 2 : 1;
-<<<<<<< Updated upstream
   const MAIL11 = !C && !WEB; // Correo (Outlook): todo el texto en Calibri 11 pt, como el resto del correo
   const T = (t, sz = fs, c = INK, w = 'normal', fam = 'Arial,sans-serif', extra = '') => { if(MAIL11) fam = 'Calibri,Arial,sans-serif'; let x = `<font color="${c}" face="${fam.split(',')[0].replace(/'/g, '')}" size="${MAIL11 ? 2 : fsz(sz)}"><span style="font-family:${fam};font-size:${MAIL11 ? '11pt' : sz + 'px'};font-weight:${w};color:${c};${extra}">${t}</span></font>`; return w === 'bold' ? `<b>${x}</b>` : x; };
   const W = (t, sz = 13, w = 'normal', extra = '') => T(t, sz, ON, w, 'Arial,sans-serif', extra); // texto sobre fondo verde
@@ -1401,20 +1398,11 @@ function mailHTML(r, enPDF){
   const caja = (tit, inner) => `<tr><td style="padding:${C ? '6px 0 2px' : '12px 0 4px'}"><table width="100%" cellpadding="0" cellspacing="0"><tr><td bgcolor="#FFFBEF" style="background:#FFFBEF;border:1.5px solid #F2D58A;border-radius:12px;padding:${C ? '6px 10px' : '12px 14px'}">${T(esc(tit.toUpperCase()), C ? 12 : 15, '#6B4A00', 'bold', 'Arial,sans-serif', 'letter-spacing:.6px')}<table width="100%" cellpadding="0" cellspacing="0" style="margin-top:${C ? 2 : 6}px">${inner}</table></td></tr></table></td></tr>`;
   const p = (t, st = '') => `<tr><td style="font-family:${MAIL11 ? 'Calibri,Arial,sans-serif' : 'Arial,sans-serif'};font-size:${MAIL11 ? '11pt' : fs + 'px'};line-height:${C ? 1.3 : 1.45};${C ? 'padding:1px 4px;' : ''}color:${INK};${st}">${t}</td></tr>`;
   const key = (lab, v) => `<tr><td style="padding:${C ? '2px 0' : '6px 0'}"><table cellpadding="${C ? 3 : 6}" cellspacing="0"><tr><td bgcolor="${HB}" style="background:${HB};border:2px solid ${G};border-radius:8px;padding:${C ? '3px 10px' : '6px 12px'}">${W(lab.toUpperCase(), C ? 11 : 12, 'bold', 'letter-spacing:.5px')}&nbsp;&nbsp;${T(esc(v), C ? 15 : 18, ON, 'bold', "'Courier New',monospace", 'letter-spacing:2px')}</td></tr></table></td></tr>`;
-=======
-  const T = (t, sz = fs, c = INK, w = 'normal', fam = FF, extra = '') => { let x = `<font color="${c}" face="${fam.split(',')[0].replace(/'/g, '')}" size="${fsz(sz)}"><span style="font-family:${fam};font-size:${U(sz)};font-weight:${w};color:${c};${extra}">${t}</span></font>`; return w === 'bold' ? `<b>${x}</b>` : x; };
-  const W = (t, sz = 13, w = 'normal', extra = '') => T(t, sz, ON, w, FF, extra); // texto sobre fondo verde
-  const M = (t, sz = 22) => T(t, sz, INK, 'bold', (EM ? FF : "'Courier New',monospace"));
-  const h2 = t => `<tr data-h="1"><td style="padding:${C ? '9px 0 2px' : '16px 0 6px'}"><table cellpadding="0" cellspacing="0"><tr><td width="4" bgcolor="${G}" style="background:${G};width:4px">&nbsp;</td><td style="padding-left:8px">${T(t.toUpperCase(), C ? 12 : 14, G, 'bold', FF, 'letter-spacing:.5px')}</td></tr></table></td></tr>`;
-  const caja = (tit, inner) => `<tr><td style="padding:${C ? '6px 0 2px' : '12px 0 4px'}"><table width="100%" cellpadding="0" cellspacing="0"><tr><td bgcolor="#FFFBEF" style="background:#FFFBEF;border:1.5px solid #F2D58A;border-radius:12px;padding:${C ? '6px 10px' : '12px 14px'}">${T(esc(tit.toUpperCase()), C ? 12 : 15, '#6B4A00', 'bold', FF, 'letter-spacing:.6px')}<table width="100%" cellpadding="0" cellspacing="0" style="margin-top:${C ? 2 : 6}px">${inner}</table></td></tr></table></td></tr>`;
-  const p = (t, st = '') => `<tr><td style="font-family:${FF};font-size:${U(fs)};line-height:${C ? 1.3 : 1.45};${C ? 'padding:1px 4px;' : ''}color:${INK};${st}">${t}</td></tr>`;
-  const key = (lab, v) => `<tr><td style="padding:${C ? '2px 0' : '6px 0'}"><table cellpadding="${C ? 3 : 6}" cellspacing="0"><tr><td bgcolor="${HB}" style="background:${HB};border:2px solid ${G};border-radius:8px;padding:${C ? '3px 10px' : '6px 12px'}">${W(lab.toUpperCase(), C ? 11 : 12, 'bold', 'letter-spacing:.5px')}&nbsp;&nbsp;${T(esc(v), C ? 15 : 18, ON, 'bold', (EM ? FF : "'Courier New',monospace"), 'letter-spacing:2px')}</td></tr></table></td></tr>`;
->>>>>>> Stashed changes
   const card = (title, legs, fill, sinTitulo) => { legs = legs.filter(Boolean); if(!legs.length) return '';
     let rows = `<tr><td bgcolor="${fill}" style="background:${fill};padding:${pv}px 12px" colspan="2">${W(esc(fmtDate(legs[0].f)), 13)}${sinTitulo ? '' : '&nbsp;&nbsp;' + W(title.toUpperCase(), 13, 'bold', 'letter-spacing:1px')}&nbsp;&nbsp;${W(esc(cityOf(legs[0].o)) + ' &rarr; ' + esc(cityOf(legs[legs.length-1].d)), 13)}</td></tr>`;
     legs.forEach((l, i) => {
       if(i > 0){ const w = Math.round((when(l,'s') - when(legs[i-1],'l')) / 60000);
-        rows += `<tr><td colspan="2" align="center" style="text-align:center;padding:4px">${T('Conexión en ' + esc(cityOf(l.o)) + (w > 0 ? ' · ' + durTxt(w) : ''), 12, MUT, 'normal', FF, 'background:#F0F8F2;padding:3px 10px')}</td></tr>`; }
+        rows += `<tr><td colspan="2" align="center" style="text-align:center;padding:4px">${T('Conexión en ' + esc(cityOf(l.o)) + (w > 0 ? ' · ' + durTxt(w) : ''), 12, MUT, 'normal', 'Arial,sans-serif', 'background:#F0F8F2;padding:3px 10px')}</td></tr>`; }
       rows += `<tr><td bgcolor="${fill}" width="130" style="background:${fill};padding:${pv}px 12px;width:130px;vertical-align:middle">${W(esc(l.v), 13, 'bold')}</td>
         <td style="padding:${pv}px 14px"><table width="100%" cellpadding="0" cellspacing="0"><tr>
           <td>${M(esc(l.s || '-'), C ? 18 : 22)}<br>${T(esc(l.o), 12, INK, 'bold')} ${T(esc(cityOf(l.o)), 12, MUT)}</td>
@@ -1441,9 +1429,9 @@ function mailHTML(r, enPDF){
   if(!tierra && !(WEB && viajeHecho(r))){ const u = claveUna(r); b += p(T('Datos de su reservación aérea', C ? 14 : 16, G, 'bold'), C ? 'padding-top:8px;padding-bottom:2px' : 'padding-top:14px;padding-bottom:4px');
     if(dos) b += p(T('Su viaje tiene dos claves de reserva distintas: la clave de ida aparece en su vuelo de ida y la clave de regreso en su vuelo de regreso.', C ? 11 : fs, INK)); else if(!r.ida && !r.reg && !r.c1 && !r.c2) b += p(T('Sus vuelos están en proceso de emisión. En cuanto estén confirmados verá aquí su clave de reserva y sus horarios.', C ? 11 : fs, INK)); else b += key(u.lab, u.k); }
   { const blkRows = rows => (rows || []).map(([k, v]) => `<tr><td valign="top" width="${C ? 104 : 120}" style="width:${C ? 104 : 120}px;padding:${C ? '0 6px 0 0' : '1px 8px 1px 0'}">${T(esc(k), C ? 10 : 12, MUT, 'bold')}</td><td style="padding:${C ? '0;line-height:1.25' : '1px 0;line-height:1.35'}">${T(esc(v).replace(B_HL, x => `<b style="color:${INK}">${x}</b>`), C ? 11 : 13, INK)}</td></tr>`).join('');
-    const blk = (ic, t, inner) => `<tr><td style="padding:${C ? '3px 0' : '5px 0'}"><table width="100%" cellpadding="0" cellspacing="0"><tr><td bgcolor="#FFFFFF" style="background:#FFFFFF;border:1.5px solid #EBCB72;border-left:5px solid #E0A100;border-radius:8px;padding:${C ? '3px 9px' : '6px 11px'}">${T(ic + ' ' + esc(t.toUpperCase()), C ? 10 : 12, '#6B4A00', 'bold', FF, 'letter-spacing:.5px')}<table cellpadding="0" cellspacing="0" style="margin-top:${C ? 1 : 2}px">${inner}</table></td></tr></table></td></tr>`;
+    const blk = (ic, t, inner) => `<tr><td style="padding:${C ? '3px 0' : '5px 0'}"><table width="100%" cellpadding="0" cellspacing="0"><tr><td bgcolor="#FFFFFF" style="background:#FFFFFF;border:1.5px solid #EBCB72;border-left:5px solid #E0A100;border-radius:8px;padding:${C ? '3px 9px' : '6px 11px'}">${T(ic + ' ' + esc(t.toUpperCase()), C ? 10 : 12, '#6B4A00', 'bold', 'Arial,sans-serif', 'letter-spacing:.5px')}<table cellpadding="0" cellspacing="0" style="margin-top:${C ? 1 : 2}px">${inner}</table></td></tr></table></td></tr>`;
     const verde = (tit, txt) => `<tr><td style="padding:${C ? '3px 0' : '5px 0'}"><table width="100%" cellpadding="0" cellspacing="0"><tr><td bgcolor="#E3F1E7" style="background:#E3F1E7;border:2px solid ${G};border-radius:8px;padding:${C ? '4px 10px;line-height:1.3' : '8px 12px;line-height:1.4'}">${T(tit, C ? 12 : 14, G, 'bold')}<br>${T(txt, C ? 12 : fs, INK)}</td></tr></table></td></tr>`;
-    const dia = f => `<tr><td style="padding:${C ? '8px 0 2px' : '14px 0 4px'}"><table width="100%" cellpadding="0" cellspacing="0"><tr><td bgcolor="#EAF5EE" style="background:#EAF5EE;border-left:5px solid ${G};border-radius:6px;padding:${C ? '4px 10px' : '7px 12px'}">${T('📅 ' + (f ? fLarga(f).toUpperCase() : 'INDICACIONES'), C ? 13 : 15, ON, 'bold', FF, 'letter-spacing:.6px')}</td></tr></table></td></tr>`;
+    const dia = f => `<tr><td style="padding:${C ? '8px 0 2px' : '14px 0 4px'}"><table width="100%" cellpadding="0" cellspacing="0"><tr><td bgcolor="#EAF5EE" style="background:#EAF5EE;border-left:5px solid ${G};border-radius:6px;padding:${C ? '4px 10px' : '7px 12px'}">${T('📅 ' + (f ? fLarga(f).toUpperCase() : 'INDICACIONES'), C ? 13 : 15, ON, 'bold', 'Arial,sans-serif', 'letter-spacing:.6px')}</td></tr></table></td></tr>`;
     b += h2('Su itinerario día por día');
     let fa = null;
     /* En la página: solo lo que está sucediendo hoy o por suceder (los días pasados y los vuelos de hoy que ya aterrizaron se quitan) */
@@ -1467,8 +1455,8 @@ function mailHTML(r, enPDF){
     b += `<tr><td bgcolor="#F0F8F2" style="background:#F0F8F2;border-left:4px solid ${G};padding:${C ? '5px 12px' : '10px 14px'}"><table cellpadding="0" cellspacing="0">${pts}</table></td></tr>`; }
   b += `<tr><td style="padding-top:${C ? 6 : 12}px"><table width="100%" cellpadding="0" cellspacing="0"><tr><td bgcolor="#FFF7E6" style="background:#FFF7E6;border-left:4px solid #E0A100;padding:${C ? '5px 12px;line-height:1.25' : '10px 14px'}">${T('Importante.- ' + impTxt(r), C ? 11 : fs, INK, 'bold')}</td></tr></table></td></tr>`;
   // (sin botón de PDF en el correo)
-  if(C) b += p(T('Le enviamos un cordial saludo deseándole un buen viaje y nos reiteramos a sus órdenes.', 11) + '&nbsp;&nbsp;' + T('Equipo de Coordinación de Viajes', 11, G, 'bold', FF, 'font-style:italic'), 'padding-top:4px');
-  else b += p(T('Le enviamos un cordial saludo deseándole un buen viaje y nos reiteramos a sus órdenes.')) + p(T('Equipo de Coordinación de Viajes', fs, G, 'bold', FF, 'font-style:italic'), C ? 'padding-top:2px;padding-bottom:4px' : 'padding-top:6px;padding-bottom:10px');
+  if(C) b += p(T('Le enviamos un cordial saludo deseándole un buen viaje y nos reiteramos a sus órdenes.', 11) + '&nbsp;&nbsp;' + T('Equipo de Coordinación de Viajes', 11, G, 'bold', 'Arial,sans-serif', 'font-style:italic'), 'padding-top:4px');
+  else b += p(T('Le enviamos un cordial saludo deseándole un buen viaje y nos reiteramos a sus órdenes.')) + p(T('Equipo de Coordinación de Viajes', fs, G, 'bold', 'Arial,sans-serif', 'font-style:italic'), C ? 'padding-top:2px;padding-bottom:4px' : 'padding-top:6px;padding-bottom:10px');
   // PDF: 640 px fijos (cabe en una hoja). Correo: a lo ancho de la ventana del correo, hasta 1000 px, para leerse mejor.
   return C ? `<table width="100%" cellpadding="4" cellspacing="0" style="width:100%;font-family:Arial,sans-serif;background:#ffffff">${b}</table>`
     : `<table width="100%" cellpadding="4" cellspacing="0" style="width:100%;max-width:1000px;font-family:Calibri,Arial,sans-serif;font-size:11pt;background:#ffffff">${b}</table>`;
@@ -2852,7 +2840,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 411;
+const APP_V = 412;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

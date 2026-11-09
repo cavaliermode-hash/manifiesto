@@ -904,7 +904,7 @@ main a:not([class]):hover,.foot a:hover{color:var(--acc)!important;text-decorati
     </div>
   </section>
   <section class="agenda ag-compact" id="agenda" aria-labelledby="ag-t">
-    <div class="ag-head"><div><h2 id="ag-t">Agenda del evento</h2><p>ConoceMet by MetLife · Torre Manacar, CDMX · Horarios en hora del centro de México · Clima 🌦️ 24° / 8°–9° · Dress code: smart casual</p></div><div class="ag-btns"><a class="ag-pdf" href="agenda-conocemet.jpg?v=409" id="ag-open">📄 Ver agenda completa</a><a class="ag-pdf" href="dresscode-conocemet.jpg?v=409" data-agv="dc">👕 Dress code y recomendaciones</a></div></div>
+    <div class="ag-head"><div><h2 id="ag-t">Agenda del evento</h2><p>ConoceMet by MetLife · Torre Manacar, CDMX · Horarios en hora del centro de México · Clima 🌦️ 24° / 8°–9° · Dress code: smart casual</p></div><div class="ag-btns"><a class="ag-pdf" href="agenda-conocemet.jpg?v=410" id="ag-open">📄 Ver agenda completa</a><a class="ag-pdf" href="dresscode-conocemet.jpg?v=410" data-agv="dc">👕 Información general y dress code</a></div></div>
     <div class="ag-tabs" role="tablist" aria-label="Días del evento">
       <button role="tab" id="tab-3" aria-controls="day-3" data-day="3"><b>3</b><span>Jueves</span></button>
     </div>
@@ -1516,8 +1516,8 @@ function waTxt(r){
   if(!tierra) L.push('_Horarios de vuelo en hora local de cada aeropuerto._');
   if(!tierra){ L.push('', '📌 *PUNTOS IMPORTANTES DE SU VUELO*'); document.querySelectorAll('section.important li').forEach(li => L.push('• ' + li.innerText.trim())); }
   L.push('',
-    '🗓️ *Agenda del evento:*', base + 'agenda-conocemet.jpg?v=409', '',
-    '👕 *Dress code y recomendaciones:*', base + 'dresscode-conocemet.jpg?v=409', '',
+    '🗓️ *Agenda del evento:*', base + 'agenda-conocemet.jpg?v=410', '',
+    '👕 *Información general y dress code:*', base + 'dresscode-conocemet.jpg?v=410', '',
     '🔎 *Consulta tu reserva cuando quieras:*', base, '',
     '*Importante.-* ' + impTxt(r).replace('MetLife', '*MetLife*'), '',
     'Le enviamos un cordial saludo deseándole un buen viaje y nos reiteramos a sus órdenes.', '', '*_Equipo de Coordinación de Viajes_*');
@@ -1960,8 +1960,8 @@ function agvClose(){ AGV_R = null; $('#agv').classList.remove('vue'); $('#agv').
 document.addEventListener('click', e => { const a = e.target.closest('#ag-open, [data-agv]'); if(!a) return; e.preventDefault();
   const img = $('#agv-img'), dc = a.dataset.agv === 'dc'; AGV_R = null; $('#agv').classList.remove('vue'); $('#agv-dl').hidden = true; $('#agv-wait').hidden = true; img.hidden = false;
   img.alt = dc ? 'Dress code y recomendaciones de ConoceMet by MetLife' : 'Agenda de ConoceMet by MetLife, jueves 3 de diciembre';
-  img.src = dc ? 'dresscode-conocemet.jpg?v=409' : 'agenda-conocemet.jpg?v=409';
-  agvShow(dc ? 'Dress code y recomendaciones' : 'Agenda del evento'); });
+  img.src = dc ? 'dresscode-conocemet.jpg?v=410' : 'agenda-conocemet.jpg?v=410';
+  agvShow(dc ? 'Información general y dress code' : 'Agenda del evento'); });
 $('#agv-img').addEventListener('click', e => { const bd = $('.agv-body'), r = e.target.getBoundingClientRect(), fx = (e.clientX - r.left) / r.width, fy = (e.clientY - r.top) / r.height;
   bd.classList.toggle('zoom'); if(bd.classList.contains('zoom')){ const im = e.target; bd.scrollLeft = fx * im.offsetWidth - bd.clientWidth / 2; bd.scrollTop = fy * im.offsetHeight - bd.clientHeight / 2; } });
 $('#agv-back').addEventListener('click', () => { if(history.state && history.state.agv) history.back(); else agvClose(); });
@@ -2839,7 +2839,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 409;
+const APP_V = 410;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

@@ -1513,13 +1513,11 @@ function invHTML(r){
   const F = 'font-family:Calibri,Arial,sans-serif;font-size:11pt;color:#16301F;line-height:1.4', G = '#136c34';
   const P = t => `<p style="margin:0 0 10px;${F}"><font face="Calibri">${t}</font></p>`;
   const H = t => `<p style="margin:14px 0 6px;${F};font-weight:bold;color:${G}"><font face="Calibri" color="${G}"><b>${t}</b></font></p>`;
-  const UL = a => `<ul style="margin:0 0 10px 18px;padding:0;${F}">${a.map(x => `<li style="margin:0 0 4px;${F}"><font face="Calibri">${x}</font></li>`).join('')}</ul>`;
+  const UL = a => a.map(x => `<p style="margin:0 0 4px;text-align:left;${F}"><font face="Calibri">•&nbsp;${x}</font></p>`).join('') + `<p style="margin:0 0 6px;${F}">&nbsp;</p>`; // viñetas como texto: alineadas a la izquierda al pegar en Outlook
   return `<div style="${F}">` +
     P(`Estimado(a) <b>${esc(r.n)}</b>`) +
     P('Por medio del presente, tenemos el gusto de invitarle a <b>ConoceMet by MetLife</b>, que se llevará a cabo el <b>jueves 3 de diciembre de 2026</b> en <b>MetLife Torre Manacar, piso 7</b> (Av. Insurgentes Sur 1457, esquina Río Mixcoac, Ciudad de México).') +
     H('Para su participación le estamos considerando') + UL(invPartes(r)) +
-    H('Agenda del evento · jueves 3 de diciembre') +
-    UL(['12:00 h · Cita participantes locales', '12:00 – 12:30 h · Recepción y bienvenida (piso 7)', '12:30 – 18:55 h · Sesiones de trabajo y comida', '20:00 – 23:00 h · Actividad y cena', '23:00 h · Traslados a Torre Manacar y al Hotel NH T2 Aeropuerto']) +
     P('<b>Código de vestimenta:</b> smart casual. <b>Clima:</b> 24° máxima y 8°–9° mínima, con probabilidad de lluvia; le recomendamos llevar chamarra o abrigo.') +
     P('Le agradeceremos <b>confirmar su asistencia</b> respondiendo a este correo. Una vez confirmada, le compartiremos su itinerario con sus claves de reserva e información importante.') +
     P('Le enviamos un cordial saludo y nos reiteramos a sus órdenes.') +
@@ -2886,7 +2884,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 420;
+const APP_V = 421;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

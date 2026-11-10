@@ -929,7 +929,7 @@ main a:not([class]):hover,.foot a:hover{color:var(--acc)!important;text-decorati
       <li><b>Qué necesita llevar:</b> una <b>identificación oficial vigente</b> (INE o pasaporte) <b>con el mismo nombre de su reserva</b>, y su <b>clave de reserva o pase de abordar</b>.</li>
     </ul>
   </section>
-  <div class="dcierre" id="cierre" hidden><p class="dimp"><b id="dimp-t">Importante.- Le recordamos que MetLife cubre únicamente las noches de hotel y traslados terrestres que estén dentro del evento o por ruta.</b></p>
+  <div class="dcierre" id="cierre" hidden><p class="dimp"><b id="dimp-t">Importante.- Le recordamos que MetLife cubre las pernoctas y/o traslados terrestres necesarios, siempre que este aplique, dentro de las fechas del evento.</b></p>
     <p class="dbye">Le enviamos un cordial saludo deseándole un buen viaje y nos reiteramos a sus órdenes.&nbsp;&nbsp;<b><i>Equipo de Coordinación de Viajes</i></b></p></div>
   <section class="faq" aria-labelledby="faq-t">
     <h2 id="faq-t">Preguntas frecuentes</h2>
@@ -1061,8 +1061,8 @@ const MESL = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto',
 const fLarga = iso => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || ''); if(!m) return iso || ''; const d = new Date(Date.UTC(+m[1], m[2]-1, +m[3])); return `${DIAL[d.getUTCDay()]} ${+m[3]} de ${MESL[m[2]-1]}`; };
 /* Locales de Hermosillo que llegan por su cuenta (con estacionamiento): MetLife solo cubre las noches de hotel */
 const esLocal = r => (r.notas || []).some(n => n.k === 'tr' && /por tu cuenta/i.test(n.t) && /estacionamiento/i.test(n.t));
-const impTxt = r => r.loc ? 'Le recordamos que su llegada y regreso a la sede del evento son por su cuenta.' : esLocal(r) ? 'Le recordamos que MetLife cubre únicamente las noches de hotel.' : 'Le recordamos que MetLife cubre únicamente las noches de hotel y traslados terrestres que estén dentro del evento o por ruta.';
-const MET = 'Le recordamos que MetLife cubre únicamente las noches de hotel y traslados terrestres que estén dentro del evento.';
+const impTxt = r => r.loc ? 'Le recordamos que su llegada y regreso a la sede del evento son por su cuenta.' : esLocal(r) ? 'Le recordamos que MetLife cubre únicamente las noches de hotel.' : 'Le recordamos que MetLife cubre las pernoctas y/o traslados terrestres necesarios, siempre que este aplique, dentro de las fechas del evento.';
+const MET = 'Le recordamos que MetLife cubre las pernoctas y/o traslados terrestres necesarios, siempre que este aplique, dentro de las fechas del evento.';
 // Excepciones confirmadas por el equipo (noches adicionales pagadas por el invitado, etc.)
 const HOTEL_EXC = {};
 /* Recepción en el aeropuerto de Hermosillo (logo de MetLife): solo si su vuelo llega a Hermosillo dentro de las fechas del evento (3 al 5 nov). */
@@ -2887,7 +2887,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 426;
+const APP_V = 427;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

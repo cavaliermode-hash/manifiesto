@@ -1509,6 +1509,7 @@ function invPartes(r){
   return L;
 }
 const fDia = f => { if(!f) return ''; const d = new Date(f + 'T12:00:00'); return ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'][d.getDay()] + ' ' + d.getDate() + ' ' + ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'][d.getMonth()]; };
+const conVueloInv = r => !r.loc && !!(r.vu || r.ida || r.reg || r.c1 || r.c2);
 function invHTML(r){
   const F = 'font-family:Calibri,Arial,sans-serif;font-size:11pt;color:#16301F;line-height:1.4', G = '#136c34';
   const P = t => `<p style="margin:0 0 10px;${F}"><font face="Calibri">${t}</font></p>`;
@@ -1518,8 +1519,12 @@ function invHTML(r){
     P(`Estimado(a) <b>${esc(r.n)}</b>`) +
     P('Por medio del presente, tenemos el gusto de invitarle a <b>ConoceMet by MetLife</b>, que se llevará a cabo el <b>jueves 3 de diciembre de 2026</b> en <b>MetLife Torre Manacar, piso 7</b> (Av. Insurgentes Sur 1457, esquina Río Mixcoac, Ciudad de México).') +
     H('Para su participación le estamos considerando') + UL(invPartes(r)) +
-    P('<b>Código de vestimenta:</b> smart casual. <b>Clima:</b> 24° máxima y 8°–9° mínima, con probabilidad de lluvia; le recomendamos llevar chamarra o abrigo.') +
-    P('Le agradeceremos <b>confirmar su asistencia</b> respondiendo a este correo. Una vez confirmada, le compartiremos su itinerario con sus claves de reserva e información importante.') +
+    (conVueloInv(r)
+      ? P('Si desea realizar algún cambio de fecha u horario posterior a su confirmación, esto generará un <b>cargo por cambio</b> y posiblemente <b>diferencia de tarifa</b>, los cuales tendrán que ser cubiertos por su parte.') +
+        P('Le recordamos que <b>MetLife</b> cubre únicamente las noches de hotel y traslados terrestres que estén dentro del evento.') +
+        P('Esperamos su validación respondiendo con la siguiente leyenda: <b>“Estoy de acuerdo con el itinerario de vuelo, proceder con la compra”</b>.')
+      : (r.loc ? '' : P('Le recordamos que <b>MetLife</b> cubre únicamente las noches de hotel y traslados terrestres que estén dentro del evento.')) +
+        P('Esperamos su <b>confirmación de asistencia</b> respondiendo a este correo.')) +
     P('Le enviamos un cordial saludo y nos reiteramos a sus órdenes.') +
     `<p style="margin:0;${F};font-weight:bold;font-style:italic;color:${G}"><font face="Calibri" color="${G}"><b><i>Equipo de Coordinación de Viajes</i></b></font></p></div>`;
 }
@@ -2884,7 +2889,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 421;
+const APP_V = 422;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

@@ -577,8 +577,8 @@ header.board #upd:not(:empty)::before{content:" · "}
   background:radial-gradient(120% 140% at 100% 0%,#FFF1E8 0%,rgba(255,241,232,0) 45%),linear-gradient(135deg,#E6F2EA 0%,#F7FAF8 70%);box-shadow:0 8px 24px rgba(19,108,52,.07)}
 .h3eye{display:inline-block;font:700 12px var(--body);letter-spacing:.12em;text-transform:uppercase;color:var(--acc,#C2410C)}
 .h3t{margin:0 0 8px;font:700 clamp(26px,4.2vw,38px)/1.05 var(--display);color:var(--green-dark);letter-spacing:-.01em;text-wrap:balance}
-.hero3 p{margin:0 auto;color:var(--ink);font-size:15.5px;line-height:1.55;max-width:none;text-align:justify;text-align-last:center}
-.hero3 .h3t{text-align:center}
+.hero3 p{margin:0;color:var(--ink);font-size:15.5px;line-height:1.55;max-width:none;text-align:left}
+.hero3 .h3t{text-align:left}
 .h3chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
 .h3chips span{font:600 13px var(--body);background:#fff;border:1px solid var(--line);border-radius:99px;padding:5px 11px;color:var(--green-dark)}
 .h3art{width:100%;height:auto;max-width:220px;justify-self:end}
@@ -2840,7 +2840,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 413;
+const APP_V = 414;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

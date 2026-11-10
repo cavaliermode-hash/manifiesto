@@ -1501,6 +1501,7 @@ function invPartes(r){
     L.push(`<b>Traslado terrestre</b> desde ${esc(tcase(r.tc))} a la sede del evento (punto de encuentro y horario por confirmar).`);
   } else {
     L.push(`<b>Vuelo redondo</b>${org ? ' desde ' + esc(org) : ' desde su ciudad de origen'} a la Ciudad de México.` + (ida.length || reg.length ? ' Propuesta de vuelos:<br>&nbsp;<br>&nbsp;' : ' Su vuelo se encuentra en proceso de emisión.'));
+    L.push('<b>Boleto de avión</b> en clase turista.', '<b>Equipaje de mano</b> en cabina, máximo 15 kg.', '<b>Equipaje documentado</b>, máximo 25 kg.', '<b>Asientos asignados</b>.');
     L.push('<b>Recepción</b> a su llegada al Aeropuerto de la Ciudad de México y <b>traslados</b> al evento.');
   }
   if(tieneHotel(r)) L.push(`<b>Hospedaje</b> 1 noche en el ${esc(HOTEL.n)} (check in 3 de diciembre · check out 4 de diciembre).`);
@@ -2887,7 +2888,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 427;
+const APP_V = 428;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

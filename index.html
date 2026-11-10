@@ -1081,7 +1081,7 @@ function aplicaLlegada(r){ const ida = [r.c1, r.ida].filter(Boolean), l = ida.fi
 function hotelInfo(r){
   if(HOTEL_EXC[r.n]) return HOTEL_EXC[r.n];
   if(!tieneHotel(r)) return {lines: [], nota: ''};
-  const lines = [`Reservación por 1 noche en el ${HOTEL.n}. Dirección: ${HOTEL.dir}`, 'Check in: 03 diciembre, 15:00 hrs.', 'Check out: 04 diciembre, 12:00 hrs.'];
+  const lines = [`Reservación por 1 noche en el ${HOTEL.n}. Dirección: ${HOTEL.dir}`, 'Check in: 03 diciembre, 15:00 hrs.', 'Check out: 04 diciembre, 12:00 hrs.', `Resguardo de equipaje: a su llegada a la Ciudad de México, su equipaje será resguardado en el ${HOTEL.n}, donde se hospedará, para su mayor comodidad en el desplazamiento a la sede del evento; se le entregará a su regreso al hotel.`];
   const ida = [r.c1, r.ida].filter(Boolean), reg = [r.reg, r.c2].filter(Boolean);
   const lleg = ida.find(l => l.d === EV_AP) || ida[ida.length - 1], sal = reg.find(l => l.o === EV_AP) || reg[0];
   const notas = [];
@@ -2886,7 +2886,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 418;
+const APP_V = 419;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

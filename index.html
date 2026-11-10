@@ -869,7 +869,7 @@ main a:not([class]):hover,.foot a:hover{color:var(--acc)!important;text-decorati
 <div class="wrap qhint-w"><div id="qhint" class="qhint hero3" hidden>
   <div class="h3txt">
     <h2 class="h3t">Consulta tu itinerario</h2>
-    <p><b>Escribe tu nombre completo</b> (nombres y apellidos) para ver tus vuelos, traslados y hospedaje. Por seguridad solo aparece tu reserva si el nombre coincide completo; los acentos no importan.</p>
+    <p><b>Escribe tu nombre completo</b> (nombres y apellidos) para ver tus vuelos, traslados y hospedaje.</p>
   </div>
 </div></div>
 <div class="controls">
@@ -2840,7 +2840,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 412;
+const APP_V = 413;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

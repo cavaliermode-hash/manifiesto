@@ -1524,8 +1524,7 @@ function invHTML(r){
         P('Le recordamos que <b>MetLife</b> cubre únicamente las noches de hotel y traslados terrestres que estén dentro del evento.') +
         P('Esperamos su validación respondiendo con la siguiente leyenda: <b>“Estoy de acuerdo con el itinerario de vuelo, proceder con la compra”</b>.')
       : '') + // terrestres y locales: su información se agrega aparte
-    P('Le enviamos un cordial saludo y nos reiteramos a sus órdenes.') +
-    `<p style="margin:0;${F};font-weight:bold;font-style:italic;color:${G}"><font face="Calibri" color="${G}"><b><i>Equipo de Coordinación de Viajes</i></b></font></p></div>`;
+    '</div>';
 }
 const invTxt = r => invHTML(r).replace(/<br>/g, '\n').replace(/<\/(p|li)>/g, '\n').replace(/<li[^>]*>/g, '• ').replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/\n{3,}/g, '\n\n').trim();
 /* Copiar correo: data-cinv = invitación · data-cmail = confirmación con claves */
@@ -2888,7 +2887,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 423;
+const APP_V = 424;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

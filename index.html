@@ -1501,7 +1501,7 @@ function invPartes(r){
     L.push(`<b>Traslado terrestre</b> desde ${esc(tcase(r.tc))} a la sede del evento (punto de encuentro y horario por confirmar).`);
   } else {
     L.push(`<b>Vuelo redondo</b>${org ? ' desde ' + esc(org) : ' desde su ciudad de origen'} a la Ciudad de México.` + (ida.length || reg.length ? ' Propuesta de vuelos:<br>&nbsp;<br>&nbsp;' : ' Su vuelo se encuentra en proceso de emisión.'));
-    L.push('<b>Recepción</b> a su llegada al Aeropuerto de la Ciudad de México y <b>traslados</b> del evento.');
+    L.push('<b>Recepción</b> a su llegada al Aeropuerto de la Ciudad de México y <b>traslados</b> al evento.');
   }
   if(tieneHotel(r)) L.push(`<b>Hospedaje</b> 1 noche en el ${esc(HOTEL.n)} (check in 3 de diciembre · check out 4 de diciembre).`);
   if(tieneHotel(r)) L.push(`<b>Resguardo de equipaje:</b> a su llegada a la Ciudad de México, su equipaje será resguardado en el ${esc(HOTEL.n)}, donde se hospedará, para su mayor comodidad en el desplazamiento a la sede del evento; se le entregará a su regreso al hotel.`);
@@ -2887,7 +2887,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 424;
+const APP_V = 425;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

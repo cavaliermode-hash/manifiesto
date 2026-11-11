@@ -1540,8 +1540,9 @@ function invHTML(r){
   } else if(!vuelo && r.tc){
     b += blk('🚐', 'Traslado terrestre', [['Fecha', 'Jueves 3 de diciembre'], ['Desde', esc(tcase(r.tc))], ['Destino', 'Sede del evento: MetLife Torre Manacar, piso 7'], ['Punto de encuentro y horario', 'Por confirmar']]);
   } else {
-    b += blk('✈️', 'Vuelo redondo', [['Desde', esc(org || 'Su ciudad de origen')], ['Hacia', 'Ciudad de México'], ['Propuesta de vuelos', ida.length || r.reg ? '' : 'En proceso de emisión']]);
-    if(ida.length || r.reg) b += p('&nbsp;') + p('&nbsp;');
+    b += blk('✈️', 'Vuelo redondo', [['Desde', esc(org || 'Su ciudad de origen')], ['Hacia', 'Ciudad de México']]);
+    b += h2('Propuesta de vuelos');
+    b += ida.length || r.reg ? p('&nbsp;') + p('&nbsp;') : p(T('Su vuelo se encuentra en proceso de emisión.'));
     b += blk('🧳', 'Incluye', [['Boleto de avión', 'Clase turista'], ['Equipaje de mano', 'En cabina, máximo 15 kg'], ['Equipaje documentado', 'Máximo 25 kg'], ['Asientos', 'Asignados']]);
     b += verde('📍 Recepción en el Aeropuerto de la Ciudad de México', 'Recepción a su llegada y traslados al evento.');
   }
@@ -2915,7 +2916,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 437;
+const APP_V = 438;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

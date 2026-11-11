@@ -1085,6 +1085,7 @@ function aplicaLlegada(r){ const ida = [r.c1, r.ida].filter(Boolean), l = ida.fi
 function hotelInfo(r){
   if(HOTEL_EXC[r.n]) return HOTEL_EXC[r.n];
   if(!tieneHotel(r)) return {lines: [], nota: ''};
+  if(r.pe2) return {lines: [`Reservación por 2 noches en el ${HOTEL.n} (pernocta por ruta a su llegada y noche del evento). Dirección: ${HOTEL.dir}`, 'Check in: 02 diciembre, a su llegada.', 'Check out: 04 diciembre, 12:00 hrs.'], nota: ''};
   const lines = [`Reservación por 1 noche en el ${HOTEL.n}. Dirección: ${HOTEL.dir}`, 'Check in: 03 diciembre, 15:00 hrs.', 'Check out: 04 diciembre, 12:00 hrs.', `Resguardo de equipaje: a su llegada a la Ciudad de México, su equipaje será resguardado en el ${HOTEL.n}, donde se hospedará, para su mayor comodidad en el desplazamiento a la sede del evento; se le entregará a su regreso al hotel.`];
   const ida = [r.c1, r.ida].filter(Boolean), reg = [r.reg, r.c2].filter(Boolean);
   const lleg = ida.find(l => l.d === EV_AP) || ida[ida.length - 1], sal = reg.find(l => l.o === EV_AP) || reg[0];
@@ -1182,8 +1183,10 @@ function lineaTiempo(r){
   if(!tierra && aplicaLlegada(r)){ const l = legsI.find(x => x.d === EV_AP); add(l.f, minDe(l.l) + 1, {tipo: 'verde', i: '📍', t: 'Recepción en el Aeropuerto de la Ciudad de México', text: LLEGA_TXT}); }
   if(tieneHotel(r)){ const h = hotelInfo(r), ci = isoDe(((h.lines.find(t => /^Check in/i.test(t)) || '').replace(/(\d+) (noviembre|diciembre)/, '$1 de $2'))) || HOTEL.ci;
     const hci = ((h.lines.find(t => /^Check in/i.test(t)) || '').match(/(\d{1,2}:\d{2})/) || [])[1] || '15:00';
-    add(ci, '15:00', {tipo: 'hotel', i: '🏨', t: 'Hospedaje en el hotel sede', lines: h.lines.filter(t => !/^Check (out|in)/i.test(t)), nota: h.nota});
-    add(ci, '15:00', {tipo: 'info', i: '🛎️', t: 'Check-in del ' + HOTEL.n + ' · ' + hci + ' h', text: ''});
+    const hT = r.pe2 ? '23:50' : '15:00';
+    add(ci, hT, {tipo: 'hotel', i: '🏨', t: r.pe2 ? 'Hospedaje del 2 al 4 de diciembre (2 noches)' : 'Hospedaje en el hotel sede', lines: h.lines.filter(t => !/^Check (out|in)/i.test(t)), nota: h.nota});
+    add(ci, hT, {tipo: 'info', i: '🛎️', t: 'Check-in del ' + HOTEL.n + (r.pe2 ? ' · a su llegada' : ' · ' + hci + ' h'), text: ''});
+    if(r.pe2) add(HOTEL.ci, '11:00', {tipo: 'verde', i: '🚐', t: 'Traslado a la sede del evento', text: 'Del Hotel NH T2 Aeropuerto a MetLife Torre Manacar, piso 7. El horario se le confirmará previamente.'});
     add(HOTEL.co, '12:00', {tipo: 'info', i: '🛎️', t: 'Check-out del ' + HOTEL.n, text: ''}); }
   if(!tierra && aplicaRegreso(r) && !regHMO){ const l = legsR.find(x => x.o === EV_AP); add(l.f, minDe(l.s) - 1, {tipo: 'verde', i: '✈️', t: 'Del hotel a tu vuelo de regreso', text: REGRESO_TXT}); }
   { const co = S.find(x => x.tipo === 'info' && /^Check-out/.test(x.t)), sal = S.filter(x => x.f === HOTEL.co && x !== co && (/regreso|aeropuerto/i.test(x.t || '') || x.dir === 'Regreso')).map(x => x.m);
@@ -1550,11 +1553,13 @@ function invHTML(r, vImg){
   } else {
     b += vImg ? p(`<img src="${vImg}" width="640" alt="Propuesta de vuelos" style="width:640px;max-width:100%;height:auto;display:block;border:0">`) : ida.length || r.reg ? p('&nbsp;') + p('&nbsp;') : p(T('Su vuelo se encuentra en proceso de emisión.'));
     b += blk('🧳', 'Su vuelo incluye', [['Boleto de avión', 'Clase <b>turista</b>'], ['Equipaje de mano', 'En cabina, máximo <b>15 kg</b>'], ['Equipaje documentado', 'Máximo <b>25 kg</b>'], ['Asientos', '<b>Asignados</b>']]);
-    if((r.notas || []).some(n => n.k === 'pe')) b += blk('🏨', 'Pernocta a su llegada', [['Periodo', '<b>Del miércoles 2 al jueves 3 de diciembre</b> (1 noche)'], ['Hotel', 'Hotel NH Collection Mexico City Airport T2'], ['Check-in', '<b>2 de diciembre</b>'], ['Check-out', '<b>3 de diciembre</b>']]);
-    b += verde('📍 Recepción en el Aeropuerto de la Ciudad de México', '<b>Recepción a su llegada</b> y <b>traslado a la sede del evento</b> (<b>MetLife Torre Manacar, piso 7</b>).');
+    if(r.pe2){
+      b += blk('🏨', 'Hospedaje', [['NH T2 Aeropuerto', '<b>Check in 2 dic</b> (a su llegada) · <b>Check out 4 dic</b> · 2 noches']]);
+      b += verde('🚐 Traslado a la sede del evento', 'El <b>jueves 3 de diciembre</b>, del <b>Hotel NH T2 Aeropuerto</b> a <b>MetLife Torre Manacar, piso 7</b>.');
+    } else b += verde('📍 Recepción en el Aeropuerto de la Ciudad de México', '<b>Recepción a su llegada</b> y <b>traslado a la sede del evento</b> (<b>MetLife Torre Manacar, piso 7</b>).');
   }
-  if(hotel) b += blk('🧳', 'Resguardo de equipaje', [['A su llegada', `Su equipaje será <b>resguardado en el ${esc(HOTEL.n)}</b>, donde se hospedará, para su mayor comodidad en el desplazamiento a la sede del evento; <b>se le entregará a su regreso al hotel</b>.`]]);
-  if(hotel) b += blk('🏨', 'Hospedaje', [['NH T2 Aeropuerto', '<b>Check in 3 dic</b> · <b>Check out 4 dic</b> · 1 noche']]);
+  if(hotel && !r.pe2) b += blk('🧳', 'Resguardo de equipaje', [['A su llegada', `Su equipaje será <b>resguardado en el ${esc(HOTEL.n)}</b>, donde se hospedará, para su mayor comodidad en el desplazamiento a la sede del evento; <b>se le entregará a su regreso al hotel</b>.`]]);
+  if(hotel && !r.pe2) b += blk('🏨', 'Hospedaje', [['NH T2 Aeropuerto', '<b>Check in 3 dic</b> · <b>Check out 4 dic</b> · 1 noche']]);
   b += blk('🍽️', 'Durante el evento · jueves 3 de diciembre', [['Incluye', '<b>Comida, actividad y cena</b>']]);
   if(hotel) b += verde('🚐 Traslado al hotel', 'Al terminar la cena, a las <b>23:00 h</b>, traslado al <b>Hotel NH T2 Aeropuerto</b>.');
   if(tc) b += blk('🚐', 'Traslado terrestre de regreso', [['Desde', '<b>' + (hotel ? esc(HOTEL.n) : 'Sede del evento') + '</b>'], ['Hacia', '<b>' + tc + '</b>'], ['Horario', 'Se le compartirá <b>al finalizar el evento</b>']]);
@@ -2988,7 +2993,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 455;
+const APP_V = 456;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

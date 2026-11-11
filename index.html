@@ -16,7 +16,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Manifiesto">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<title>Manifiesto · ConoceMet by MetLife</title>
+<title>Itinerarios de viaje · Evento ConoceMet by MetLife</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap" media="print" onload="this.media='all'">
@@ -756,12 +756,16 @@ main a:not([class]):hover,.foot a:hover{color:var(--acc)!important;text-decorati
 .agv-wait{position:relative;max-width:520px;margin:40px auto!important;padding:56px 16px!important;border-radius:14px;background:linear-gradient(100deg,var(--green-soft) 30%,#F4FBF6 50%,var(--green-soft) 70%);background-size:220% 100%;animation:shimmer 1.4s linear infinite}
 @keyframes shimmer{from{background-position:120% 0}to{background-position:-120% 0}}
 @media (prefers-reduced-motion:reduce){.vbar i,.cfl.flash .cfh,.agv-wait{animation:none!important}.prow-b,.abtn2{transition:none!important}}
+.disc{margin:2px 0 0;font:500 11.5px/1.3 var(--body);color:var(--muted)}
+@media (max-width:560px){.disc{font-size:10px}}
 </style>
 </head>
 <body>
 <header class="board">
   <div class="wrap">
+    <p class="eyebrow">Itinerarios de viaje de los invitados</p>
     <h1>CONOCEMET BY METLIFE</h1>
+    <p class="disc">Sitio informativo de la agencia de viajes que coordina el evento · No es un sitio oficial de MetLife</p>
     <div class="sub" id="upd" hidden></div>
     <nav class="tabs" role="tablist" aria-label="Apartados">
       <button role="tab" data-tab="man" aria-selected="true">Manifiesto</button>
@@ -940,7 +944,7 @@ main a:not([class]):hover,.foot a:hover{color:var(--acc)!important;text-decorati
     <details><summary>¿Cómo identifico mi traslado en el aeropuerto?</summary><p>A tu llegada al aeropuerto, localiza el <b>logo de MetLife</b>: habrá <b>staff apoyando</b> para trasladarte a la sede del evento.</p></details>
     <details><summary>¿Cómo llego a mi vuelo de regreso?</summary><p>El <b>Hotel NH T2 Aeropuerto</b> está dentro de la <b>Terminal 2</b> del Aeropuerto de la Ciudad de México. Si tu vuelo sale de la <b>Terminal 1</b>, puedes cambiar de terminal en el <b>Aerotrén</b>.</p></details>
   </section>
-  <p class="foot"><a href="privacidad.html" style="color:inherit">Aviso de privacidad</a></p>
+  <p class="foot">Sitio informativo operado por la agencia de viajes que coordina el evento ConoceMet by MetLife para que sus invitados consulten su itinerario. No es un sitio oficial de MetLife ni de ninguna aerolínea, y no solicita contraseñas de otros servicios ni datos de pago. · <a href="privacidad.html" style="color:inherit">Aviso de privacidad</a></p>
 </main>
 
 <div id="agv" class="agv" role="dialog" aria-modal="true" aria-label="Agenda del evento" hidden>

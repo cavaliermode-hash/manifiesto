@@ -1546,9 +1546,9 @@ function invHTML(r){
     b += verde('📍 Recepción en el Aeropuerto de la Ciudad de México', 'Recepción a su llegada y traslado a la sede del evento (MetLife Torre Manacar, piso 7).');
   }
   if(hotel) b += blk('🧳', 'Resguardo de equipaje', [['A su llegada', `Su equipaje será resguardado en el ${esc(HOTEL.n)}, donde se hospedará, para su mayor comodidad en el desplazamiento a la sede del evento; se le entregará a su regreso al hotel.`]]);
+  if(hotel) b += blk('🏨', 'Hospedaje', [['NH T2 Aeropuerto', 'Check in 3 dic · Check out 4 dic · 1 noche']]);
   b += blk('🍽️', 'Durante el evento · jueves 3 de diciembre', [['Incluye', 'Comida, actividad y cena']]);
   if(hotel) b += verde('🚐 Traslado al hotel', 'Al terminar la cena, a las <b>23:00 h</b>, traslado al <b>Hotel NH T2 Aeropuerto</b>.');
-  if(hotel) b += blk('🏨', 'Hospedaje', [['Hotel', esc(HOTEL.n) + ' · 1 noche'], ['Check in', '3 de diciembre'], ['Check out', '4 de diciembre']]);
   if(tc) b += blk('🚐', 'Traslado terrestre de regreso', [['Desde', hotel ? esc(HOTEL.n) : 'Sede del evento'], ['Hacia', tc], ['Horario', 'Se le compartirá al finalizar el evento']]);
   else b += verde('✈️ Vuelo de regreso', 'El <b>Hotel NH T2 Aeropuerto</b> está dentro de la <b>Terminal 2</b> del aeropuerto; si su vuelo sale de la Terminal 1, puede cambiar de terminal en el Aerotrén.');
   if(vuelo){
@@ -2918,7 +2918,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 442;
+const APP_V = 443;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

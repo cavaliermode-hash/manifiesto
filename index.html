@@ -1087,6 +1087,7 @@ function hotelInfo(r){
   if(!tieneHotel(r)) return {lines: [], nota: ''};
   if(r.pe2) return {lines: [`Reservación por 2 noches en el ${HOTEL.n} (pernocta por ruta a su llegada y noche del evento). Dirección: ${HOTEL.dir}`, 'Check in: 02 diciembre, a su llegada.', 'Check out: 04 diciembre, 12:00 hrs.'], nota: ''};
   const lines = [`Reservación por 1 noche en el ${HOTEL.n}. Dirección: ${HOTEL.dir}`, 'Check in: 03 diciembre, 15:00 hrs.', 'Check out: 04 diciembre, 12:00 hrs.', `Resguardo de equipaje: a su llegada a la Ciudad de México, su equipaje será resguardado en el ${HOTEL.n}, donde se hospedará, para su mayor comodidad en el desplazamiento a la sede del evento; se le entregará a su regreso al hotel.`];
+  if(r.tc && !tieneVuelo(r)) lines.pop(); // terrestres: el resguardo de equipaje ya va en su traslado de llegada
   const ida = [r.c1, r.ida].filter(Boolean), reg = [r.reg, r.c2].filter(Boolean);
   const lleg = ida.find(l => l.d === EV_AP) || ida[ida.length - 1], sal = reg.find(l => l.o === EV_AP) || reg[0];
   const notas = [];
@@ -1113,7 +1114,7 @@ function notaBloques(r){
       ida.push({i:'🚙', t:'Llegada por su cuenta', rows:[['Fecha', m[2]], ['Llegada', 'Por su cuenta al ' + m[1] + ' (no aplica traslado terrestre)']]});
       reg.push({i:'🚙', t:'Regreso por su cuenta', rows:[['Fecha', m[3]], ['Regreso', 'Por su cuenta desde el ' + m[4] + ' (no aplica traslado terrestre)']]}); return; }
     if(n.k === 'tr' && (m = t.match(/^Traslado terrestre desde (.+?) a la sede del evento\. Te compartiremos/))){
-      ida.push({i:'🚐', t:'Traslado terrestre', rows:[['Fecha', 'Jueves 3 de diciembre'], ['Desde', m[1]], ['Destino', 'Sede del evento: MetLife Torre Manacar, piso 7'], ['Punto de encuentro y horario', 'Se los compartiremos próximamente']]}); return; }
+      ida.push({i:'🚐', t:'Traslado terrestre', rows:[['Fecha', 'Jueves 3 de diciembre'], ['Desde', m[1]], ['Hacia', 'Hotel NH T2 Aeropuerto, donde para su mayor comodidad su equipaje será resguardado y se le entregará a su regreso al final del día'], ['Después', 'Del Hotel NH T2 Aeropuerto continuará el desplazamiento a la sede del evento: MetLife Torre Manacar, piso 7'], ['Punto de encuentro y horario', 'Se los compartiremos próximamente']]}); return; }
     if(n.k === 'tr' && r.loc){
       ida.push({i:'🅿️', t:'Asistencia al evento', rows:[['Fecha', 'Jueves 3 de diciembre'], ['Sede', 'MetLife Torre Manacar, piso 7 (Av. Insurgentes Sur 1457, esquina Río Mixcoac)'], ['Cita', '12:00 h'], ['Estacionamiento', 'Aplica en Torre Manacar']]}); return; }
     if(n.k === 'tr' && /por tu cuenta/i.test(t)){
@@ -1550,7 +1551,7 @@ function invHTML(r, vImg){
   const tc = !vuelo && r.tc ? esc(tcase(r.tc)) : '';
   const reg = [r.reg, r.c2].filter(Boolean), regF = reg[0] ? fDia(reg[0].f).replace(/^(\w+) (\d+) (\w+)$/, '$1 $2 $3') : 'Viernes 4 dic';
   if(tc){
-    b += blk('🚐', 'Traslado terrestre de llegada', [['Fecha', '<b>Jueves 3 de diciembre</b>'], ['Desde', '<b>' + tc + '</b>'], ['Hacia', 'Sede del evento: <b>MetLife Torre Manacar, piso 7</b>'], ['Punto de encuentro y horario', 'Por confirmar']]);
+    b += blk('🚐', 'Traslado terrestre de llegada', [['Fecha', '<b>Jueves 3 de diciembre</b>'], ['Desde', '<b>' + tc + '</b>'], ['Hacia', '<b>Hotel NH T2 Aeropuerto</b>, donde para su mayor comodidad su equipaje será <b>resguardado</b> y se le entregará a su regreso al final del día.'], ['Después', 'Del Hotel NH T2 Aeropuerto continuará el desplazamiento a la sede del evento: <b>MetLife Torre Manacar, piso 7</b>.'], ['Punto de encuentro y horario', 'Por confirmar']]);
   } else {
     b += vImg ? p(`<img src="${vImg}" width="640" alt="Propuesta de vuelos" style="width:640px;max-width:100%;height:auto;display:block;border:0">`) : ida.length || r.reg ? p('&nbsp;') + p('&nbsp;') : p(T('Su vuelo se encuentra en proceso de emisión.'));
     b += blk('🧳', 'Su vuelo incluye', [['Boleto de avión', 'Clase <b>turista</b>'], ['Equipaje de mano', 'En cabina, máximo <b>15 kg</b>'], ['Equipaje documentado', 'Máximo <b>25 kg</b>'], ['Asientos', '<b>Asignados</b>']]);
@@ -1559,7 +1560,7 @@ function invHTML(r, vImg){
       b += verde('🚐 Traslado a la sede del evento', 'El <b>jueves 3 de diciembre</b>, del <b>Hotel NH T2 Aeropuerto</b> a <b>MetLife Torre Manacar, piso 7</b>.');
     } else b += verde('📍 Recepción en el Aeropuerto de la Ciudad de México', '<b>Recepción a su llegada</b> y <b>traslado a la sede del evento</b> (<b>MetLife Torre Manacar, piso 7</b>).');
   }
-  if(hotel && !r.pe2) b += blk('🧳', 'Resguardo de equipaje', [['A su llegada', `Su equipaje será <b>resguardado en el ${esc(HOTEL.n)}</b>, donde se hospedará, para su mayor comodidad en el desplazamiento a la sede del evento; <b>se le entregará a su regreso al hotel</b>.`]]);
+  if(hotel && !r.pe2 && !tc) b += blk('🧳', 'Resguardo de equipaje', [['A su llegada', `Su equipaje será <b>resguardado en el ${esc(HOTEL.n)}</b>, donde se hospedará, para su mayor comodidad en el desplazamiento a la sede del evento; <b>se le entregará a su regreso al hotel</b>.`]]);
   if(hotel && !r.pe2) b += blk('🏨', 'Hospedaje', [['NH T2 Aeropuerto', '<b>Check in 3 dic</b> · <b>Check out 4 dic</b> · 1 noche']]);
   b += blk('🍽️', 'Durante el evento · jueves 3 de diciembre', [['Incluye', '<b>Comida, actividad y cena</b>']]);
   if(hotel) b += verde('🚐 Traslado al hotel', 'Al terminar la cena, a las <b>23:00 h</b>, traslado al <b>Hotel NH T2 Aeropuerto</b>.');
@@ -1594,7 +1595,7 @@ function invWa(r){
     L.push('', '*Le agradecería una confirmación de recepción de este mensaje.*');
   } else {
     L.push('', SEP, '📋 *PARA SU PARTICIPACIÓN LE ESTAMOS CONSIDERANDO' + (vuelo ? ' - PROPUESTA DE VUELOS' : '') + '*', SEP);
-    if(tc) sec('🚐', 'Traslado terrestre de llegada', [['Fecha', '*Jueves 3 de diciembre*'], ['Desde', `*${tc}*`], ['Hacia', 'Sede del evento: *MetLife Torre Manacar, piso 7*'], ['Punto de encuentro y horario', 'Por confirmar']]);
+    if(tc) sec('🚐', 'Traslado terrestre de llegada', [['Fecha', '*Jueves 3 de diciembre*'], ['Desde', `*${tc}*`], ['Hacia', '*Hotel NH T2 Aeropuerto*, donde para su mayor comodidad su equipaje será *resguardado* y se le entregará a su regreso al final del día.'], ['Después', 'Del Hotel NH T2 Aeropuerto continuará el desplazamiento a la sede del evento: *MetLife Torre Manacar, piso 7*.'], ['Punto de encuentro y horario', 'Por confirmar']]);
     else {
       const leg = [r.c1, r.ida].filter(Boolean).map(l => fl('IDA', l)).concat([r.reg, r.c2].filter(Boolean).map(l => fl('REGRESO', l)));
       L.push(''); if(leg.length) leg.forEach(x => L.push(...x)); else L.push('Su vuelo se encuentra en proceso de emisión.');
@@ -1603,7 +1604,7 @@ function invWa(r){
         sec('🚐', 'Traslado a la sede del evento', [['', 'El *jueves 3 de diciembre*, del *Hotel NH T2 Aeropuerto* a *MetLife Torre Manacar, piso 7*.']]); }
       else sec('📍', 'Recepción en el Aeropuerto de la Ciudad de México', [['', '*Recepción a su llegada* y *traslado a la sede del evento* (*MetLife Torre Manacar, piso 7*).']]);
     }
-    if(hotel && !r.pe2){ sec('🧳', 'Resguardo de equipaje', [['A su llegada', `Su equipaje será *resguardado en el ${HOTEL.n}*, donde se hospedará, para su mayor comodidad en el desplazamiento a la sede del evento; *se le entregará a su regreso al hotel*.`]]);
+    if(hotel && !r.pe2){ if(!tc) sec('🧳', 'Resguardo de equipaje', [['A su llegada', `Su equipaje será *resguardado en el ${HOTEL.n}*, donde se hospedará, para su mayor comodidad en el desplazamiento a la sede del evento; *se le entregará a su regreso al hotel*.`]]);
       sec('🏨', 'Hospedaje', [['NH T2 Aeropuerto', '*Check in 3 dic* · *Check out 4 dic* · 1 noche']]); }
     sec('🍽️', 'Durante el evento · jueves 3 de diciembre', [['Incluye', '*Comida, actividad y cena*']]);
     if(hotel) sec('🚐', 'Traslado al hotel', [['', 'Al terminar la cena, a las *23:00 h*, traslado al *Hotel NH T2 Aeropuerto*.']]);
@@ -2249,7 +2250,7 @@ function trLegs(r){ const lle = CTL.tab === 'lle', out = [], val = (R, k) => ((R
     if(r.tc && soloTierra(r) && /^(|Traslado terrestre desde.*)$/i.test(((r.notas || []).find(n => n.k === 'tr') || {}).t || '')){
       const f = lle ? HOTEL.ci : HOTEL.co;
       return [{terr: true, tr: true, f, l: '—', s: '—', v: '🚐 Traslado terrestre', ini: null, fin: null,
-        route: lle ? `${tcase(r.tc)} → sede del evento · horario por confirmar` : `Hotel NH T2 → ${tcase(r.tc)} · horario por confirmar`}]; } }
+        route: lle ? `${tcase(r.tc)} → Hotel NH T2 → sede del evento · horario por confirmar` : `Hotel NH T2 → ${tcase(r.tc)} · horario por confirmar`}]; } }
   notaBloques(r).forEach(b => { const R = b.rows || [], txt = R.map(x => x[1]).join(' ');
     let f = '', h = '';
     if(lle && b.t === 'Traslado de ida'){ const fh = val(R, 'Fecha y hora'); f = isoDe(fh); h = (fh.split('·')[1] || '').trim().replace(/\s*h$/, ''); }
@@ -2570,7 +2571,7 @@ function pytData(){
 function rutaDe(r){
   const ev = [], MESN = {noviembre:11, octubre:10, diciembre:12};
   const tc3 = r.tc && conTraslado(r) && /^(|Traslado terrestre desde.*)$/i.test(notaDe(r, 'tr')), tr = conTraslado(r) && !tc3 ? notaDe(r, 'tr') : '', pe = pernoc(r);
-  if(tc3){ ev.push({k: '2026-12-03 06:00', t: `🚐 Jue 3 dic · traslado terrestre desde ${tcase(r.tc)} → sede del evento (horario por confirmar)`}); ev.push({k: '2026-12-04 99', t: `🚐 Regreso · traslado terrestre a ${tcase(r.tc)} (horario por confirmar)`}); }
+  if(tc3){ ev.push({k: '2026-12-03 06:00', t: `🚐 Jue 3 dic · traslado terrestre desde ${tcase(r.tc)} → Hotel NH T2 (resguardo de equipaje) → sede del evento (horario por confirmar)`}); ev.push({k: '2026-12-04 99', t: `🚐 Regreso · traslado terrestre a ${tcase(r.tc)} (horario por confirmar)`}); }
   if(tieneHotel(r)) ev.push({k: (r.pe2 ? '2026-12-02 23:30' : '2026-12-03 23:10'), t: r.pe2 ? '🏨 Hotel NH T2 · check-in 2 dic, check-out 4 dic (2 noches)' : '🏨 Hotel NH T2 · check-in 3 dic, check-out 4 dic'});
   const corto = iso => fmtDate(iso);
   if(tr && !/solo a tu regreso/i.test(tr)){
@@ -3040,7 +3041,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 467;
+const APP_V = 468;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

@@ -1534,14 +1534,12 @@ function invHTML(r){
     b += p(T('Continúo a sus órdenes.'), 'padding-top:8px') + p(T('Saludos cordiales,'), 'padding-top:8px');
     return `<table width="100%" cellpadding="4" cellspacing="0" style="max-width:720px;font-family:Calibri,Arial,sans-serif;font-size:11pt;background:#ffffff">${b}</table>`;
   }
-  b += h2('Para su participación le estamos considerando');
+  b += h2(vuelo ? 'Para su participación le estamos considerando - Propuesta de vuelos' : 'Para su participación le estamos considerando');
   if(r.loc){
     b += blk('🅿️', 'Asistencia al evento', [['Fecha', 'Jueves 3 de diciembre'], ['Sede', 'MetLife Torre Manacar, piso 7'], ['Cita', '12:00 h'], ['Estacionamiento', 'Aplica en Torre Manacar']]);
   } else if(!vuelo && r.tc){
     b += blk('🚐', 'Traslado terrestre', [['Fecha', 'Jueves 3 de diciembre'], ['Desde', esc(tcase(r.tc))], ['Destino', 'Sede del evento: MetLife Torre Manacar, piso 7'], ['Punto de encuentro y horario', 'Por confirmar']]);
   } else {
-    b += blk('✈️', 'Vuelo redondo', [['Desde', esc(org || 'Su ciudad de origen')], ['Hacia', 'Ciudad de México']]);
-    b += h2('Propuesta de vuelos');
     b += ida.length || r.reg ? p('&nbsp;') + p('&nbsp;') : p(T('Su vuelo se encuentra en proceso de emisión.'));
     b += blk('🧳', 'Incluye', [['Boleto de avión', 'Clase turista'], ['Equipaje de mano', 'En cabina, máximo 15 kg'], ['Equipaje documentado', 'Máximo 25 kg'], ['Asientos', 'Asignados']]);
     b += verde('📍 Recepción en el Aeropuerto de la Ciudad de México', 'Recepción a su llegada y traslados al evento.');
@@ -2916,7 +2914,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 438;
+const APP_V = 439;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

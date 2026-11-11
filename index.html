@@ -1576,6 +1576,15 @@ async function invEml(r){
 }
 document.addEventListener('click', async e => { const b = e.target.closest('[data-cinv]'); if(!b) return; e.preventDefault();
   const r = DATA[+b.dataset.cinv], msg = $('#cmsg2'), done = t => { b.textContent = '✅'; setTimeout(() => { b.textContent = '📨'; }, 1800); if(msg) msg.innerHTML = t; };
+  // Computadora: borrador .eml que Outlook clásico abre ya lleno (Para, Asunto, cuerpo con formato y agenda adjunta)
+  if(!matchMedia('(pointer:coarse)').matches){
+    try{
+      const eml = await invEml(r), url = URL.createObjectURL(new Blob([eml], {type: 'message/rfc822'})), a = document.createElement('a');
+      a.href = url; a.download = invAsunto(r).replace(/[\\/:*?"<>|]/g, '-') + '.eml'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 20000);
+      done(`<b>Invitación de ${esc(tcase(r.n))} lista.</b> Abre el archivo descargado (.eml): Outlook la muestra llena, con destinatario, asunto, formato y la agenda adjunta. Si el navegador pregunta, elige <b>Conservar</b>.`);
+      return;
+    }catch(err){ /* si falla, abre Outlook y copia la invitación */ }
+  }
   const abrir = () => { location.href = `mailto:${encodeURIComponent(MAIL[r.n] || '')}?subject=${encodeURIComponent(invAsunto(r))}`; };
   // Se abre Outlook (mailto) con destinatario y asunto; la invitación ya va copiada con formato y con la agenda al final.
   const conAgenda = invHTML(r) + `<p style="margin:12px 0 0"><img src="${new URL(AGENDA_ADJ, location.href).href}" width="640" alt="Agenda ConoceMet by MetLife" style="width:640px;max-width:100%;height:auto"></p>`;
@@ -2935,7 +2944,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 447;
+const APP_V = 448;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

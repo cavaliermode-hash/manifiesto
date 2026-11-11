@@ -815,7 +815,7 @@ main a:not([class]):hover,.foot a:hover{color:var(--acc)!important;text-decorati
 </section>
 <section class="wrap ctl" id="cla" hidden>
   <h2 class="ct">Claves de reserva</h2>
-  <p class="cs">Todas las claves en una sola lista. Ordena tocando el encabezado de cada columna; toca una clave para copiarla. En <b>Itinerario</b>: ✈️ descarga el PDF solo de vuelos, 💬 lo envía por WhatsApp 📨 abre la <b>invitación</b> en Outlook con asunto y agenda adjunta y 📋 el de <b>confirmación</b> (itinerario con claves e información importante), con formato para pegarlo.</p>
+  <p class="cs">Todas las claves en una sola lista. Ordena tocando el encabezado de cada columna; toca una clave para copiarla. En <b>Itinerario</b>: ✈️ descarga el PDF solo de vuelos, 💬 envía la confirmación por WhatsApp, 📲 envía la <b>invitación</b> por WhatsApp, 📨 abre la <b>invitación</b> en Outlook con asunto y agenda adjunta y 📋 el de <b>confirmación</b> (itinerario con claves e información importante), con formato para pegarlo.</p>
   <div class="rolbar" id="rolbar" role="group" aria-label="Filtrar por rol"></div>
   <div class="csearch"><input id="cq" type="search" placeholder="🔍 Buscar por nombre o apellido" autocomplete="off" aria-label="Buscar por nombre o apellido"><button type="button" class="cx" aria-label="Borrar búsqueda" title="Borrar">✕</button><span id="cqn"></span></div>
   <div class="ktable-wrap"><table class="ktable ctab">
@@ -1577,6 +1577,46 @@ const invTxt = r => invHTML(r).replace(/<br>/g, '\n').replace(/<table/g, '\n<tab
 /* Invitación: en computadora descarga un borrador .eml que Outlook abre listo para enviar
    (destinatario, asunto "Invitación | ConoceMet by MetLife | NOMBRE", cuerpo con formato y la agenda adjunta).
    En celular se copia con formato y se abre el correo con destinatario y asunto. */
+/* WhatsApp de INVITACIÓN: el mismo contenido de la invitación por correo, en texto con *negritas* de WhatsApp;
+   la propuesta de vuelos va escrita (WhatsApp no lleva imagen en el texto) y al final el link de la agenda. */
+function invWa(r){
+  const base = location.origin + location.pathname.replace(/[^\/]*$/, ''), SEP = '━━━━━━━━━━━━━━', L = [];
+  const sec = (ic, t, rows) => { L.push('', `${ic} *${t.toUpperCase()}*`); rows.forEach(([k, v]) => L.push(k ? `• *${k}:* ${v}` : `• ${v}`)); };
+  const vuelo = conVueloInv(r), hotel = tieneHotel(r), tc = !vuelo && r.tc ? tcase(r.tc) : '';
+  const fl = (lab, l) => [`${lab === 'IDA' ? '🛫' : '🛬'} *${lab} · ${l.v}*`, `• ${fmtDate(l.f)} · ${cityOf(l.o)} ${l.s} h → ${cityOf(l.d)} ${l.l} h`];
+  L.push(`👋 Estimado(a) *${r.n.toUpperCase()}*`, '', 'Esperando se encuentre bien, reciba un cordial saludo' + (CFG.yo ? `, mi nombre es *${CFG.yo}*.` : '.'), '',
+    (CFG.ag ? `Le escribo de *${CFG.ag}* en representación de *MetLife*` : 'Le escribimos en representación de *MetLife*') + ' para dar seguimiento a su participación al evento *ConoceMet by MetLife*, que se llevará a cabo el *jueves 3 de diciembre de 2026* en *MetLife Torre Manacar, piso 7* (Av. Insurgentes Sur 1457, esquina Río Mixcoac, Ciudad de México).');
+  if(r.loc){
+    L.push('', SEP, '📋 *DETALLES DE SU PARTICIPACIÓN*', SEP, '', 'A continuación, le presentamos los detalles que *MetLife* estará cubriendo con base en su registro y alineado a la agenda el cual le adjuntamos.');
+    sec('🅿️', 'MetLife estará cubriendo', [['Estacionamiento', '*Los días del evento* · Torre Manacar'], ['Hospedaje', '*No aplica*']]);
+    sec('🍽️', 'Durante el evento · jueves 3 de diciembre', [['Incluye', '*Comida, actividad y cena*']]);
+    sec('📅', 'Cita', [['', 'Jueves 3 de diciembre a las *12:00 h* · MetLife Torre Manacar, piso 7.']]);
+    L.push('', '*Le agradecería una confirmación de recepción de este mensaje.*');
+  } else {
+    L.push('', SEP, '📋 *PARA SU PARTICIPACIÓN LE ESTAMOS CONSIDERANDO' + (vuelo ? ' - PROPUESTA DE VUELOS' : '') + '*', SEP);
+    if(tc) sec('🚐', 'Traslado terrestre de llegada', [['Fecha', '*Jueves 3 de diciembre*'], ['Desde', `*${tc}*`], ['Hacia', 'Sede del evento: *MetLife Torre Manacar, piso 7*'], ['Punto de encuentro y horario', 'Por confirmar']]);
+    else {
+      const leg = [r.c1, r.ida].filter(Boolean).map(l => fl('IDA', l)).concat([r.reg, r.c2].filter(Boolean).map(l => fl('REGRESO', l)));
+      L.push(''); if(leg.length) leg.forEach(x => L.push(...x)); else L.push('Su vuelo se encuentra en proceso de emisión.');
+      sec('🧳', 'Su vuelo incluye', [['Boleto de avión', 'Clase *turista*'], ['Equipaje de mano', 'En cabina, máximo *15 kg*'], ['Equipaje documentado', 'Máximo *25 kg*'], ['Asientos', '*Asignados*']]);
+      if(r.pe2){ sec('🏨', 'Hospedaje', [['NH T2 Aeropuerto', '*Check in 2 dic* (a su llegada) · *Check out 4 dic* · 2 noches']]);
+        sec('🚐', 'Traslado a la sede del evento', [['', 'El *jueves 3 de diciembre*, del *Hotel NH T2 Aeropuerto* a *MetLife Torre Manacar, piso 7*.']]); }
+      else sec('📍', 'Recepción en el Aeropuerto de la Ciudad de México', [['', '*Recepción a su llegada* y *traslado a la sede del evento* (*MetLife Torre Manacar, piso 7*).']]);
+    }
+    if(hotel && !r.pe2){ sec('🧳', 'Resguardo de equipaje', [['A su llegada', `Su equipaje será *resguardado en el ${HOTEL.n}*, donde se hospedará, para su mayor comodidad en el desplazamiento a la sede del evento; *se le entregará a su regreso al hotel*.`]]);
+      sec('🏨', 'Hospedaje', [['NH T2 Aeropuerto', '*Check in 3 dic* · *Check out 4 dic* · 1 noche']]); }
+    sec('🍽️', 'Durante el evento · jueves 3 de diciembre', [['Incluye', '*Comida, actividad y cena*']]);
+    if(hotel) sec('🚐', 'Traslado al hotel', [['', 'Al terminar la cena, a las *23:00 h*, traslado al *Hotel NH T2 Aeropuerto*.']]);
+    if(tc) sec('🚐', 'Traslado terrestre de regreso', [['Desde', `*${hotel ? HOTEL.n : 'Sede del evento'}*`], ['Hacia', `*${tc}*`], ['Horario', 'Se le compartirá *al finalizar el evento*']]);
+    else sec('✈️', 'Vuelo de regreso', [['', 'El *Hotel NH T2 Aeropuerto* está dentro de la *Terminal 2* del aeropuerto; si su vuelo sale de la *Terminal 1*, puede cambiar de terminal en el *Aerotrén*.']]);
+    if(vuelo) L.push('', SEP, '', '*Importante.-* Si desea realizar algún cambio de fecha u horario posterior a su confirmación, esto generará un *cargo por cambio* y posiblemente *diferencia de tarifa*, los cuales tendrán que ser cubiertos por su parte.', '',
+      'Le recordamos que *MetLife* cubre las pernoctas y/o traslados terrestres necesarios, siempre que este aplique, dentro de las fechas del evento.', '',
+      'Esperamos su validación respondiendo con la siguiente leyenda: *“Estoy de acuerdo con el itinerario de vuelo, proceder con la compra”*.');
+  }
+  L.push('', '🗓️ *Agenda del evento:*', base + 'agenda-conocemet-invitacion.jpg', '',
+    'Si necesita más información o tiene preguntas específicas, no dude en ponerse en contacto.', '', 'Continúo a sus órdenes.', '', 'Saludos cordiales,');
+  return L.join('\n');
+}
 const invAsunto = r => 'Invitación | ConoceMet by MetLife | ' + String(r.n || '').toUpperCase();
 const AGENDA_ADJ = 'agenda-conocemet-invitacion.jpg';
 async function invEml(r){
@@ -2474,7 +2514,7 @@ addEventListener('DOMContentLoaded', () => Object.entries(VQ).forEach(([id, sel]
 /* Botones 📄 PDF, 💬 WhatsApp y ✉️ correo de una persona (Claves y Traslados y pernoctas) */
 function accBtns(i, vuelos){ const n = DATA[i].n; return `<td class="cpdf"><div class="cbx">${vuelos && [DATA[i].ida, DATA[i].reg, DATA[i].c1, DATA[i].c2].some(Boolean) ? `<button class="cvue" data-vpdf="${i}" title="Descargar el PDF de vuelos de ${esc(tcase(n))}" aria-label="PDF de vuelos de ${esc(tcase(n))}">✈️</button>` : ''}${TEL[n]
       ? `<a class="cwa" href="https://wa.me/52${TEL[n]}?text=${encodeURIComponent(waTxt(DATA[i]))}" target="_blank" rel="noopener" title="Enviar por WhatsApp a ${esc(tcase(n))} (${TEL[n]})" aria-label="WhatsApp a ${esc(tcase(n))}">💬</a>`
-      : '<span class="cwa na" title="Sin teléfono registrado">—</span>'}<button class="ccopy cinv" type="button" data-cinv="${i}" title="Correo de INVITACIÓN de ${esc(tcase(n))}: abre en Outlook con asunto, destinatario y la agenda adjunta" aria-label="Copiar invitación de ${esc(tcase(n))}">📨</button><button class="ccopy" type="button" data-cmail="${i}" title="Copiar correo de CONFIRMACIÓN de ${esc(tcase(n))} (itinerario con claves e información importante)" aria-label="Copiar confirmación de ${esc(tcase(n))}">📋</button></div></td>`; }
+      : '<span class="cwa na" title="Sin teléfono registrado">—</span>'}${TEL[n] ? `<a class="cwa cwainv" href="https://wa.me/52${TEL[n]}?text=${encodeURIComponent(invWa(DATA[i]))}" target="_blank" rel="noopener" title="WhatsApp de INVITACIÓN a ${esc(tcase(n))} (${TEL[n]})" aria-label="WhatsApp de invitación a ${esc(tcase(n))}">📲</a>` : ''}<button class="ccopy cinv" type="button" data-cinv="${i}" title="Correo de INVITACIÓN de ${esc(tcase(n))}: abre en Outlook con asunto, destinatario y la agenda adjunta" aria-label="Copiar invitación de ${esc(tcase(n))}">📨</button><button class="ccopy" type="button" data-cmail="${i}" title="Copiar correo de CONFIRMACIÓN de ${esc(tcase(n))} (itinerario con claves e información importante)" aria-label="Copiar confirmación de ${esc(tcase(n))}">📋</button></div></td>`; }
 function rolBar(){ const el = document.getElementById('rolbar'); if(!el) return;
   const c = {}; DATA.forEach(r => { const k = (r.rol || 'SIN ROL').toUpperCase(); c[k] = (c[k] || 0) + 1; });
   const orden = Object.keys(c).sort((a, b) => (/^STAFF/.test(a) - /^STAFF/.test(b)) || c[b] - c[a] || a.localeCompare(b, 'es'));
@@ -3009,7 +3049,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 463;
+const APP_V = 465;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

@@ -1644,11 +1644,18 @@ document.addEventListener('click', async e => { const b = e.target.closest('[dat
       return;
     }catch(err){ /* si falla, abre Outlook y copia la invitación */ }
   }
-  const abrir = () => { location.href = `mailto:${encodeURIComponent(MAIL[r.n] || '')}?subject=${encodeURIComponent(invAsunto(r))}` + (CFG.cc ? '&cc=' + encodeURIComponent(CFG.cc) : ''); };
+  // Celular: abre la app de Outlook ya con Para, CC, Asunto y el texto de la invitación (si no está instalada, usa la app de correo)
+  const qs = (body) => `to=${encodeURIComponent(MAIL[r.n] || '')}` + (CFG.cc ? '&cc=' + encodeURIComponent(CFG.cc) : '') + `&subject=${encodeURIComponent(invAsunto(r))}` + (body ? '&body=' + encodeURIComponent(body) : '');
+  const abrir = () => { const mail = `mailto:${encodeURIComponent(MAIL[r.n] || '')}?` + qs('').replace(/^to=[^&]*&?/, '');
+    if(!matchMedia('(pointer:coarse)').matches){ location.href = mail; return; }
+    const txt = invWa(r).replace(/\*/g, ''), t0 = Date.now();
+    location.href = 'ms-outlook://compose?' + qs(txt);
+    setTimeout(() => { if(!document.hidden && Date.now() - t0 < 2500) location.href = mail + '&body=' + encodeURIComponent(txt); }, 1600); };
   // Se abre Outlook (mailto) con destinatario y asunto; la invitación ya va copiada con formato y con la agenda al final.
+  if(matchMedia('(pointer:coarse)').matches){ done(`<b>Se abrió Outlook con la invitación de ${esc(tcase(r.n))}</b>: destinatario, copia, asunto y texto listos, con el link de la agenda. Revisa y toca Enviar.`); abrir(); return; }
   const vImg = await vueloPropPNG(r).catch(() => '');
   const conAgenda = invHTML(r, vImg) + `<p style="margin:12px 0 0"><img src="${new URL(AGENDA_ADJ, location.href).href}" width="640" alt="Agenda ConoceMet by MetLife" style="width:640px;max-width:100%;height:auto"></p>`;
-  const okCopia = () => { done(`<b>Se abrió Outlook con la invitación de ${esc(tcase(r.n))}</b> (destinatario y asunto listos). Haz clic en el cuerpo del correo y pega con <b>Ctrl+V</b> (en celular: mantén presionado › Pegar): se pega con formato y con la agenda.`); abrir(); };
+  const okCopia = () => { done(matchMedia('(pointer:coarse)').matches ? `<b>Se abrió Outlook con la invitación de ${esc(tcase(r.n))}</b>: destinatario, copia, asunto y texto listos, con el link de la agenda. Revisa y toca Enviar.` : `<b>Se abrió Outlook con la invitación de ${esc(tcase(r.n))}</b> (destinatario y asunto listos). Haz clic en el cuerpo del correo y pega con <b>Ctrl+V</b>: se pega con formato y con la agenda.`); abrir(); };
   try{ await navigator.clipboard.write([new ClipboardItem({'text/html': new Blob([conAgenda], {type:'text/html'}), 'text/plain': new Blob([invTxt(r)], {type:'text/plain'})})]); okCopia(); }
   catch(err){ const t = document.createElement('textarea'); t.value = invTxt(r); document.body.appendChild(t); t.select(); try{ document.execCommand('copy'); }catch(e2){} t.remove(); okCopia(); }
 });
@@ -3049,7 +3056,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 465;
+const APP_V = 466;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

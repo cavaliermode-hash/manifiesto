@@ -1523,7 +1523,9 @@ function invHTML(r){
   const imp = t => `<tr><td style="padding-top:12px"><table width="100%" cellpadding="0" cellspacing="0"><tr><td bgcolor="#FFF7E6" style="background:#FFF7E6;border-left:4px solid #E0A100;padding:10px 14px;line-height:1.4">${t}</td></tr></table></td></tr>`;
   const ida = [r.c1, r.ida].filter(Boolean), org = ida[0] ? (AP[ida[0].o] || ida[0].o) : '', vuelo = conVueloInv(r), hotel = tieneHotel(r);
   let b = p(`${T('Estimado(a)', MUT)} ${T(esc(r.n.toUpperCase()), INK, 'bold')}`, 'padding-top:12px');
-  b += p(T('Por medio del presente, tenemos el gusto de invitarle a <b>ConoceMet by MetLife</b>, que se llevará a cabo el <b>jueves 3 de diciembre de 2026</b> en <b>MetLife Torre Manacar, piso 7</b> (Av. Insurgentes Sur 1457, esquina Río Mixcoac, Ciudad de México).'), 'padding-top:4px;padding-bottom:4px');
+  const SEDE = 'que se llevará a cabo el <b>jueves 3 de diciembre de 2026</b> en <b>MetLife Torre Manacar, piso 7</b> (Av. Insurgentes Sur 1457, esquina Río Mixcoac, Ciudad de México).';
+  b += p(T('Esperando se encuentre bien, reciba un cordial saludo' + (CFG.yo ? `, mi nombre es <b>${esc(CFG.yo)}</b>.` : '.')), 'padding-top:4px');
+  b += p(T((CFG.ag ? `Le escribo de <b>${esc(CFG.ag)}</b> en representación de <b>MetLife</b>` : 'Le escribimos en representación de <b>MetLife</b>') + ' para dar seguimiento a su participación al evento <b>ConoceMet by MetLife</b>, ' + SEDE), 'padding-top:8px;padding-bottom:4px');
   if(r.loc){ // Locales: texto propio, con agenda adjunta
     b += h2('Detalles de su participación');
     b += p(T('A continuación, le presentamos los detalles que <b>MetLife</b> estará cubriendo con base en su registro y alineado a la agenda el cual le adjuntamos.'), 'padding-bottom:4px');
@@ -2678,8 +2680,8 @@ function askPw(msg){
 const Staff_MIN = 60, Staff_MS = Staff_MIN * 60000;
 const stfSes = () => { try{ const v = JSON.parse(sessionStorage.getItem('stf') || 'null'); return v && Date.now() - v.t < Staff_MS ? v : null; }catch(e){ return null; } };
 const stfSave = pw => { try{ sessionStorage.setItem('stf', JSON.stringify({pw: pw || (stfSes() || {}).pw || '', t: Date.now()})); }catch(e){} };
-const stfEnd = () => { try{ sessionStorage.removeItem('stf'); }catch(e){} TEL = {}; MAIL = {}; DATA = DATA.filter(r => !r.staff); };
-async function stfTel(pw){ if(PACK && PACK.tel && !Object.keys(TEL).length){ try{ const c = await Cifra.descifrar(PACK.tel, pw); TEL = c.tel || {}; MAIL = c.mail || {}; staffAdd(c.staff || []); }catch(e){ TEL = {}; MAIL = {}; } } }
+const stfEnd = () => { try{ sessionStorage.removeItem('stf'); }catch(e){} TEL = {}; MAIL = {}; CFG = {}; DATA = DATA.filter(r => !r.staff); };
+async function stfTel(pw){ if(PACK && PACK.tel && !Object.keys(TEL).length){ try{ const c = await Cifra.descifrar(PACK.tel, pw); TEL = c.tel || {}; MAIL = c.mail || {}; CFG = c.cfg || {}; staffAdd(c.staff || []); }catch(e){ TEL = {}; MAIL = {}; } } }
 /* Staff: viene protegido con la contraseña Staff y solo se agrega a las pestañas de Staff (no al buscador público ni a Traslados y pernoctas) */
 const stTag = n => { const r = DATA.find(x => x.staff && x.n === n); return r ? rolTag(r.rol || 'STAFF') : ''; }; // staff: mismo formato que los demás roles
 function staffAdd(L){ DATA = DATA.filter(r => !r.staff); L.forEach(r => { r.staff = true; r._w = new Set(norm(r.n).split(/\s+/).filter(Boolean)); r._n = norm(r.n); DATA.push(r); }); }
@@ -2693,7 +2695,7 @@ async function conGate(msg){
   await stfTel(pw);
   return true;
 }
-let TEL = {}, MAIL = {}, REP = null;
+let TEL = {}, MAIL = {}, REP = null, CFG = {}; // CFG: datos solo para staff (agencia y nombre en las invitaciones)
 /* Reporte: datos cifrados aparte con su propia contraseña; se pide al entrar y queda abierto hasta recargar la página */
 const repSes = () => { try{ const v = JSON.parse(sessionStorage.getItem('repses') || 'null'); return v && Date.now() - v.t < Staff_MS ? v : null; }catch(e){ return null; } };
 const repSave = pw => { try{ sessionStorage.setItem('repses', JSON.stringify({pw: pw || (repSes() || {}).pw || '', t: Date.now()})); }catch(e){} };
@@ -2918,7 +2920,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 443;
+const APP_V = 444;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

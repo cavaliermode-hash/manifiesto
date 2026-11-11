@@ -1003,7 +1003,7 @@ const soloTierra = r => !r.ida && !r.reg && !r.c1 && !r.c2 && !r.vu && (r.loc ||
 /* Hotel del evento: solo foráneos (con vuelo o con pernocta indicada en el Excel); los locales no llevan hospedaje */
 const tieneHotel = r => !r.loc && !!(r.pe || r.vu || r.ida || r.reg || r.c1 || r.c2 || (r.notas || []).some(n => n.k === 'pe'));
 function tierraBlock(r){
-  const det = r.loc ? 'Participante local: llegas por tu cuenta a la sede del evento, MetLife Torre Manacar, piso 7.' + (r.est ? ' Tienes estacionamiento considerado en Torre Manacar.' : '') : porCuentaR(r) ? 'Llegas por tu cuenta a la sede del evento; revisa tus indicaciones especiales.' : (r.notas || []).some(n => n.k === 'tr') ? 'Revisa los detalles en tus indicaciones especiales.' : 'Tu viaje al evento es por traslado terrestre.';
+  const det = r.loc ? 'Participante local: tu cita es a las 12:00 h en MetLife Torre Manacar, piso 7. Aplica estacionamiento en Torre Manacar.' : porCuentaR(r) ? 'Llegas por tu cuenta a la sede del evento; revisa tus indicaciones especiales.' : (r.notas || []).some(n => n.k === 'tr') ? 'Revisa los detalles en tus indicaciones especiales.' : 'Tu viaje al evento es por traslado terrestre.';
   return `<div class="leg ida"><h4>${porCuentaR(r) ? 'Llega por su cuenta' : 'Traslado terrestre'}</h4><div class="none">${det}</div></div>`;
 }
 /* Tarjetas de vuelo: Ida / Regreso con horas grandes, duración y conexión. */
@@ -1061,7 +1061,7 @@ const MESL = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto',
 const fLarga = iso => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || ''); if(!m) return iso || ''; const d = new Date(Date.UTC(+m[1], m[2]-1, +m[3])); return `${DIAL[d.getUTCDay()]} ${+m[3]} de ${MESL[m[2]-1]}`; };
 /* Locales de Hermosillo que llegan por su cuenta (con estacionamiento): MetLife solo cubre las noches de hotel */
 const esLocal = r => (r.notas || []).some(n => n.k === 'tr' && /por tu cuenta/i.test(n.t) && /estacionamiento/i.test(n.t));
-const impTxt = r => r.loc ? 'Le recordamos que su llegada y regreso a la sede del evento son por su cuenta.' : esLocal(r) ? 'Le recordamos que MetLife cubre únicamente las noches de hotel.' : 'Le recordamos que MetLife cubre las pernoctas y/o traslados terrestres necesarios, siempre que este aplique, dentro de las fechas del evento.';
+const impTxt = r => r.loc ? 'Le recordamos que su cita es a las 12:00 h en MetLife Torre Manacar, piso 7, y que aplica estacionamiento en Torre Manacar.' : esLocal(r) ? 'Le recordamos que MetLife cubre únicamente las noches de hotel.' : 'Le recordamos que MetLife cubre las pernoctas y/o traslados terrestres necesarios, siempre que este aplique, dentro de las fechas del evento.';
 const MET = 'Le recordamos que MetLife cubre las pernoctas y/o traslados terrestres necesarios, siempre que este aplique, dentro de las fechas del evento.';
 // Excepciones confirmadas por el equipo (noches adicionales pagadas por el invitado, etc.)
 const HOTEL_EXC = {};
@@ -1109,7 +1109,7 @@ function notaBloques(r){
     if(n.k === 'tr' && (m = t.match(/^Traslado terrestre desde (.+?) a la sede del evento\. Te compartiremos/))){
       ida.push({i:'🚐', t:'Traslado terrestre', rows:[['Fecha', 'Jueves 3 de diciembre'], ['Desde', m[1]], ['Destino', 'Sede del evento: MetLife Torre Manacar, piso 7'], ['Punto de encuentro y horario', 'Se los compartiremos próximamente']]}); return; }
     if(n.k === 'tr' && r.loc){
-      ida.push({i:'🚙', t:'Llegada por su cuenta', rows:[['Fecha', 'Jueves 3 de diciembre'], ['Llegada', 'Por su cuenta a la sede del evento: MetLife Torre Manacar, piso 7 (Av. Insurgentes Sur 1457, esquina Río Mixcoac)'], ['Cita', '12:00 h · participantes locales'], ['Regreso', 'Por su cuenta, al terminar el evento']].concat(r.est ? [['Estacionamiento', 'Considerado para usted en Torre Manacar']] : [])}); return; }
+      ida.push({i:'🅿️', t:'Asistencia al evento', rows:[['Fecha', 'Jueves 3 de diciembre'], ['Sede', 'MetLife Torre Manacar, piso 7 (Av. Insurgentes Sur 1457, esquina Río Mixcoac)'], ['Cita', '12:00 h'], ['Estacionamiento', 'Aplica en Torre Manacar']]}); return; }
     if(n.k === 'tr' && /por tu cuenta/i.test(t)){
       ida.push({i:'🚙', t:'Llegada por su cuenta', rows:[['Periodo', 'Jueves 3 de diciembre'], ['Llegada', 'Jueves 3 de diciembre, por su cuenta, directo a la sede del evento (MetLife Torre Manacar, piso 7, Ciudad de México)'], ['Regreso', 'Jueves 3 de diciembre, por su cuenta, al terminar el evento']]}); return; }
     if(n.k === 'tr' && (m = t.match(/solo a tu regreso: el (.+?) te llevamos del (.+?) al (aeropuerto de [A-ZÁÉÍÓÚa-záéíóúñ ]+?) para tu vuelo (.+?) \(salida ([\d:]+) h\)\.(?: A tu llegada el (.+?) no aplica traslado (.+?)\.)?/))){
@@ -1156,9 +1156,9 @@ function lineaTiempo(r){
     if(/por su cuenta$/.test(b.t) && val(R, 'Fecha')){ const f = isoDe(val(R, 'Fecha')), lr = legsR.find(x => x.f === f && x.d === 'MEX');
       add(f, b.t.startsWith('Llegada') ? '22:00' : (lr ? minDe(lr.l) + 1 : '17:00'), {tipo: 'blk', i: b.i, t: b.t, rows: R}); return; }
     if(b.t === 'Traslado terrestre'){ add(HOTEL.ci, '08:00', {tipo: 'blk', i: b.i, t: b.t, rows: R}); return; }
-    if(b.t === 'Llegada por su cuenta' && r.loc){
-      add(HOTEL.ci, '11:59', {tipo: 'blk', i: '🚙', t: 'Llegada por su cuenta', rows: R.filter(x => x[0] !== 'Regreso')});
-      add(HOTEL.ci, '23:01', {tipo: 'blk', i: '🚙', t: 'Regreso por su cuenta', rows: [['Regreso', val(R, 'Regreso')]]}); return; }
+    if(b.t === 'Asistencia al evento' && r.loc){
+      add(HOTEL.ci, '11:59', {tipo: 'blk', i: b.i, t: b.t, rows: R}); return; }
+
     if(b.t === 'Llegada por su cuenta'){
       add(HOTEL.ci, '14:00', {tipo: 'blk', i: '🚙', t: 'Llegada por su cuenta', rows: R.filter(x => x[0] !== 'Regreso')});
       add(HOTEL.co, '12:30', {tipo: 'blk', i: '🚙', t: 'Regreso por su cuenta', rows: [['Regreso', val(R, 'Regreso')]]}); return; }
@@ -1526,7 +1526,7 @@ function invHTML(r){
   b += p(T('Por medio del presente, tenemos el gusto de invitarle a <b>ConoceMet by MetLife</b>, que se llevará a cabo el <b>jueves 3 de diciembre de 2026</b> en <b>MetLife Torre Manacar, piso 7</b> (Av. Insurgentes Sur 1457, esquina Río Mixcoac, Ciudad de México).'), 'padding-top:4px;padding-bottom:4px');
   b += h2('Para su participación le estamos considerando');
   if(r.loc){
-    b += blk('🚙', 'Llegada por su cuenta', [['Fecha', 'Jueves 3 de diciembre'], ['Sede', 'MetLife Torre Manacar, piso 7'], ['Cita', '12:00 h · participantes locales']].concat(r.est ? [['Estacionamiento', 'Considerado para usted en Torre Manacar']] : []));
+    b += blk('🅿️', 'Asistencia al evento', [['Fecha', 'Jueves 3 de diciembre'], ['Sede', 'MetLife Torre Manacar, piso 7'], ['Cita', '12:00 h'], ['Estacionamiento', 'Aplica en Torre Manacar']]);
   } else if(!vuelo && r.tc){
     b += blk('🚐', 'Traslado terrestre', [['Fecha', 'Jueves 3 de diciembre'], ['Desde', esc(tcase(r.tc))], ['Destino', 'Sede del evento: MetLife Torre Manacar, piso 7'], ['Punto de encuentro y horario', 'Por confirmar']]);
   } else {
@@ -2904,7 +2904,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 432;
+const APP_V = 433;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

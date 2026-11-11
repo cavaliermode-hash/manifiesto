@@ -2210,6 +2210,15 @@ const TR_TZ = t => /san carlos|marinaterra|hermosillo|sede|los mochis/i.test(t) 
 function trDur(r, t){ if(/metepec|toluca/i.test(t)) return 120; if(/puebla|triángulo/i.test(t)) return 150; if(/los mochis/i.test(r.cd || '') || /los mochis/i.test(t)) return 300;
   if(/aeropuerto de hermosillo/i.test(t)) return 120; if(/domicilio/i.test(t)) return 90; return 120; }
 function trLegs(r){ const lle = CTL.tab === 'lle', out = [], val = (R, k) => ((R || []).find(x => x[0] === k) || [])[1] || '';
+  // ConoceMet: locales (cita 12:00 h, por su cuenta con estacionamiento) y terrestres sin horario todavía
+  { const at = (f, h) => { const [y, mo, d] = f.split('-').map(Number), [H, M] = h.split(':').map(Number); return new Date(Date.UTC(y, mo - 1, d, H + 6, M)); };
+    if(r.loc){ const f = HOTEL.ci, h = lle ? '12:00' : '23:00', t = at(f, h);
+      return [{terr: true, tr: true, loc: true, f, l: h, s: h, v: '🅿️ Local · por su cuenta', ini: t, fin: t,
+        route: lle ? 'Cita 12:00 h · MetLife Torre Manacar, piso 7 · estacionamiento' : 'Regresa por su cuenta al terminar el evento'}]; }
+    if(r.tc && soloTierra(r) && /^(|Traslado terrestre desde.*)$/i.test(((r.notas || []).find(n => n.k === 'tr') || {}).t || '')){
+      const f = lle ? HOTEL.ci : HOTEL.co;
+      return [{terr: true, tr: true, f, l: '—', s: '—', v: '🚐 Traslado terrestre', ini: null, fin: null,
+        route: lle ? `${tcase(r.tc)} → sede del evento · horario por confirmar` : `Hotel NH T2 → ${tcase(r.tc)} · horario por confirmar`}]; } }
   notaBloques(r).forEach(b => { const R = b.rows || [], txt = R.map(x => x[1]).join(' ');
     let f = '', h = '';
     if(lle && b.t === 'Traslado de ida'){ const fh = val(R, 'Fecha y hora'); f = isoDe(fh); h = (fh.split('·')[1] || '').trim().replace(/\s*h$/, ''); }
@@ -3000,7 +3009,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 458;
+const APP_V = 459;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

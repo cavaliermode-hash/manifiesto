@@ -1544,8 +1544,8 @@ function invHTML(r){
     if(ida.length || r.reg) b += p('&nbsp;') + p('&nbsp;');
     b += blk('🧳', 'Incluye', [['Boleto de avión', 'Clase turista'], ['Equipaje de mano', 'En cabina, máximo 15 kg'], ['Equipaje documentado', 'Máximo 25 kg'], ['Asientos', 'Asignados']]);
     b += verde('📍 Recepción en el Aeropuerto de la Ciudad de México', 'Recepción a su llegada y traslados al evento.');
-    b += verde('🚐 Traslado al hotel', 'Al terminar la cena, a las <b>23:00 h</b>, traslado al <b>Hotel NH T2 Aeropuerto</b>.');
   }
+  if(hotel) b += verde('🚐 Traslado al hotel', 'Al terminar la cena, a las <b>23:00 h</b>, traslado al <b>Hotel NH T2 Aeropuerto</b>.');
   if(hotel) b += blk('🏨', 'Hospedaje', [['Hotel', esc(HOTEL.n) + ' · 1 noche'], ['Check in', '3 de diciembre'], ['Check out', '4 de diciembre'], ['Resguardo de equipaje', `A su llegada a la Ciudad de México, su equipaje será resguardado en el ${esc(HOTEL.n)}, donde se hospedará, para su mayor comodidad en el desplazamiento a la sede del evento; se le entregará a su regreso al hotel.`]]);
   b += blk('🍽️', 'Durante el evento', [['Incluye', 'Comida, actividad y cena']]);
   if(vuelo){
@@ -2915,7 +2915,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 436;
+const APP_V = 437;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

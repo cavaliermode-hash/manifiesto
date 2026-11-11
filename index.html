@@ -1838,7 +1838,7 @@ function vueloPropHTML(r){
         </table></td></tr></table>`;
   return `<div style="width:760px;background:#fff;padding:18px 26px 22px;box-sizing:border-box;font-family:Arial,sans-serif">
     ${ida.map(l => leg(l, 'IDA')).join('')}${reg.map(l => leg(l, 'REGRESO')).join('')}
-    <div style="margin-top:10px;font:11px Arial,sans-serif;color:#666">Horarios en hora local de cada aeropuerto. Propuesta sujeta a disponibilidad y tarifa al momento de la compra.</div>
+    <div style="margin-top:10px;font:11px Arial,sans-serif;color:#666">Horarios en hora local de cada aeropuerto.</div>
   </div>`;
 }
 async function vueloPropPNG(r){
@@ -2982,7 +2982,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 453;
+const APP_V = 454;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

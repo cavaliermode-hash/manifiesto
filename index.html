@@ -1512,22 +1512,38 @@ function invPartes(r){
 const fDia = f => { if(!f) return ''; const d = new Date(f + 'T12:00:00'); return ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'][d.getDay()] + ' ' + d.getDate() + ' ' + ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'][d.getMonth()]; };
 const conVueloInv = r => !r.loc && !!(r.vu || r.ida || r.reg || r.c1 || r.c2);
 function invHTML(r){
-  const F = 'font-family:Calibri,Arial,sans-serif;font-size:11pt;color:#16301F;line-height:1.4', G = '#136c34';
-  const P = t => `<p style="margin:0 0 10px;${F}"><font face="Calibri">${t}</font></p>`;
-  const H = t => `<p style="margin:14px 0 6px;${F};font-weight:bold;color:${G}"><font face="Calibri" color="${G}"><b>${t}</b></font></p>`;
-  const UL = a => a.map(x => `<p style="margin:0 0 4px;text-align:left;${F}"><font face="Calibri">•&nbsp;${x}</font></p>`).join('') + `<p style="margin:0 0 6px;${F}">&nbsp;</p>`; // viñetas como texto: alineadas a la izquierda al pegar en Outlook
-  return `<div style="${F}">` +
-    P(`Estimado(a) <b>${esc(r.n)}</b>`) +
-    P('Por medio del presente, tenemos el gusto de invitarle a <b>ConoceMet by MetLife</b>, que se llevará a cabo el <b>jueves 3 de diciembre de 2026</b> en <b>MetLife Torre Manacar, piso 7</b> (Av. Insurgentes Sur 1457, esquina Río Mixcoac, Ciudad de México).') +
-    H('Para su participación le estamos considerando') + UL(invPartes(r)) +
-    (conVueloInv(r)
-      ? P('Si desea realizar algún cambio de fecha u horario posterior a su confirmación, esto generará un <b>cargo por cambio</b> y posiblemente <b>diferencia de tarifa</b>, los cuales tendrán que ser cubiertos por su parte.') +
-        P('Le recordamos que <b>MetLife</b> cubre las pernoctas y/o traslados terrestres necesarios, siempre que este aplique, dentro de las fechas del evento.') +
-        P('Esperamos su validación respondiendo con la siguiente leyenda: <b>“Estoy de acuerdo con el itinerario de vuelo, proceder con la compra”</b>.')
-      : '') + // terrestres y locales: su información se agrega aparte
-    '</div>';
+  // Mismo formato y colores que el correo de confirmación (Calibri 11 pt, barras verdes, bloques y aviso amarillo)
+  const MUT = '#5C6B80', INK = '#16301F', G = '#136c34';
+  const T = (t, c = INK, w = 'normal', extra = '') => { const x = `<font color="${c}" face="Calibri" size="2"><span style="font-family:Calibri,Arial,sans-serif;font-size:11pt;font-weight:${w};color:${c};${extra}">${t}</span></font>`; return w === 'bold' ? `<b>${x}</b>` : x; };
+  const p = (t, st = '') => `<tr><td style="font-family:Calibri,Arial,sans-serif;font-size:11pt;line-height:1.45;color:${INK};${st}">${t}</td></tr>`;
+  const h2 = t => `<tr><td style="padding:16px 0 6px"><table cellpadding="0" cellspacing="0"><tr><td width="4" bgcolor="${G}" style="background:${G};width:4px">&nbsp;</td><td style="padding-left:8px">${T(t.toUpperCase(), G, 'bold', 'letter-spacing:.5px')}</td></tr></table></td></tr>`;
+  const rows = R => R.map(([k, v]) => `<tr><td valign="top" width="150" style="width:150px;padding:1px 8px 1px 0">${T(k, MUT, 'bold')}</td><td style="padding:1px 0;line-height:1.35">${T(v)}</td></tr>`).join('');
+  const blk = (ic, t, R) => `<tr><td style="padding:5px 0"><table width="100%" cellpadding="0" cellspacing="0"><tr><td bgcolor="#FFFFFF" style="background:#FFFFFF;border:1.5px solid #EBCB72;border-left:5px solid #E0A100;border-radius:8px;padding:6px 11px">${T(ic + ' ' + t.toUpperCase(), '#6B4A00', 'bold', 'letter-spacing:.5px')}<table cellpadding="0" cellspacing="0" style="margin-top:2px">${rows(R)}</table></td></tr></table></td></tr>`;
+  const verde = (tit, txt) => `<tr><td style="padding:5px 0"><table width="100%" cellpadding="0" cellspacing="0"><tr><td bgcolor="#E3F1E7" style="background:#E3F1E7;border:2px solid ${G};border-radius:8px;padding:8px 12px;line-height:1.4">${T(tit, G, 'bold')}<br>${T(txt)}</td></tr></table></td></tr>`;
+  const imp = t => `<tr><td style="padding-top:12px"><table width="100%" cellpadding="0" cellspacing="0"><tr><td bgcolor="#FFF7E6" style="background:#FFF7E6;border-left:4px solid #E0A100;padding:10px 14px;line-height:1.4">${t}</td></tr></table></td></tr>`;
+  const ida = [r.c1, r.ida].filter(Boolean), org = ida[0] ? (AP[ida[0].o] || ida[0].o) : '', vuelo = conVueloInv(r), hotel = tieneHotel(r);
+  let b = p(`${T('Estimado(a)', MUT)} ${T(esc(r.n.toUpperCase()), INK, 'bold')}`, 'padding-top:12px');
+  b += p(T('Por medio del presente, tenemos el gusto de invitarle a <b>ConoceMet by MetLife</b>, que se llevará a cabo el <b>jueves 3 de diciembre de 2026</b> en <b>MetLife Torre Manacar, piso 7</b> (Av. Insurgentes Sur 1457, esquina Río Mixcoac, Ciudad de México).'), 'padding-top:4px;padding-bottom:4px');
+  b += h2('Para su participación le estamos considerando');
+  if(r.loc){
+    b += blk('🚙', 'Llegada por su cuenta', [['Fecha', 'Jueves 3 de diciembre'], ['Sede', 'MetLife Torre Manacar, piso 7'], ['Cita', '12:00 h · participantes locales']].concat(r.est ? [['Estacionamiento', 'Considerado para usted en Torre Manacar']] : []));
+  } else if(!vuelo && r.tc){
+    b += blk('🚐', 'Traslado terrestre', [['Fecha', 'Jueves 3 de diciembre'], ['Desde', esc(tcase(r.tc))], ['Destino', 'Sede del evento: MetLife Torre Manacar, piso 7'], ['Punto de encuentro y horario', 'Por confirmar']]);
+  } else {
+    b += blk('✈️', 'Vuelo redondo', [['Desde', esc(org || 'Su ciudad de origen')], ['Hacia', 'Ciudad de México'], ['Propuesta de vuelos', ida.length || r.reg ? '' : 'En proceso de emisión']]);
+    if(ida.length || r.reg) b += p('&nbsp;') + p('&nbsp;');
+    b += blk('🧳', 'Incluye', [['Boleto de avión', 'Clase turista'], ['Equipaje de mano', 'En cabina, máximo 15 kg'], ['Equipaje documentado', 'Máximo 25 kg'], ['Asientos', 'Asignados']]);
+    b += verde('📍 Recepción en el Aeropuerto de la Ciudad de México', 'Recepción a su llegada y traslados al evento.');
+  }
+  if(hotel) b += blk('🏨', 'Hospedaje', [['Hotel', esc(HOTEL.n) + ' · 1 noche'], ['Check in', '3 de diciembre'], ['Check out', '4 de diciembre'], ['Resguardo de equipaje', `A su llegada a la Ciudad de México, su equipaje será resguardado en el ${esc(HOTEL.n)}, donde se hospedará, para su mayor comodidad en el desplazamiento a la sede del evento; se le entregará a su regreso al hotel.`]]);
+  b += blk('🍽️', 'Durante el evento', [['Incluye', 'Comida, actividad y cena']]);
+  if(vuelo){
+    b += imp(T('Importante.- ', INK, 'bold') + T('Si desea realizar algún cambio de fecha u horario posterior a su confirmación, esto generará un <b>cargo por cambio</b> y posiblemente <b>diferencia de tarifa</b>, los cuales tendrán que ser cubiertos por su parte.') + '<br>' + T('Le recordamos que <b>MetLife</b> cubre las pernoctas y/o traslados terrestres necesarios, siempre que este aplique, dentro de las fechas del evento.'));
+    b += p(T('Esperamos su validación respondiendo con la siguiente leyenda: <b>“Estoy de acuerdo con el itinerario de vuelo, proceder con la compra”</b>.'), 'padding-top:12px');
+  }
+  return `<table width="100%" cellpadding="4" cellspacing="0" style="max-width:720px;font-family:Calibri,Arial,sans-serif;font-size:11pt;background:#ffffff">${b}</table>`;
 }
-const invTxt = r => invHTML(r).replace(/<br>/g, '\n').replace(/<\/(p|li)>/g, '\n').replace(/<li[^>]*>/g, '• ').replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/\n{3,}/g, '\n\n').trim();
+const invTxt = r => invHTML(r).replace(/<br>/g, '\n').replace(/<table/g, '\n<table').replace(/<\/(p|li|tr)>/g, '\n').replace(/<\/td><td[^>]*>/g, ' ').replace(/<li[^>]*>/g, '• ').replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/\n{3,}/g, '\n\n').trim();
 /* Copiar correo: data-cinv = invitación · data-cmail = confirmación con claves */
 document.addEventListener('click', e => { const b = e.target.closest('[data-cinv]'); if(!b) return; e.preventDefault();
   const r = DATA[+b.dataset.cinv], msg = $('#cmsg2'), ok = () => { b.textContent = '✅'; setTimeout(() => { b.textContent = '📨'; }, 1800);
@@ -2888,7 +2904,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 431;
+const APP_V = 432;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

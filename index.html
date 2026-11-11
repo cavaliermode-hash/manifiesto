@@ -1558,7 +1558,7 @@ function invHTML(r, vImg){
     if(r.pe2){
       b += blk('🏨', 'Hospedaje', [['NH T2 Aeropuerto', '<b>Check in 2 dic</b> (a su llegada) · <b>Check out 4 dic</b> · 2 noches']]);
       b += verde('🚐 Traslado a la sede del evento', 'El <b>jueves 3 de diciembre</b>, del <b>Hotel NH T2 Aeropuerto</b> a <b>MetLife Torre Manacar, piso 7</b>.');
-    } else b += verde('📍 Recepción en el Aeropuerto de la Ciudad de México', '<b>Recepción a su llegada</b> y <b>traslado a la sede del evento</b> (<b>MetLife Torre Manacar, piso 7</b>).');
+    } else b += `<tr><td style="padding:5px 0"><table width="100%" cellpadding="0" cellspacing="0"><tr><td bgcolor="#E3F1E7" style="background:#E3F1E7;border:2px solid ${G};border-radius:8px;padding:8px 12px;line-height:1.4">${T('📍 Recepción en el Aeropuerto de la Ciudad de México y traslado a la sede del evento (MetLife Torre Manacar, piso 7).', INK, 'bold')}</td></tr></table></td></tr>`;
   }
   if(hotel && !r.pe2 && !tc) b += blk('🧳', 'Resguardo de equipaje', [['A su llegada', `Su equipaje será <b>resguardado en el ${esc(HOTEL.n)}</b>, donde se hospedará, para su mayor comodidad en el desplazamiento a la sede del evento; <b>se le entregará a su regreso al hotel</b>.`]]);
   if(hotel && !r.pe2) b += blk('🏨', 'Hospedaje', [['NH T2 Aeropuerto', '<b>Check in 3 dic</b> · <b>Check out 4 dic</b> · 1 noche']]);
@@ -1603,7 +1603,7 @@ function invWa(r){
       sec('🧳', 'Su vuelo incluye', [['Boleto de avión', 'Clase *turista*'], ['Equipaje de mano', 'En cabina, máximo *15 kg*'], ['Equipaje documentado', 'Máximo *25 kg*'], ['Asientos', '*Asignados*']]);
       if(r.pe2){ sec('🏨', 'Hospedaje', [['NH T2 Aeropuerto', '*Check in 2 dic* (a su llegada) · *Check out 4 dic* · 2 noches']]);
         sec('🚐', 'Traslado a la sede del evento', [['', 'El *jueves 3 de diciembre*, del *Hotel NH T2 Aeropuerto* a *MetLife Torre Manacar, piso 7*.']]); }
-      else sec('📍', 'Recepción en el Aeropuerto de la Ciudad de México', [['', '*Recepción a su llegada* y *traslado a la sede del evento* (*MetLife Torre Manacar, piso 7*).']]);
+      else L.push('', '📍 *Recepción en el Aeropuerto de la Ciudad de México y traslado a la sede del evento (MetLife Torre Manacar, piso 7).*');
     }
     if(hotel && !r.pe2){ if(!tc) sec('🧳', 'Resguardo de equipaje', [['A su llegada', `Su equipaje será *resguardado en el ${HOTEL.n}*, donde se hospedará, para su mayor comodidad en el desplazamiento a la sede del evento; *se le entregará a su regreso al hotel*.`]]);
       sec('🏨', 'Hospedaje', [['NH T2 Aeropuerto', '*Check in 3 dic* · *Check out 4 dic* · 1 noche']]); }
@@ -3042,7 +3042,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 471;
+const APP_V = 472;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

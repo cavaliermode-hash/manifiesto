@@ -1837,7 +1837,6 @@ function vueloPropHTML(r){
           <tr><td style="padding:2px 0">Duración</td><td></td><td>${dur(l)}</td></tr>
         </table></td></tr></table>`;
   return `<div style="width:760px;background:#fff;padding:18px 26px 22px;box-sizing:border-box;font-family:Arial,sans-serif">
-    <table style="width:100%;border-collapse:collapse;background:${G};color:#fff"><tr><td style="width:120px;padding:9px 12px;font:12px Arial,sans-serif">Viajero</td><td style="padding:9px 12px;font:bold 13px Arial,sans-serif">${esc(tcase(r.n))}</td></tr></table>
     ${ida.map(l => leg(l, 'IDA')).join('')}${reg.map(l => leg(l, 'REGRESO')).join('')}
     <div style="margin-top:10px;font:11px Arial,sans-serif;color:#666">Horarios en hora local de cada aeropuerto. Propuesta sujeta a disponibilidad y tarifa al momento de la compra.</div>
   </div>`;
@@ -2983,7 +2982,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 452;
+const APP_V = 453;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

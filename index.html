@@ -1569,10 +1569,10 @@ async function invEml(r){
   const html = `<!doctype html><html><head><meta charset="utf-8"></head><body style="margin:0;padding:12px;background:#fff">${invHTML(r)}</body></html>`;
   const img = new Uint8Array(await (await fetch(AGENDA_ADJ + '?v=' + APP_V, {cache: 'no-store'})).arrayBuffer()); let is = ''; for(let i = 0; i < img.length; i += 8192) is += String.fromCharCode.apply(null, img.subarray(i, i + 8192));
   const B = 'inv' + Date.now(), name = 'Agenda ConoceMet by MetLife.jpg';
-  return ['X-Unsent: 1', `To: ${MAIL[r.n] || ''}`, `Subject: =?UTF-8?B?${b64u(invAsunto(r))}?=`, 'MIME-Version: 1.0',
+  return ['X-Unsent: 1'].concat(CFG.de ? [`From: ${CFG.de}`] : [], [`To: ${MAIL[r.n] || ''}`], CFG.cc ? [`Cc: ${CFG.cc}`] : [], [`Subject: =?UTF-8?B?${b64u(invAsunto(r))}?=`, 'MIME-Version: 1.0',
     `Content-Type: multipart/mixed; boundary="${B}"`, '', `--${B}`, 'Content-Type: text/html; charset="UTF-8"', 'Content-Transfer-Encoding: base64', '', wrap76(b64u(html)),
     `--${B}`, `Content-Type: image/jpeg; name="=?UTF-8?B?${b64u(name)}?="`, 'Content-Transfer-Encoding: base64', `Content-Disposition: attachment; filename="=?UTF-8?B?${b64u(name)}?="`, '', wrap76(btoa(is)),
-    `--${B}--`, ''].join('\r\n');
+    `--${B}--`, '']).join('\r\n');
 }
 document.addEventListener('click', async e => { const b = e.target.closest('[data-cinv]'); if(!b) return; e.preventDefault();
   const r = DATA[+b.dataset.cinv], msg = $('#cmsg2'), done = t => { b.textContent = '✅'; setTimeout(() => { b.textContent = '📨'; }, 1800); if(msg) msg.innerHTML = t; };
@@ -1585,7 +1585,7 @@ document.addEventListener('click', async e => { const b = e.target.closest('[dat
       return;
     }catch(err){ /* si falla, abre Outlook y copia la invitación */ }
   }
-  const abrir = () => { location.href = `mailto:${encodeURIComponent(MAIL[r.n] || '')}?subject=${encodeURIComponent(invAsunto(r))}`; };
+  const abrir = () => { location.href = `mailto:${encodeURIComponent(MAIL[r.n] || '')}?subject=${encodeURIComponent(invAsunto(r))}` + (CFG.cc ? '&cc=' + encodeURIComponent(CFG.cc) : ''); };
   // Se abre Outlook (mailto) con destinatario y asunto; la invitación ya va copiada con formato y con la agenda al final.
   const conAgenda = invHTML(r) + `<p style="margin:12px 0 0"><img src="${new URL(AGENDA_ADJ, location.href).href}" width="640" alt="Agenda ConoceMet by MetLife" style="width:640px;max-width:100%;height:auto"></p>`;
   const okCopia = () => { done(`<b>Se abrió Outlook con la invitación de ${esc(tcase(r.n))}</b> (destinatario y asunto listos). Haz clic en el cuerpo del correo y pega con <b>Ctrl+V</b> (en celular: mantén presionado › Pegar): se pega con formato y con la agenda.`); abrir(); };
@@ -2944,7 +2944,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 448;
+const APP_V = 449;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

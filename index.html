@@ -673,7 +673,7 @@ button.ptile{font:inherit;cursor:pointer;width:100%;transition:transform .08s,bo
 #atoast{position:fixed;left:50%;transform:translateX(-50%);top:calc(env(safe-area-inset-top,0px) + 10px);z-index:3000;display:grid;gap:8px;width:min(94vw,460px);pointer-events:none}
 #atoast div{pointer-events:auto;background:#0C4F23;color:#fff;border-radius:12px;padding:10px 14px;box-shadow:0 6px 18px rgba(0,0,0,.25);font:500 14px/1.4 var(--body);cursor:pointer;animation:rise .25s ease both}
 #atoast div b{display:block;font-weight:700;font-size:15px}
-.cview{display:flex;flex-wrap:wrap;justify-content:center;gap:5px;margin:6px 0}.cview button{flex:0 1 auto;white-space:nowrap;font:700 12.5px var(--body);border:1.5px solid var(--green);background:#fff;color:var(--green);border-radius:999px;padding:5px 12px;line-height:1.2;cursor:pointer}@media (max-width:640px){.cview{gap:4px}.cview button{font-size:10.8px;padding:4px 7px}}
+.cview{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin:8px 0;width:100%}.cview button{flex:1 1 0;min-width:0;white-space:nowrap;text-align:center;font:700 14px var(--body);border:1.5px solid var(--green);background:#fff;color:var(--green);border-radius:999px;padding:9px 10px;line-height:1.2;cursor:pointer}@media (max-width:640px){.cview{gap:5px}.cview button{flex:1 1 calc(25% - 5px);font-size:12px;padding:8px 4px}}
 .cview button[aria-pressed="true"]{background:var(--green);color:#fff}
 #cout .cfh{cursor:pointer;position:relative;padding-right:30px}#cout .cfh::after{content:"▾";position:absolute;right:11px;top:10px;font-size:15px;color:var(--green);transition:transform .15s}
 #cout.solo .cfl:not(.tg) .cnames,#cout:not(.solo) .cfl.tg .cnames{display:none}
@@ -3009,7 +3009,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 462;
+const APP_V = 463;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

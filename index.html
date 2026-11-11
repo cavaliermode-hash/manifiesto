@@ -1535,18 +1535,22 @@ function invHTML(r){
     return `<table width="100%" cellpadding="4" cellspacing="0" style="width:100%;max-width:1000px;font-family:Calibri,Arial,sans-serif;font-size:11pt;background:#ffffff">${b}</table>`;
   }
   b += h2(vuelo ? 'Para su participación le estamos considerando - Propuesta de vuelos' : 'Para su participación le estamos considerando');
-  if(r.loc){
-    b += blk('🅿️', 'Asistencia al evento', [['Fecha', 'Jueves 3 de diciembre'], ['Sede', 'MetLife Torre Manacar, piso 7'], ['Cita', '12:00 h'], ['Estacionamiento', 'Aplica en Torre Manacar']]);
-  } else if(!vuelo && r.tc){
-    b += blk('🚐', 'Traslado terrestre', [['Fecha', 'Jueves 3 de diciembre'], ['Desde', esc(tcase(r.tc))], ['Destino', 'Sede del evento: MetLife Torre Manacar, piso 7'], ['Punto de encuentro y horario', 'Por confirmar']]);
+  // Orden cronológico: llegada → vuelo/traslado → recepción → resguardo de equipaje → evento → traslado al hotel → hospedaje → regreso
+  const tc = !vuelo && r.tc ? esc(tcase(r.tc)) : '';
+  const reg = [r.reg, r.c2].filter(Boolean), regF = reg[0] ? fDia(reg[0].f).replace(/^(\w+) (\d+) (\w+)$/, '$1 $2 $3') : 'Viernes 4 dic';
+  if(tc){
+    b += blk('🚐', 'Traslado terrestre de llegada', [['Fecha', 'Jueves 3 de diciembre'], ['Desde', tc], ['Hacia', 'Sede del evento: MetLife Torre Manacar, piso 7'], ['Punto de encuentro y horario', 'Por confirmar']]);
   } else {
     b += ida.length || r.reg ? p('&nbsp;') + p('&nbsp;') : p(T('Su vuelo se encuentra en proceso de emisión.'));
-    b += blk('🧳', 'Incluye', [['Boleto de avión', 'Clase turista'], ['Equipaje de mano', 'En cabina, máximo 15 kg'], ['Equipaje documentado', 'Máximo 25 kg'], ['Asientos', 'Asignados']]);
-    b += verde('📍 Recepción en el Aeropuerto de la Ciudad de México', 'Recepción a su llegada y traslados al evento.');
+    b += blk('🧳', 'Su vuelo incluye', [['Boleto de avión', 'Clase turista'], ['Equipaje de mano', 'En cabina, máximo 15 kg'], ['Equipaje documentado', 'Máximo 25 kg'], ['Asientos', 'Asignados']]);
+    b += verde('📍 Recepción en el Aeropuerto de la Ciudad de México', 'Recepción a su llegada y traslado a la sede del evento (MetLife Torre Manacar, piso 7).');
   }
+  if(hotel) b += blk('🧳', 'Resguardo de equipaje', [['A su llegada', `Su equipaje será resguardado en el ${esc(HOTEL.n)}, donde se hospedará, para su mayor comodidad en el desplazamiento a la sede del evento; se le entregará a su regreso al hotel.`]]);
+  b += blk('🍽️', 'Durante el evento · jueves 3 de diciembre', [['Incluye', 'Comida, actividad y cena']]);
   if(hotel) b += verde('🚐 Traslado al hotel', 'Al terminar la cena, a las <b>23:00 h</b>, traslado al <b>Hotel NH T2 Aeropuerto</b>.');
-  if(hotel) b += blk('🏨', 'Hospedaje', [['Hotel', esc(HOTEL.n) + ' · 1 noche'], ['Check in', '3 de diciembre'], ['Check out', '4 de diciembre'], ['Resguardo de equipaje', `A su llegada a la Ciudad de México, su equipaje será resguardado en el ${esc(HOTEL.n)}, donde se hospedará, para su mayor comodidad en el desplazamiento a la sede del evento; se le entregará a su regreso al hotel.`]]);
-  b += blk('🍽️', 'Durante el evento', [['Incluye', 'Comida, actividad y cena']]);
+  if(hotel) b += blk('🏨', 'Hospedaje', [['Hotel', esc(HOTEL.n) + ' · 1 noche'], ['Check in', '3 de diciembre'], ['Check out', '4 de diciembre']]);
+  if(tc) b += blk('🚐', 'Traslado terrestre de regreso', [['Desde', hotel ? esc(HOTEL.n) : 'Sede del evento'], ['Hacia', tc], ['Horario', 'Se le compartirá al finalizar el evento']]);
+  else b += verde('✈️ Vuelo de regreso', 'El <b>Hotel NH T2 Aeropuerto</b> está dentro de la <b>Terminal 2</b> del aeropuerto; si su vuelo sale de la Terminal 1, puede cambiar de terminal en el Aerotrén.');
   if(vuelo){
     b += imp(T('Importante.- ', INK, 'bold') + T('Si desea realizar algún cambio de fecha u horario posterior a su confirmación, esto generará un <b>cargo por cambio</b> y posiblemente <b>diferencia de tarifa</b>, los cuales tendrán que ser cubiertos por su parte.') + '<br><br>' + T('Le recordamos que <b>MetLife</b> cubre las pernoctas y/o traslados terrestres necesarios, siempre que este aplique, dentro de las fechas del evento.'));
     b += p(T('Esperamos su validación respondiendo con la siguiente leyenda: <b>“Estoy de acuerdo con el itinerario de vuelo, proceder con la compra”</b>.'), 'padding-top:12px');
@@ -2914,7 +2918,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 441;
+const APP_V = 442;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

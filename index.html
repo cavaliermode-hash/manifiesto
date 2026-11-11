@@ -1570,6 +1570,7 @@ function invHTML(r, vImg){
     b += imp(T('Importante.- ', INK, 'bold') + T('Si desea realizar algún cambio de fecha u horario posterior a su confirmación, esto generará un <b>cargo por cambio</b> y posiblemente <b>diferencia de tarifa</b>, los cuales tendrán que ser cubiertos por su parte.') + '<br><br>' + T('Le recordamos que <b>MetLife</b> cubre las pernoctas y/o traslados terrestres necesarios, siempre que este aplique, dentro de las fechas del evento.'));
     b += p(T('Esperamos su validación respondiendo con la siguiente leyenda: <b>“Estoy de acuerdo con el itinerario de vuelo, proceder con la compra”</b>.'), 'padding-top:12px');
   }
+  if(tc) b += imp(T('Le agradecería una confirmación de recepción de este mensaje.', INK, 'bold'));
   b += p(T('Si necesita más información o tiene preguntas específicas, no dude en ponerse en contacto.'), 'padding-top:12px');
   b += p(T('Continúo a sus órdenes.'), 'padding-top:8px') + p(T('Saludos cordiales,'), 'padding-top:8px');
   return `<table width="100%" cellpadding="4" cellspacing="0" style="width:100%;max-width:1000px;font-family:Calibri,Arial,sans-serif;font-size:11pt;background:#ffffff">${b}</table>`;
@@ -1612,7 +1613,7 @@ function invWa(r){
     else sec('✈️', 'Vuelo de regreso', [['', 'El *Hotel NH T2 Aeropuerto* está dentro de la *Terminal 2* del aeropuerto; si su vuelo sale de la *Terminal 1*, puede cambiar de terminal en el *Aerotrén*.']]);
     if(vuelo) L.push('', SEP, '', '*Importante.-* Si desea realizar algún cambio de fecha u horario posterior a su confirmación, esto generará un *cargo por cambio* y posiblemente *diferencia de tarifa*, los cuales tendrán que ser cubiertos por su parte.', '',
       'Le recordamos que *MetLife* cubre las pernoctas y/o traslados terrestres necesarios, siempre que este aplique, dentro de las fechas del evento.', '',
-      'Esperamos su validación respondiendo con la siguiente leyenda: *“Estoy de acuerdo con el itinerario de vuelo, proceder con la compra”*.');
+      'Esperamos su validación respondiendo con la siguiente leyenda: *“Estoy de acuerdo con el itinerario de vuelo, proceder con la compra”*.');    if(tc) L.push('', '*Le agradecería una confirmación de recepción de este mensaje.*');
   }
   L.push('', '🗓️ *Agenda del evento:*', base + 'agenda-conocemet-invitacion.jpg', '',
     'Si necesita más información o tiene preguntas específicas, no dude en ponerse en contacto.', '', 'Continúo a sus órdenes.', '', 'Saludos cordiales,');
@@ -3041,7 +3042,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 470;
+const APP_V = 471;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

@@ -2485,12 +2485,15 @@ function claRender(){ rolBar(); zipRoles();
 const notaDe = (r, k) => ((r.notas || []).find(n => n.k === k) || {}).t || '';
 /* Quién tiene traslado real: la nota "Llegas por tu cuenta… estacionamiento" NO es traslado (son locales que llegan por su cuenta). */
 const sinTraslado = r => /^Sin traslado terrestre/i.test(notaDe(r, 'tr')); // vuela y llega/regresa por su cuenta a CDMX (no es local)
-const esPorCuenta = r => /por tu cuenta/i.test(notaDe(r, 'tr')) && !sinTraslado(r);
-const conTraslado = r => !!notaDe(r, 'tr') && !esPorCuenta(r) && !sinTraslado(r);
 const tieneVuelo = r => [r.c1, r.ida, r.reg, r.c2].some(Boolean);
-const EDO = {'Hermosillo':'Sonora', 'Los Mochis':'Sinaloa', 'Puebla':'Puebla', 'Metepec':'Estado de México', 'Ciudad de México':'CDMX', 'Guaymas':'Sonora', 'Toluca':'Estado de México', 'Culiacán':'Sinaloa', 'Culiacan':'Sinaloa'};
+const esPorCuenta = r => !!r.loc || (/por tu cuenta/i.test(notaDe(r, 'tr')) && !sinTraslado(r));
+const conTraslado = r => (!!r.tc && !r.vu && !tieneVuelo(r)) || (!!notaDe(r, 'tr') && !r.loc && !esPorCuenta(r) && !sinTraslado(r));
+/* Pernocta por ruta a su llegada (Hotel NH): llegan el 2 de diciembre */
+const pernoc = r => !!(r.pe2 || notaDe(r, 'pe'));
+const EDO = {'Hermosillo':'Sonora', 'Los Mochis':'Sinaloa', 'Puebla':'Puebla', 'Metepec':'Estado de México', 'Ciudad de México':'CDMX', 'Guaymas':'Sonora', 'Toluca':'Estado de México', 'Culiacán':'Sinaloa', 'Culiacan':'Sinaloa', 'Cuernavaca':'Morelos', 'Querétaro':'Querétaro', 'Queretaro':'Querétaro', 'Guadalajara':'Jalisco'};
 const conEdo = c => EDO[c] && EDO[c] !== 'CDMX' ? `${c}, ${EDO[c]}` : c;
 function ciudadTr(r, t){ // ciudad de donde sale el traslado
+  if(r.tc && (!t || /^Traslado terrestre desde/i.test(t))) return conEdo(tcase(r.tc));
   const m = t.match(/punto de encuentro .+?,\s*([A-ZÁÉÍÓÚa-záéíóúñ ]+),\s*(?:Pue\.|Estado de México|Edo\.)/);
   if(/Metepec/i.test(t)) return conEdo('Metepec');
   if(m) return conEdo(m[1].trim());
@@ -2503,14 +2506,15 @@ function ciudadTr(r, t){ // ciudad de donde sale el traslado
 const INV = () => DATA.filter(r => !r.staff); // invitados sin staff (Traslados y pernoctas no incluye staff)
 function pytData(){
   const by = (a, b) => a.n.localeCompare(b.n, 'es');
-  const pern = INV().filter(r => notaDe(r, 'pe')).sort(by), grupos = new Map();
+  const pern = INV().filter(pernoc).sort(by), grupos = new Map();
   const locales = INV().filter(r => esPorCuenta(r) || (!tieneVuelo(r) && !conTraslado(r))).sort(by);
   INV().filter(conTraslado).sort(by).forEach(r => {
     const t = notaDe(r, 'tr'), m = t.match(/punto de encuentro (.+?)(?:, para llevarte|\. A tu regreso)/i), cd = ciudadTr(r, t);
     const cuando = (t.match(/el (\S+ \d+ de \S+) a las ([\d:]+ h)/) || []).slice(1).join(' · ') || (t.match(/a las ([\d:]+ h)/) || [])[1] || '';
     const dest = (t.match(/para llevarte (?:al|a la|a) (.+?)(?:,|\.)/) || [])[1] || '';
     let key, sub, det = '';
-    if(m){ key = 'Punto de encuentro: ' + m[1].split(',')[0]; sub = [cuando, m[1].split(',').slice(1).join(',').trim()].filter(Boolean).join(' · '); }
+    if(r.tc && (!t || /^Traslado terrestre desde/i.test(t))){ key = 'Traslado terrestre a la sede'; sub = 'Jueves 3 de diciembre · punto de encuentro y horario por confirmar · regreso al finalizar el evento'; }
+    else if(m){ key = 'Punto de encuentro: ' + m[1].split(',')[0]; sub = [cuando, m[1].split(',').slice(1).join(',').trim()].filter(Boolean).join(' · '); }
     else if(/te recogemos en el aeropuerto/i.test(t)){ key = 'Desde el aeropuerto'; sub = 'Se recoge en el aeropuerto y regresa al mismo aeropuerto.'; det = [cuando, dest && '→ ' + dest].filter(Boolean).join(' '); }
     else if(/domicilio/i.test(t)){ key = 'Desde su domicilio'; sub = 'Se recoge en el domicilio registrado y regresa a la misma dirección.'; det = [cuando, dest && '→ ' + dest].filter(Boolean).join(' '); }
     else if(/solo a tu regreso/i.test(t)){ key = 'Solo traslado de regreso'; sub = /del Hotel Marinaterra al aeropuerto/i.test(t) ? 'Del hotel sede al aeropuerto de Hermosillo para su vuelo de regreso (sin traslado a su llegada).' : 'Se le recibe al aterrizar de regreso.'; det = ((t.match(/el (\S+ \d+ de \S+), al aterrizar en (.+?) en el vuelo (.+?) \(llegada ([\d:]+) h\)/) || []).slice(1).join(' · ')) || t; }
@@ -2524,7 +2528,9 @@ function pytData(){
 /* Recorrido completo de una persona en orden de fecha y hora: traslado de ida, vuelos, pernocta en el Hotel NH y traslado de regreso. */
 function rutaDe(r){
   const ev = [], MESN = {noviembre:11, octubre:10, diciembre:12};
-  const tr = conTraslado(r) ? notaDe(r, 'tr') : '', pe = notaDe(r, 'pe');
+  const tc3 = r.tc && conTraslado(r) && /^(|Traslado terrestre desde.*)$/i.test(notaDe(r, 'tr')), tr = conTraslado(r) && !tc3 ? notaDe(r, 'tr') : '', pe = pernoc(r);
+  if(tc3){ ev.push({k: '2026-12-03 06:00', t: `🚐 Jue 3 dic · traslado terrestre desde ${tcase(r.tc)} → sede del evento (horario por confirmar)`}); ev.push({k: '2026-12-04 99', t: `🚐 Regreso · traslado terrestre a ${tcase(r.tc)} (horario por confirmar)`}); }
+  if(tieneHotel(r)) ev.push({k: (r.pe2 ? '2026-12-02 23:30' : '2026-12-03 23:10'), t: r.pe2 ? '🏨 Hotel NH T2 · check-in 2 dic, check-out 4 dic (2 noches)' : '🏨 Hotel NH T2 · check-in 3 dic, check-out 4 dic'});
   const corto = iso => fmtDate(iso);
   if(tr && !/solo a tu regreso/i.test(tr)){
     const m = tr.match(/el \S+ (\d+) de (\S+) a las ([\d:]+) h/), pt = tr.match(/punto de encuentro (.+?),/), dest = /Hotel NH/i.test(tr) ? 'Hotel NH' : /sede del evento/i.test(tr) ? 'sede del evento' : '';
@@ -2532,7 +2538,7 @@ function rutaDe(r){
     const iso = m ? `2026-${String(MESN[m[2]] || 11).padStart(2,'0')}-${m[1].padStart(2,'0')}` : '';
     ev.push({k: iso + ' ' + (m ? m[3].padStart(5,'0') : '00:00'), t: `🚗 ${iso ? corto(iso) + ' ' : ''}${m ? m[3] + ' h' : ''} · traslado desde ${desde}${dest ? ' → ' + dest : ''}`});
   }
-  if(pe) ev.push({k: '2026-11-02 23:00', t: '🏨 Pernocta Hotel NH · check-in 2 nov, check-out 3 nov'});
+
   [r.c1, r.ida, r.reg, r.c2].filter(Boolean).forEach(l => ev.push({k: l.f + ' ' + String(l.s || '').padStart(5,'0'), t: `✈️ ${corto(l.f)} · ${l.v} · ${l.o} ${l.s} → ${l.d} ${l.l}`}));
   if(tr){
     if(/solo a tu regreso/i.test(tr) && /del Hotel Marinaterra al aeropuerto/i.test(tr)) ev.push({k: '2026-11-05 00', t: '🚗 Jue 5 nov · traslado del Hotel Marinaterra al aeropuerto de Hermosillo'});
@@ -2543,19 +2549,19 @@ function rutaDe(r){
 }
 const rutaHTML = r => { const L = rutaDe(r); return L.length ? `<ol class="pruta">${L.map(t => `<li>${esc(t)}</li>`).join('')}</ol>` : ''; };
 /* Etiquetas por servicio que aplica a cada persona (sin más detalle) */
-const svcTags = r => (conTraslado(r) ? '<span class="ptag">🚗 Traslado</span>' : '') + (notaDe(r,'pe') ? '<span class="ptag">🏨 Hotel NH</span>' : '') + (tieneVuelo(r) ? '<span class="ptag">✈️ Vuelo</span>' : '') + (esPorCuenta(r) || (!tieneVuelo(r) && !conTraslado(r)) ? '<span class="ptag" style="background:#FFF7E6">🚙 Llega por su cuenta</span>' : '');
+const svcTags = r => (conTraslado(r) ? '<span class="ptag">🚗 Traslado</span>' : '') + (pernoc(r) ? '<span class="ptag">🏨 Hotel NH</span>' : '') + (tieneVuelo(r) ? '<span class="ptag">✈️ Vuelo</span>' : '') + (esPorCuenta(r) || (!tieneVuelo(r) && !conTraslado(r)) ? '<span class="ptag" style="background:#FFF7E6">🚙 Llega por su cuenta</span>' : '');
 /* Filtros de los cuadritos y del desglose: al tocar uno se muestra solo la lista de esas personas; al tocarlo otra vez vuelve a todo. */
 let PYT_F = '';
 const PYT_FIL = {
   all:  ['👥 Todos los invitados', r => true],
   tr:   ['🚗 Con traslado terrestre', r => conTraslado(r)],
-  pe:   ['🏨 Con pernocta en el Hotel NH', r => !!notaDe(r,'pe')],
-  tres: ['🚗+🏨+✈️ Traslado + pernocta + vuelo', r => conTraslado(r) && !!notaDe(r,'pe') && tieneVuelo(r)],
-  pev:  ['🏨+✈️ Pernocta + vuelo, sin traslado', r => !!notaDe(r,'pe') && !conTraslado(r)],
-  trv:  ['🚗+✈️ Traslado + vuelo, sin pernocta', r => conTraslado(r) && !notaDe(r,'pe') && tieneVuelo(r)],
-  trs:  ['🚗 Solo traslado terrestre (sin vuelo)', r => conTraslado(r) && !notaDe(r,'pe') && !tieneVuelo(r)],
-  loc:  ['🚙 Locales que llegan por su cuenta', r => esPorCuenta(r) || (!tieneVuelo(r) && !conTraslado(r))],
-  sv:   ['✈️ Solo vuelo (sin traslado ni pernocta)', r => tieneVuelo(r) && !conTraslado(r) && !notaDe(r,'pe') && !esPorCuenta(r)]
+  pe:   ['🏨 Con pernocta en el Hotel NH', r => pernoc(r)],
+  tres: ['🚗+🏨+✈️ Traslado + pernocta + vuelo', r => conTraslado(r) && pernoc(r) && tieneVuelo(r)],
+  pev:  ['🏨+✈️ Pernocta + vuelo, sin traslado', r => pernoc(r) && !conTraslado(r)],
+  trv:  ['🚗+✈️ Traslado + vuelo, sin pernocta', r => conTraslado(r) && !pernoc(r) && tieneVuelo(r)],
+  trs:  ['🚗 Solo traslado terrestre (sin vuelo)', r => conTraslado(r) && !pernoc(r) && !tieneVuelo(r)],
+  loc:  ['🅿️ Locales (cita 12:00 h · estacionamiento)', r => esPorCuenta(r) || (!tieneVuelo(r) && !conTraslado(r))],
+  sv:   ['✈️ Solo vuelo (sin traslado ni pernocta)', r => tieneVuelo(r) && !conTraslado(r) && !pernoc(r) && !esPorCuenta(r)]
 };
 document.addEventListener('click', e => { const b = e.target.closest('#pout [data-pf]'); if(!b) return; PYT_F = PYT_F === b.dataset.pf ? '' : b.dataset.pf; pytRender(); const t = document.querySelector('#pout .pres') || document.getElementById('pout'); t.scrollIntoView({block:'start', behavior:'smooth'}); });
 function pytRender(){
@@ -2581,24 +2587,24 @@ function pytRender(){
   h += `<div class="pgrp"><h3>🚗+🏨+✈️ Traslado + pernocta + vuelo</h3><p class="pw"><span class="pc">${tres.length} ${tres.length===1?'persona':'personas'}</span></p>`
     + tabla(tres.map(r => `<tr><td class="kn">${esc(r.n)}${rolTag(r.rol)}</td></tr>`)) + '</div>';
   const peSolo = pern.filter(r => !conTraslado(r));
-  h += `<div class="pgrp"><h3>🏨+✈️ Pernocta + vuelo (sin traslado)</h3><p class="pw"><span class="pc">${peSolo.length} ${peSolo.length===1?'persona':'personas'}</span> · llegan en vuelo a CDMX, duermen en el Hotel NH y vuelan a Hermosillo al día siguiente</p>`
+  h += `<div class="pgrp"><h3>🏨+✈️ Pernocta + vuelo (sin traslado)</h3><p class="pw"><span class="pc">${peSolo.length} ${peSolo.length===1?'persona':'personas'}</span> · llegan en vuelo a CDMX el miércoles 2 de diciembre y se hospedan en el Hotel NH T2 del 2 al 4 de diciembre</p>`
     + tabla(peSolo.map(r => `<tr><td class="kn">${esc(r.n)}${rolTag(r.rol)}</td></tr>`)) + '</div>';
-  h += `<div class="pgrp"><h3>🏨 Pernoctan en el Hotel NH Collection Mexico City Airport T2</h3><p class="pw"><span class="pc">${pern.length} ${pern.length===1?'persona':'personas'}</span> · a su llegada · check-in lunes 2 nov · check-out martes 3 nov</p>`
+  h += `<div class="pgrp"><h3>🏨 Pernoctan en el Hotel NH Collection Mexico City Airport T2</h3><p class="pw"><span class="pc">${pern.length} ${pern.length===1?'persona':'personas'}</span> · por ruta a su llegada · check-in miércoles 2 dic · check-out viernes 4 dic (incluye la noche del evento)</p>`
     + tabla(pern.map(r => { return `<tr><td class="kn">${esc(r.n)}${rolTag(r.rol)}</td></tr>`; })) + '</div>';
   h += `<div class="pgrp"><h3>🚗 Traslados terrestres por ciudad</h3><p class="pw"><span class="pc">${tras} ${tras===1?'persona':'personas'}</span></p></div>`;
   [...grupos].sort((a, b) => a[1].cd.localeCompare(b[1].cd, 'es')).forEach(([key, g]) => {
     h += `<div class="pgrp"><h3>${esc(key)}</h3><p class="pw"><span class="pc">${g.pax.length}</span>${g.sub ? ' · ' + esc(g.sub) : ''}</p>`
       + tabla(g.pax.map(({r, det}) => `<tr><td class="kn">${esc(r.n)}${rolTag(r.rol)}</td></tr>`)) + '</div>';
   });
-  h += `<div class="pgrp"><h3>🚙 Locales que llegan por su cuenta</h3><p class="pw"><span class="pc">${locales.length} ${locales.length===1?'persona':'personas'}</span> · sin vuelo ni traslado; llegan directo a la sede del evento.</p>`
+  h += `<div class="pgrp"><h3>🅿️ Locales (cita 12:00 h · estacionamiento)</h3><p class="pw"><span class="pc">${locales.length} ${locales.length===1?'persona':'personas'}</span> · sin vuelo ni traslado; cita a las 12:00 h en Torre Manacar con estacionamiento.</p>`
     + tabla(locales.map(r => { return `<tr><td class="kn">${esc(r.n)}${rolTag(r.rol)}</td></tr>`; })) + '</div>';
   $('#pout').innerHTML = h;
 }
 function pytTxt(){
-  const {pern, grupos, locales} = pytData(), L = ['*Traslados y pernoctas · ConoceMet*', '', `🏨 *Pernoctan en Hotel NH CDMX T2* (${pern.length}) · check-in 2 nov, check-out 3 nov`];
+  const {pern, grupos, locales} = pytData(), L = ['*Traslados y pernoctas · ConoceMet*', '', `🏨 *Pernoctan en Hotel NH CDMX T2* (${pern.length}) · check-in 2 dic, check-out 4 dic`];
   pern.forEach(r => L.push('• ' + tcase(r.n) + (conTraslado(r) ? ' (traslado)' : ' (vuelo)')));
   [...grupos].sort((a, b) => a[1].cd.localeCompare(b[1].cd, 'es')).forEach(([key, g]) => { L.push('', `🚗 *${key.replace(/^📍 /, '')}* (${g.pax.length})` + (g.sub ? '\n' + g.sub : '')); g.pax.forEach(({r, det}) => L.push('• ' + tcase(r.n) + (det ? ' — ' + det : ''))); });
-  L.push('', `🚙 *Locales que llegan por su cuenta* (${locales.length})`); locales.forEach(r => L.push('• ' + tcase(r.n) + (r.cd ? ' — ' + conEdo(r.cd) : '')));
+  L.push('', `🅿️ *Locales · cita 12:00 h con estacionamiento* (${locales.length})`); locales.forEach(r => L.push('• ' + tcase(r.n) + (r.cd ? ' — ' + conEdo(r.cd) : '')));
   return L.join('\n');
 }
 $('#pcopy').addEventListener('click', async () => { await claCopy(pytTxt()); $('#pmsg').textContent = 'Resumen copiado. Pégalo en WhatsApp.'; });
@@ -2623,14 +2629,14 @@ function kRows(){
   // Con vuelo: su vuelo. Sin vuelo en ese sentido (terrestre o por su cuenta): se incluye con su traslado.
   const MES = {enero:1,febrero:2,marzo:3,abril:4,mayo:5,junio:6,julio:7,agosto:8,septiembre:9,octubre:10,noviembre:11,diciembre:12};
   const rows = DATA.map(r => { const l = kLeg(r);
-    if(l) return {r, l, n:r.n, f:l.f + ' ' + kHora(l), v:l.v, s:kSt(r.n)};
+    if(l) return Object.assign({r, l, n:r.n, f:l.f + ' ' + kHora(l), v:l.v, s:kSt(r.n)}, KON.m === 'lle' && r.pe2 ? {tag:'🏨 Llega 2 dic · pernocta por ruta (Hotel NH)'} : {});
     const t = notaDe(r, 'tr'), lle = KON.m === 'lle';
-    const cuenta = /por tu cuenta/i.test(t), tierra = !cuenta && (soloTierra(r) || !!t);
-    const v = cuenta ? 'Por su cuenta' : tierra ? 'Terrestre' : 'Sin vuelo asignado';
+    const cuenta = !!r.loc || /por tu cuenta/i.test(t), tierra = !cuenta && (soloTierra(r) || !!t);
+    const v = r.loc ? 'Local' : cuenta ? 'Por su cuenta' : tierra ? 'Terrestre' : r.vu ? 'Vuelo en emisión' : 'Sin vuelo asignado';
     const m = lle ? t.match(/el \S+ (\d+) de (\S+) a las ([\d:]+) h/) : null;
     const f = m ? `2026-${String(MES[m[2]]||11).padStart(2,'0')}-${m[1].padStart(2,'0')} ${m[3].padStart(5,'0')}` : (lle ? HOTEL.ci + ' 99:99' : HOTEL.co + ' 99:99');
-    const lab = m ? fmtDate(f.slice(0,10)) : (lle ? 'Mar 3 nov' : 'Jue 5 nov');
-    const det = cuenta ? (lle ? (/estacionamiento/i.test(t) ? 'Llega por su cuenta · estacionamiento' : 'Llega por su cuenta') : 'Regresa por su cuenta') : tierra ? (m ? `${m[3]} h · traslado terrestre` : 'Traslado terrestre') : 'Sin vuelo asignado';
+    const lab = m ? fmtDate(f.slice(0,10)) : fmtDate(lle ? HOTEL.ci : (r.loc ? HOTEL.ci : HOTEL.co));
+    const det = r.loc ? (lle ? 'Cita 12:00 h · estacionamiento Torre Manacar' : 'Regresa al terminar el evento') : r.tc && tierra && !m ? (lle ? `Traslado terrestre desde ${tcase(r.tc)} · horario por confirmar` : `Traslado terrestre a ${tcase(r.tc)} · horario por confirmar`) : cuenta ? (lle ? (/estacionamiento/i.test(t) ? 'Llega por su cuenta · estacionamiento' : 'Llega por su cuenta') : 'Regresa por su cuenta') : tierra ? (m ? `${m[3]} h · traslado terrestre` : 'Traslado terrestre') : 'Sin vuelo asignado';
     return {r, l:null, n:r.n, f, v, s:kSt(r.n), lab, det}; });
   /* Registros adicionales, cada uno con su propio check-in / no show:
      · traslados terrestres considerados (Metepec, Toluca, Puebla, Cuernavaca, domicilio…) con su hora;
@@ -2993,7 +2999,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 456;
+const APP_V = 457;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

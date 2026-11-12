@@ -935,7 +935,7 @@ main a:not([class]):hover,.foot a:hover{color:var(--acc)!important;text-decorati
     </ul>
   </section>
   <div class="dcierre" id="cierre" hidden><p class="dimp"><b id="dimp-t">Importante.- Le recordamos que MetLife cubre las pernoctas y/o traslados terrestres necesarios, siempre que este aplique, dentro de las fechas del evento.</b></p>
-    <p class="dbye">Le enviamos un cordial saludo deseándole un buen viaje y nos reiteramos a sus órdenes.&nbsp;&nbsp;<b><i>Equipo de Coordinación de Viajes</i></b></p></div>
+    <p class="dbye">Le enviamos un cordial saludo deseándole un buen viaje y nos reiteramos a sus órdenes.</p></div>
   <section class="faq" aria-labelledby="faq-t">
     <h2 id="faq-t">Preguntas frecuentes</h2>
     <details><summary>No encuentro mi nombre, ¿qué hago?</summary><p>Escribe tu <b>nombre completo: todos tus nombres y tus dos apellidos</b>. Los acentos y el orden no importan. Si aun así no apareces o algún dato está mal, contacta a tu <b>coordinador de viajes</b>.</p></details>
@@ -1280,7 +1280,7 @@ function detailView(r){
       <p class="dname"><span class="est">Estimado(a)</span> <b>${esc(r.n)}</b></p>${viajeHecho(r) ? '' : `<p class="dsub dintro">${esc(INTRO_TXT).replace('ConoceMet by MetLife', '<mark class="dhl">ConoceMet by MetLife</mark>')}</p>`}
     </div>
     ${progViaje(r)}
-    ${viajeHecho(r) ? `<p class="dbye dfin">Gracias por acompañarnos en <b>ConoceMet by MetLife</b>. Le enviamos un cordial saludo y nos reiteramos a sus órdenes.&nbsp;&nbsp;<b><i>Equipo de Coordinación de Viajes</i></b></p>`
+    ${viajeHecho(r) ? `<p class="dbye dfin">Gracias por acompañarnos en <b>ConoceMet by MetLife</b>. Le enviamos un cordial saludo y nos reiteramos a sus órdenes.</p>`
       : `<section class="itinweb" aria-label="Su itinerario día por día">${mailHTML(r, 'web')}</section>`}
     <div id="agslot"></div>
     ${tripSteps(r)}
@@ -3052,7 +3052,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 478;
+const APP_V = 479;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

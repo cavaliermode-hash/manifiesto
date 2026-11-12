@@ -1364,7 +1364,7 @@ function resumenTxt(r){
   L.push('', 'PUNTOS IMPORTANTES',
     '- El check-in podrá realizarse 24 horas antes de la salida, si la aerolínea lo permite. De lo contrario, preséntate 2 horas antes en los mostradores.',
     '- Para administrar tu reserva usa únicamente las 6 letras de la clave en la página de la aerolínea.',
-    '', 'Consulta tu itinerario y la agenda del evento: ' + location.origin + location.pathname, '', 'Equipo de Coordinación de Viajes');
+    '', 'Consulta tu itinerario y la agenda del evento: ' + location.origin + location.pathname, '');
   return L.join('\n');
 }
 /* Correo: la misma información que el PDF (reserva, vuelos, traslados y pernoctas, sede, información general,
@@ -1386,7 +1386,7 @@ function mailTxt(r){
     else if(x.rows) x.rows.forEach(([k, v]) => L.push(`- ${k}: ${v}`)); else if(x.text) L.push(x.text); if(x.nb) L.push(x.nb); });
   if(!tierra){ L.push('', 'PUNTOS IMPORTANTES DE SU VUELO'); document.querySelectorAll('section.important li').forEach(li => L.push('- ' + li.innerText.trim())); }
   L.push('', 'Importante.- ' + impTxt(r),
-    '', 'Le enviamos un cordial saludo deseándole un buen viaje y nos reiteramos a sus órdenes.', '', CFG.firma || 'Equipo de Coordinación de Viajes');
+    '', 'Le enviamos un cordial saludo deseándole un buen viaje y nos reiteramos a sus órdenes.', '', CFG.firma || '');
   return L.join('\n');
 }
 /* Correo con formato (colores, tarjetas de vuelo, negritas y puntos importantes sombreados), igual que el PDF.
@@ -1477,8 +1477,8 @@ function mailHTML(r, enPDF){
     b += `<tr><td bgcolor="#F0F8F2" style="background:#F0F8F2;border-left:4px solid ${G};padding:${C ? '5px 12px' : '10px 14px'}"><table cellpadding="0" cellspacing="0">${pts}</table></td></tr>`; }
   b += `<tr><td style="padding-top:${C ? 6 : 12}px"><table width="100%" cellpadding="0" cellspacing="0"><tr><td bgcolor="#FFF7E6" style="background:#FFF7E6;border-left:4px solid #E0A100;padding:${C ? '5px 12px;line-height:1.25' : '10px 14px'}">${T('Importante.- ' + impTxt(r), C ? 11 : fs, INK, 'bold')}</td></tr></table></td></tr>`;
   // (sin botón de PDF en el correo)
-  if(C) b += p(T('Le enviamos un cordial saludo deseándole un buen viaje y nos reiteramos a sus órdenes.', 11) + '&nbsp;&nbsp;' + T('Equipo de Coordinación de Viajes', 11, G, 'bold', 'Arial,sans-serif', 'font-style:italic'), 'padding-top:4px');
-  else b += p(T('Le enviamos un cordial saludo deseándole un buen viaje y nos reiteramos a sus órdenes.')) + p(T((!WEB && CFG.firma) || 'Equipo de Coordinación de Viajes', fs, G, 'bold', 'Arial,sans-serif', 'font-style:italic'), C ? 'padding-top:2px;padding-bottom:4px' : 'padding-top:6px;padding-bottom:10px');
+  if(C) b += p(T('Le enviamos un cordial saludo deseándole un buen viaje y nos reiteramos a sus órdenes.', 11), 'padding-top:4px');
+  else b += p(T('Le enviamos un cordial saludo deseándole un buen viaje y nos reiteramos a sus órdenes.')) + (!WEB && CFG.firma ? p(T(esc(CFG.firma), fs, G, 'bold', 'Arial,sans-serif', 'font-style:italic'), 'padding-top:6px;padding-bottom:10px') : '');
   // PDF: 640 px fijos (cabe en una hoja). Correo: a lo ancho de la ventana del correo, hasta 1000 px, para leerse mejor.
   return C ? `<table width="100%" cellpadding="4" cellspacing="0" style="width:100%;font-family:Arial,sans-serif;background:#ffffff">${b}</table>`
     : `<table width="100%" cellpadding="4" cellspacing="0" style="width:100%;max-width:1000px;font-family:Calibri,Arial,sans-serif;font-size:11pt;background:#ffffff">${b}</table>`;
@@ -1691,7 +1691,7 @@ function waTxt(r){
     '👕 *Información general y dress code:*', base + 'dresscode-conocemet.jpg?v=410', '',
     '🔎 *Consulta tu reserva cuando quieras:*', base, '',
     '*Importante.-* ' + impTxt(r).replace('MetLife', '*MetLife*'), '',
-    'Le enviamos un cordial saludo deseándole un buen viaje y nos reiteramos a sus órdenes.', '', '*_Equipo de Coordinación de Viajes_*');
+    'Le enviamos un cordial saludo deseándole un buen viaje y nos reiteramos a sus órdenes.');
   return L.join('\n');
 }
 /* ---------- Itinerario personal en PDF ---------- */
@@ -1820,7 +1820,6 @@ async function itinPDFtexto(r){
     document.querySelectorAll('section.important li').forEach(li => bul(li.innerText)); }
   y += 4; para('Importante.- ' + impTxt(r), {b:1});
   y += 2; para('Le enviamos un cordial saludo deseándole un buen viaje y nos reiteramos a sus órdenes.');
-  para('Equipo de Coordinación de Viajes', {b:1, c:G});
   return doc.output('blob');
 }
 async function descargarPDF(r, msg, ver){
@@ -1877,7 +1876,7 @@ function vueloHTML(r, pie){ /* despedida siempre al final (búsqueda, Staff y ZI
     <div style="margin-top:16px;border-left:4px solid ${G};padding-left:9px;font:bold 15px Arial,sans-serif;color:${G};letter-spacing:.4px">PUNTOS IMPORTANTES DE SU VUELO</div>
     <div style="margin-top:6px;background:#F0F8F2;border-left:4px solid ${G};padding:8px 14px">${[...document.querySelectorAll('section.important li')].map(li => `<div style="display:flex;gap:8px;font:13px/1.55 Arial,sans-serif;color:#16301F;padding:2px 0"><span style="color:${G};font-weight:bold">•</span><span>${li.innerHTML.replace(/<b>/g, '<b style="color:#16301F">')}</span></div>`).join('')}</div>
     ${appBoxPDF(r)}
-    ${true ? `<div style="margin-top:16px;font:13px Arial,sans-serif;color:#222">Le enviamos un cordial saludo deseándole un buen viaje y nos reiteramos a sus órdenes.&nbsp;&nbsp;<i style="font-weight:bold;color:${G}">Equipo de Coordinación de Viajes</i></div>` : ''}
+    ${true ? `<div style="margin-top:16px;font:13px Arial,sans-serif;color:#222">Le enviamos un cordial saludo deseándole un buen viaje y nos reiteramos a sus órdenes.</div>` : ''}
   </div>`;
 }
 /* Propuesta de vuelos para la invitación: mismo formato que "Su viaje", sin claves (aún no se compra) */
@@ -2834,7 +2833,7 @@ const repSes = () => { try{ const v = JSON.parse(sessionStorage.getItem('repses'
 const repSave = pw => { try{ sessionStorage.setItem('repses', JSON.stringify({pw: pw || (repSes() || {}).pw || '', t: Date.now()})); }catch(e){} };
 /* Confirmado emitido OK y Bloqueo (Aeroméxico / emitido) OK cuentan juntos como un solo estatus */
 const ST_CONF = /^(CONFIRMADO EMITIDO|BLOQUEO (AEROMEXICO|EMITIDO)|INDIVIDUAL EMITIDO)|EMITIDO OK$/; // cualquier boleto emitido u OK de bloqueo
-function repNorm(R){ if(R && R.filas) R.filas.forEach(x => { const k = stKey(x.st); if(/^CONFIRMADO EMITIDO/.test(k)) x.st = 'INDIVIDUAL EMITIDO OK'; else if(/^BLOQUEO AEROMEXICO/.test(k)) x.st = 'BLOQUEO EMITIDO OK'; }); return R; }
+function repNorm(R){ if(R && R.filas) R.filas.forEach(x => { const k = stKey(x.st); if(/^CONFIRMADO EMITIDO/.test(k)) x.st = 'INDIVIDUAL EMITIDO OK'; else if(/^BLOQUEO/.test(k)) x.st = 'INDIVIDUAL EMITIDO OK'; }); return R; }
 async function repGate(){
   if(REP){ repSave(); return true; } if(!PACK || !PACK.rep) return false;
   const ses = repSes();
@@ -2844,7 +2843,7 @@ async function repGate(){
   catch(e){ alert('Contraseña incorrecta.'); return false; }
 }
 /* ---------- Reporte de telemarketing y presupuesto (solo Staff) ---------- */
-const REP_ST = [['PENDIENTE POR MANDAR LA INFORMACIÓN','#DDEBF7','#16301F'],['PENDIENTE CONFIRMAR PARTICIPANTE O INVITADO','#C9C400','#16301F'],['INDIVIDUAL EMITIDO OK','#70AD47','#0F2A12'],['BLOQUEO EMITIDO OK','#D9CCB0','#16301F'],['LOCAL CONFIRMADO','#FFF2CC','#16301F'],['TERRESTRE CONFIRMADO','#9C5B2E','#FFFFFF'],['CANCELADO','#C00000','#FFFFFF']];
+const REP_ST = [['PENDIENTE POR MANDAR LA INFORMACIÓN','#DDEBF7','#16301F'],['PENDIENTE CONFIRMAR PARTICIPANTE O INVITADO','#C9C400','#16301F'],['INDIVIDUAL EMITIDO OK','#70AD47','#0F2A12'],['LOCAL CONFIRMADO','#FFF2CC','#16301F'],['TERRESTRE CONFIRMADO','#9C5B2E','#FFFFFF'],['CANCELADO','#C00000','#FFFFFF']];
 const RV = {v:'nom', st:'', q:'', sort:'n', dir:1}; // sin buscador en el Reporte (q siempre vacío)
 const REP_NOTA = 'Nota: el presupuesto aéreo incluye asientos y pago de equipaje. No incluye los costos de telemarketing ni de emisión.';
 const repNotaHTML = () => `<p class="rnota">📝 <b>Nota:</b> ${esc(REP_NOTA.replace(/^Nota: /, ''))}</p>`;
@@ -3053,7 +3052,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 477;
+const APP_V = 478;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

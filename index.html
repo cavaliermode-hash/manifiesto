@@ -98,6 +98,7 @@ main{padding-block:16px 48px}
 .fc-fv{font:700 12.5px/1.2 var(--body)}
 .fc-m{min-width:0;padding:2px 14px;display:flex;flex-direction:column;justify-content:center}
 .fc-hm{padding-top:8px;font-size:12px;font-weight:600;color:var(--muted)}
+@media (max-width:560px){.itinweb .vfm + tr .vlogo,.itinweb .vlogo{display:none}.itinweb td.vk{width:62px!important}.itinweb td.vt{width:auto!important;white-space:nowrap}}
 .fc-seg{display:flex;align-items:center;gap:10px;padding:2px 0}
 .fc-end{display:flex;flex-direction:column;gap:2px;min-width:0}.fc-end.r{align-items:flex-end;text-align:right}
 .fc-t{font:700 21px/1 var(--mono);color:var(--ink)}
@@ -1421,13 +1422,13 @@ function mailHTML(r, enPDF){
     return `<tr><td style="padding:${C ? '2px 0 3px' : '4px 0 8px'}"><table width="100%" cellpadding="${C ? 3 : 6}" cellspacing="0" style="border:2px solid #CDE8D5;border-collapse:separate">${rows}</table></td></tr>`; };
   // Correo de confirmación: mismo formato de itinerario que la propuesta de vuelos de la invitación ("IDA · día", logo, Salida/Llegada/Duración)
   const cardM = (dir, l) => { const lg = LOGO_AL(l.v), m = legMin(l), du = m > 0 ? `${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')} (Sin paradas)` : '';
-    const td = (t, st = '') => `<td style="padding:2px 6px 2px 0;${st}">${t}</td>`;
-    return `<tr><td style="padding:10px 0 2px">${T(dir.toUpperCase(), fs, G, 'bold')} ${T('· ' + esc(fV(l.f, true)), fs, '#222222')}</td></tr>
+    const td = (t, st = '', cl = '') => `<td${cl ? ` class="${cl}"` : ''} style="padding:2px 6px 2px 0;${st}">${t}</td>`;
+    return `<tr class="vfm"><td style="padding:10px 0 2px">${T(dir.toUpperCase(), fs, G, 'bold')} ${T('· ' + esc(fV(l.f, true)), fs, '#222222')}</td></tr>
     <tr><td style="padding:0 0 4px"><table width="100%" cellpadding="0" cellspacing="0"><tr><td bgcolor="#EFEFEF" style="background:#EFEFEF;padding:10px 12px"><table width="100%" cellpadding="0" cellspacing="0"><tr>
-      <td width="100" valign="top" style="width:100px;padding:4px 10px 0 0">${lg ? `<img src="${base.replace(/[^\/]*$/, '') + lg}" width="78" alt="${esc(String(l.v).replace(/\s*\d+$/, ''))}" style="width:78px;max-height:24px;height:auto;display:block;border:0">` : ''}</td>
+      <td width="100" valign="top" class="vlogo" style="width:100px;padding:4px 10px 0 0">${lg ? `<img src="${base.replace(/[^\/]*$/, '') + lg}" width="78" alt="${esc(String(l.v).replace(/\s*\d+$/, ''))}" style="width:78px;max-height:24px;height:auto;display:block;border:0">` : ''}</td>
       <td valign="top"><table width="100%" cellpadding="0" cellspacing="0">
         <tr><td colspan="3" style="padding:0 0 6px">${T(esc(lg ? LINEA(l.v).replace(/^(Aeromexico|Volaris|Viva Aerobus) /, 'Vuelo ') : LINEA(l.v)), fs, '#222222', 'bold')}</td></tr>
-        <tr>${td(T('Salida', fs, '#222222', 'bold'), 'width:90px')}${td(T(esc(fV(l.f) + ' ' + (l.s || '')), fs, '#222222', 'bold'), 'width:190px')}${td(T(esc(AERO_N[l.o] || l.o), fs, '#222222', 'bold'))}</tr>
+        <tr>${td(T('Salida', fs, '#222222', 'bold'), 'width:90px', 'vk')}${td(T(esc(fV(l.f) + ' ' + (l.s || '')), fs, '#222222', 'bold'), 'width:190px', 'vt')}${td(T(esc(AERO_N[l.o] || l.o), fs, '#222222', 'bold'))}</tr>
         <tr>${td(T('Llegada', fs, '#222222', 'bold'))}${td(T(esc(fV(l.f) + ' ' + (l.l || '')), fs, '#222222', 'bold'))}${td(T(esc(AERO_N[l.d] || l.d), fs, '#222222', 'bold'))}</tr>
         <tr>${td(T('Duración', fs, '#222222'))}${td('')}${td(T(du, fs, '#222222'))}</tr>
       </table></td></tr></table></td></tr></table></td></tr>`; };
@@ -1464,7 +1465,7 @@ function mailHTML(r, enPDF){
     if(WEB && !TL.length) b += p(T('Su itinerario de viaje ya concluyó. ¡Gracias por acompañarnos en <b>ConoceMet by MetLife</b>!', fs, INK));
     TL.forEach(x => { if(x.f !== fa){ fa = x.f; b += dia(x.f); }
       if(x.tipo === 'vuelo' && dos && x.pk) b += key(x.dir === 'Ida' ? 'Clave de reserva de ida' : 'Clave de reserva de regreso', x.dir === 'Ida' ? r.ci : r.cr);
-      if(x.tipo === 'vuelo') b += C ? cardC(x.dir, [x.leg], x.dir === 'Ida' ? G1 : G2, '') : MAIL11 ? cardM(x.dir, x.leg) : card(x.dir, [x.leg], x.dir === 'Ida' ? G1 : G2, false);
+      if(x.tipo === 'vuelo') b += C ? cardC(x.dir, [x.leg], x.dir === 'Ida' ? G1 : G2, '') : (MAIL11 || WEB) ? cardM(x.dir, x.leg) : card(x.dir, [x.leg], x.dir === 'Ida' ? G1 : G2, false);
       else if(x.tipo === 'verde') b += verde(x.i + ' ' + esc(x.t), x.text === REGRESO_TXT ? `<b>${esc(x.text)}</b>` : esc(x.text).replace('MetLife', '<b>MetLife</b>'));
       else if(x.tipo === 'hotel') b += blk(x.i, x.t, `<tr><td colspan="2">${x.lines.map(t => T('• ' + esc(t).replace(HOTEL.n, `<b style="color:${INK}">${HOTEL.n}</b>`), C ? 11 : 13, INK)).join('<br>')}${x.nota ? '<br>' + T('⚠️ ' + esc(x.nota), C ? 11 : 13, INK, 'bold') : ''}</td></tr>`);
       else if(x.tipo === 'info') b += blk(x.i, x.t, x.text ? `<tr><td colspan="2">${T(esc(x.text), C ? 11 : 13, INK)}</td></tr>` : '');
@@ -3052,7 +3053,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 476;
+const APP_V = 477;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

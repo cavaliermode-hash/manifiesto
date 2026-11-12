@@ -276,7 +276,7 @@ table.rep{font-size:13px}
 .abtn:hover{background:var(--green);color:#fff}
 .dactions{margin-top:12px}
 .th-plain{display:block;padding:9px 8px;font:600 11px/1.2 var(--body);letter-spacing:.06em;text-transform:uppercase;color:var(--green-dark,#0c4f23)}
-.cpdf{white-space:nowrap}.cpdf{vertical-align:middle;width:1%}.cbx{display:flex;flex-direction:row;align-items:center;justify-content:flex-end;gap:3px}.cpdf button,.cpdf .cwa{margin:0;text-align:center;width:30px;height:30px;padding:0!important;display:inline-flex;align-items:center;justify-content:center;font-size:16px!important;line-height:1}.cpdf button{font:600 12px/1 var(--body);padding:6px 9px;margin:2px;border-radius:6px;border:1px solid var(--green);background:#fff;color:var(--green);cursor:pointer}.cpdf button{background:var(--green);color:#fff}
+.cvfrow td{background:#F7FAF7;padding:8px 10px 12px!important}@media (max-width:560px){.cvfrow td{padding:6px 2px 10px!important}.cvfbox{zoom:.6;width:max-content;max-width:none}.cvfx{font-size:20px}}.cvfbox{max-width:760px;margin:0 auto}.cvfx{display:block;margin:10px auto 0;font:700 13px Arial,sans-serif;color:#1C6B2E;background:#fff;border:1px solid #1C6B2E;border-radius:999px;padding:6px 14px;cursor:pointer}.cpdf .cvf.on{background:#1C6B2E!important;color:#fff}.cpdf{white-space:nowrap}.cpdf{vertical-align:middle;width:1%}.cbx{display:flex;flex-direction:row;align-items:center;justify-content:flex-end;gap:3px}.cpdf button,.cpdf .cwa{margin:0;text-align:center;width:30px;height:30px;padding:0!important;display:inline-flex;align-items:center;justify-content:center;font-size:16px!important;line-height:1}.cpdf button{font:600 12px/1 var(--body);padding:6px 9px;margin:2px;border-radius:6px;border:1px solid var(--green);background:#fff;color:var(--green);cursor:pointer}.cpdf button{background:var(--green);color:#fff}
 .cwa{display:inline-block;font:600 12px/1 var(--body);padding:6px 9px;margin:2px;border-radius:6px;background:#1FA855;color:#fff;text-decoration:none}.cwa.na{background:#eee;color:var(--muted)}.cwa.cml{background:#1E5BA8}.cpdf .ccopy{background:#fff!important;border:1.5px solid #1E5BA8!important;color:#1E5BA8}
 .pdf-msg{font-size:13px;color:var(--muted);margin-left:6px}
 .abtn2{font:700 14px var(--body);background:var(--green);color:#fff;border:0;border-radius:8px;padding:10px 14px;cursor:pointer}
@@ -2522,7 +2522,7 @@ function vFiltra(id){
 document.addEventListener('input', e => { if(VQ[e.target.id]) vFiltra(e.target.id); });
 addEventListener('DOMContentLoaded', () => Object.entries(VQ).forEach(([id, sel]) => { const c = $(sel); if(c) new MutationObserver(() => vFiltra(id)).observe(c, {childList:true, subtree:true}); }));
 /* Botones 📄 PDF, 💬 WhatsApp y ✉️ correo de una persona (Claves y Traslados y pernoctas) */
-function accBtns(i, vuelos){ const n = DATA[i].n; return `<td class="cpdf"><div class="cbx">${vuelos && [DATA[i].ida, DATA[i].reg, DATA[i].c1, DATA[i].c2].some(Boolean) ? `<button class="cvue" data-vpdf="${i}" title="Descargar el PDF de vuelos de ${esc(tcase(n))}" aria-label="PDF de vuelos de ${esc(tcase(n))}">✈️</button>` : ''}${TEL[n] ? '' : '<span class="cwa na" title="Sin teléfono registrado">—</span>'}${TEL[n] ? `<a class="cwa cwainv" href="https://wa.me/52${TEL[n]}?text=${encodeURIComponent(invWa(DATA[i]))}" target="_blank" rel="noopener" title="WhatsApp de INVITACIÓN a ${esc(tcase(n))} (${TEL[n]})" aria-label="WhatsApp de invitación a ${esc(tcase(n))}">📲</a>` : ''}<button class="ccopy cinv" type="button" data-cinv="${i}" title="Copiar correo de INVITACIÓN de ${esc(tcase(n))} (con formato y la propuesta de vuelos)" aria-label="Copiar invitación de ${esc(tcase(n))}">📨</button><button class="ccopy" type="button" data-cmail="${i}" title="Copiar correo de CONFIRMACIÓN de ${esc(tcase(n))} (itinerario con claves e información importante)" aria-label="Copiar confirmación de ${esc(tcase(n))}">📋</button></div></td>`; }
+function accBtns(i, vuelos){ const n = DATA[i].n; return `<td class="cpdf"><div class="cbx">${vuelos && [DATA[i].ida, DATA[i].reg, DATA[i].c1, DATA[i].c2].some(Boolean) ? `<button class="cvue cvf${CLA_VF.has(i) ? ' on' : ''}" data-cvf="${i}" title="Ver los vuelos de ${esc(tcase(n))}" aria-label="Ver los vuelos de ${esc(tcase(n))}" aria-expanded="${CLA_VF.has(i)}">🛫</button><button class="cvue" data-vpdf="${i}" title="Descargar el PDF de vuelos de ${esc(tcase(n))}" aria-label="PDF de vuelos de ${esc(tcase(n))}">✈️</button>` : ''}${TEL[n] ? '' : '<span class="cwa na" title="Sin teléfono registrado">—</span>'}${TEL[n] ? `<a class="cwa cwainv" href="https://wa.me/52${TEL[n]}?text=${encodeURIComponent(invWa(DATA[i]))}" target="_blank" rel="noopener" title="WhatsApp de INVITACIÓN a ${esc(tcase(n))} (${TEL[n]})" aria-label="WhatsApp de invitación a ${esc(tcase(n))}">📲</a>` : ''}<button class="ccopy cinv" type="button" data-cinv="${i}" title="Copiar correo de INVITACIÓN de ${esc(tcase(n))} (con formato y la propuesta de vuelos)" aria-label="Copiar invitación de ${esc(tcase(n))}">📨</button><button class="ccopy" type="button" data-cmail="${i}" title="Copiar correo de CONFIRMACIÓN de ${esc(tcase(n))} (itinerario con claves e información importante)" aria-label="Copiar confirmación de ${esc(tcase(n))}">📋</button></div></td>`; }
 function rolBar(){ const el = document.getElementById('rolbar'); if(!el) return;
   const c = {}; DATA.forEach(r => { const k = (r.rol || 'SIN ROL').toUpperCase(); c[k] = (c[k] || 0) + 1; });
   const orden = Object.keys(c).sort((a, b) => (/^STAFF/.test(a) - /^STAFF/.test(b)) || c[b] - c[a] || a.localeCompare(b, 'es'));
@@ -2536,9 +2536,14 @@ function claRender(){ rolBar(); zipRoles();
   const cell = x => !x.ci && !x.cr ? '—' : (!x.cr || x.cr === x.ci) ? btn(x.ci) : !x.ci ? `<span class="cl">Regreso</span>${btn(x.cr)}`
     : `<span class="cl">Ida</span>${btn(x.ci)}<br><span class="cl">Regreso</span>${btn(x.cr)}`;
   const L = claRows(), qn = $('#cqn'); if(qn) qn.textContent = $('#cq').value.trim() ? `${L.length} de ${DATA.length}` : '';
-  $('#cbody').innerHTML = (L.length ? '' : '<tr><td colspan="4" class="cnone">Sin resultados para esa búsqueda.</td></tr>') + L.map(x => `<tr><td class="kn">${esc(x.n)}${rolTag(x.rol)}<small class="kll2">${esc(x.llt)}</small></td><td class="kll">${esc(x.llt)}</td><td class="cc">${cell(x)}</td>
-    ${accBtns(x.i, true)}</tr>`).join('');
+  $('#cbody').innerHTML = (L.length ? '' : '<tr><td colspan="4" class="cnone">Sin resultados para esa búsqueda.</td></tr>') + L.map(x => `<tr data-ci="${x.i}"><td class="kn">${esc(x.n)}${rolTag(x.rol)}<small class="kll2">${esc(x.llt)}</small></td><td class="kll">${esc(x.llt)}</td><td class="cc">${cell(x)}</td>
+    ${accBtns(x.i, true)}</tr>${CLA_VF.has(x.i) ? `<tr class="cvfrow"><td colspan="4"><div class="cvfbox">${vueloPropHTML(DATA[x.i])}<button type="button" class="cvfx" data-cvf="${x.i}">▲ Ocultar vuelos</button></div></td></tr>` : ''}`).join('');
 }
+/* Ver vuelos con formato de invitación: desplegable bajo el nombre; al abrir o cerrar regresa a su renglón en Claves */
+const CLA_VF = new Set();
+document.addEventListener('click', e => { const b = e.target.closest('[data-cvf]'); if(!b) return; e.preventDefault();
+  const i = +b.dataset.cvf; CLA_VF.has(i) ? CLA_VF.delete(i) : CLA_VF.add(i); claRender();
+  const tr = document.querySelector(`#cbody tr[data-ci="${i}"]`); if(tr){ const y = tr.getBoundingClientRect().top + scrollY - 70; scrollTo({top: Math.max(0, y), behavior: 'smooth'}); } });
 /* ---------- Traslados y pernoctas ---------- */
 const notaDe = (r, k) => ((r.notas || []).find(n => n.k === k) || {}).t || '';
 /* Quién tiene traslado real: la nota "Llegas por tu cuenta… estacionamiento" NO es traslado (son locales que llegan por su cuenta). */
@@ -3057,7 +3062,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 481;
+const APP_V = 482;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

@@ -759,11 +759,6 @@ main a:not([class]):hover,.foot a:hover{color:var(--acc)!important;text-decorati
 @media (prefers-reduced-motion:reduce){.vbar i,.cfl.flash .cfh,.agv-wait{animation:none!important}.prow-b,.abtn2{transition:none!important}}
 .disc{margin:2px 0 0;font:500 11.5px/1.3 var(--body);color:var(--muted)}
 @media (max-width:560px){.disc{font-size:10px}}
-.instw{display:flex;align-items:center;gap:10px;margin:10px 0 0;padding:10px 12px;background:#E8F3EC;border:1px solid #BFD9C7;border-radius:12px;font:14px/1.35 Arial,sans-serif;color:#16301F}
-.instw[hidden]{display:none}.insti{font-size:24px}.instt{flex:1;display:flex;flex-direction:column}.instt span{font-size:13px;color:#3B5446}
-.instb{background:#136c34;color:#fff;border:0;border-radius:999px;padding:8px 14px;font:700 14px Arial,sans-serif;cursor:pointer;white-space:nowrap}
-.instx{background:none;border:0;font-size:22px;line-height:1;color:#3B5446;cursor:pointer;padding:0 2px}
-.instw ol{margin:6px 0 0;padding-left:18px;font-size:13px}
 </style>
 </head>
 <body>
@@ -896,12 +891,6 @@ main a:not([class]):hover,.foot a:hover{color:var(--acc)!important;text-decorati
     </div>
   </div>
 </div>
-<div class="wrap"><div id="instw" class="instw" hidden>
-  <span class="insti" aria-hidden="true">📲</span>
-  <div class="instt"><b>Instale la app del manifiesto</b><span id="instd">Tenga su itinerario a un toque, desde la pantalla de inicio de su celular.</span></div>
-  <button type="button" id="instb" class="instb">Instalar</button>
-  <button type="button" id="instx" class="instx" aria-label="Cerrar aviso de instalación">×</button>
-</div></div>
 
 <main class="wrap">
   <div id="out" class="list"><div class="empty">Cargando…</div></div>
@@ -3075,7 +3064,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 490;
+const APP_V = 491;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}
@@ -3155,25 +3144,6 @@ cargaData().then(j=>{
   PACK = j; if(OPEN_PIN) unlock(OPEN_PIN); else showGate(''); })
   .catch(()=>{ $('#out').innerHTML='<div class="empty">No se pudo cargar la información. Recarga la página.</div>'; });
 
-/* Aviso «Instalar la app»: solo en celular, si no está instalada y no se cerró antes */
-(() => { const w = document.getElementById('instw'); if(!w) return;
-  const ua = navigator.userAgent, ios = /iPhone|iPad|iPod/i.test(ua), and = /Android/i.test(ua);
-  const inst = matchMedia('(display-mode: standalone)').matches || navigator.standalone;
-  let off = false; try{ off = localStorage.getItem('instOff') === '1'; }catch(e){}
-  if(inst || off || !(ios || and)) return;
-  let ev = null; const b = document.getElementById('instb'), d = document.getElementById('instd');
-  const cerrar = () => { w.hidden = true; try{ localStorage.setItem('instOff', '1'); }catch(e){} };
-  document.getElementById('instx').onclick = cerrar;
-  if(ios){ const safari = /Safari/i.test(ua) && !/CriOS|FxiOS|EdgiOS|GSA/i.test(ua);
-    b.textContent = 'Cómo';
-    b.onclick = () => { d.innerHTML = safari ? '<ol><li>Toque <b>Compartir</b> (el cuadrito con la flecha ↑).</li><li>Elija <b>Agregar a pantalla de inicio</b>.</li><li>Toque <b>Agregar</b>.</li></ol>' : 'Abra esta página en <b>Safari</b> y elija <b>Compartir → Agregar a pantalla de inicio</b>.'; b.hidden = true; };
-    w.hidden = false; return; }
-  addEventListener('beforeinstallprompt', e => { e.preventDefault(); ev = e; w.hidden = false; });
-  b.onclick = async () => { if(ev){ ev.prompt(); const r = await ev.userChoice.catch(() => ({})); ev = null; if(r && r.outcome === 'accepted') w.hidden = true; }
-    else { d.innerHTML = 'Toque los <b>⋮</b> de Chrome y elija <b>Instalar aplicación</b> o <b>Agregar a pantalla principal</b>.'; b.hidden = true; } };
-  setTimeout(() => { if(w.hidden) w.hidden = false; }, 2500);
-  addEventListener('appinstalled', () => { w.hidden = true; });
-})();
 </script>
 </body>
 </html>

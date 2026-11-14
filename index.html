@@ -1073,7 +1073,7 @@ const MET = 'Le recordamos que MetLife cubre las pernoctas y/o traslados terrest
 // Excepciones confirmadas por el equipo (noches adicionales pagadas por el invitado, etc.)
 const HOTEL_EXC = {};
 /* Recepción en el aeropuerto de Hermosillo (logo de MetLife): solo si su vuelo llega a Hermosillo dentro de las fechas del evento (3 al 5 nov). */
-const INTRO_TXT = 'Nos complace compartirle los detalles de su itinerario de viaje y asistencia a ConoceMet by MetLife.';
+const INTRO_TXT = 'Nos complace compartirle los detalles de su itinerario y asistencia a ConoceMet by MetLife.';
 const LLEGA_TXT = 'A tu llegada al Aeropuerto de la Ciudad de México te pedimos localizar el logo de MetLife para trasladarte a la sede del evento en Torre Manacar.';
 /* Claves: si la ida y el regreso tienen la misma clave se muestra una sola vez; si son distintas, se separan y se hace énfasis */
 const dosClaves = r => !!(r.ci && r.cr && r.ci !== r.cr);
@@ -3067,7 +3067,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 496;
+const APP_V = 497;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

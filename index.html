@@ -2280,7 +2280,9 @@ function tierraLeg(r, lle){
 }
 const ctlLeg = r => { const lle = CTL.tab === 'lle'; return (lle ? r.ida : r.reg) || tierraLeg(r, lle); };
 const ctlHora = l => { const v = String((CTL.tab === 'lle' ? l.l : l.s) || ''); return v === '—' ? '—' : v.padStart(5,'0'); };
-const ctlSt = n => (CTL.marks[CTL.tab] || {})[n] || 'pe';
+/* Invitado cancelado en el Excel (estatus CANCELADO): cuenta como no show en Llegadas/Salidas y Concentrados */
+const CANC = new Map(); const esCancel = n => { if(!CANC.has(n) || CANC.size !== DATA.length){ CANC.clear(); DATA.forEach(r => CANC.set(r.n, /CANCEL/i.test(r.st || ''))); } return !!CANC.get(n); };
+const ctlSt = n => esCancel(n) ? 'ns' : (CTL.marks[CTL.tab] || {})[n] || 'pe';
 /* Traslados terrestres considerados (punto de encuentro, domicilio, aeropuerto, regreso a su ciudad) como "vuelos" de Llegadas/Salidas,
    con hora de salida y llegada estimada para que también pasen a En ruta y a Llegados. */
 const TR_TZ = t => /san carlos|marinaterra|hermosillo|sede|los mochis/i.test(t) ? -7 : -6;
@@ -2449,7 +2451,7 @@ function ctlRender(){
         const pern = lle && (r.notas||[]).some(n => n.k === 'pe') ? '<span class="ctag">Hotel NH</span>' : '';
         const sig = (G.pe || G.cl) && r.ida ? `<small class="csig">sigue ${esc(fmtDate(r.ida.f))} · ${esc(r.ida.v)} ${esc(r.ida.o)} ${esc(r.ida.s)} → ${esc(r.ida.d)}</small>`
           : G.cx && r.reg ? `<small class="csig">viene de ${esc(fmtDate(r.reg.f))} · ${esc(r.reg.v)} ${esc(r.reg.o)} → ${esc(r.reg.d)} ${esc(r.reg.l)}</small>` : '';
-        return `<li>${esc(r.n)}${rolTag(r.rol || (r.staff ? 'STAFF' : ''))}${sig}</li>`; }).join('') + '</ul></section>';
+        return `<li>${esc(r.n)}${rolTag(r.rol || (r.staff ? 'STAFF' : ''))}${esCancel(r.n) ? ' <small class="ktag">❌ Cancelado</small>' : ''}${sig}</li>`; }).join('') + '</ul></section>';
   });
   alUI();
   setTimeout(cvApply, 0);
@@ -2729,7 +2731,7 @@ $('#clcopy').addEventListener('click', async () => {
   await claCopy(L.join('\n')); $('#cmsg2').textContent = 'Resumen copiado. Pégalo en WhatsApp.'; });
 /* ---------- Concentrado de llegadas ---------- */
 const KON = {sort:'f', dir:1, filter:'all', m:'lle'};
-const kSt = n => (CTL.marks[KON.m] || {})[n] || 'pe';
+const kSt = n => esCancel(n) ? 'ns' : (CTL.marks[KON.m] || {})[n] || 'pe';
 const kLeg = r => KON.m === 'lle' ? r.ida : r.reg;
 const kHora = l => String((KON.m === 'lle' ? l.l : l.s) || '').padStart(5,'0');
 const kRank = {ok:0, ns:1, pe:2};
@@ -2762,7 +2764,7 @@ function kRows(){
   /* Llegadas: el check-in es automático al aterrizar el vuelo o llegar el traslado (según horario); solo el No show se marca a mano */
   { CTL.tab = KON.m; // llegadas y regresos: check-in automático al aterrizar o llegar
     try{ rows.forEach(x => { const l = x.l || x.tl || tierraLeg(x.r, lle); x.fase = l && l.f ? faseVuelo(l) : 'prog';
-      x.s = (CTL.marks[KON.m] || {})[x.k] === 'ns' ? 'ns' : x.fase === 'ater' ? 'ok' : 'pe'; }); }
+      x.s = esCancel(x.n) || (CTL.marks[KON.m] || {})[x.k] === 'ns' ? 'ns' : x.fase === 'ater' ? 'ok' : 'pe'; }); }
     finally{ CTL.tab = t0; } }
   const k = KON.sort;
   rows.sort((a,b) => { let c = k==='s' ? kRank[a.s]-kRank[b.s] : String(a[k]).localeCompare(String(b[k]),'es');
@@ -2807,7 +2809,7 @@ function konRender(){
   document.querySelectorAll('#con .ktable th button').forEach(b => { if(b.dataset.sort === KON.sort){ b.setAttribute('aria-sort', KON.dir>0?'ascending':'descending'); b.querySelector('span').dataset.a = KON.dir>0?'▲':'▼'; } else b.removeAttribute('aria-sort'); });
   const rows = all.filter(x => KON.filter === 'all' || x.s === KON.filter);
   $('#kbody').innerHTML = rows.map(x => { const l = x.l;
-    return `<tr class="st-${x.s}${x.tag ? ' kx' : ''}"><td class="kn">${esc(x.n)}${rolTag((DATA.find(r => r.n === x.n) || {}).rol || (stTag(x.n) ? 'STAFF' : ''))}${x.tag ? `<small class="ktag">${esc(x.tag)}</small>` : ''}</td>${l ? `<td class="kf">${esc(fmtDate(l.f))}<small>${esc(lle ? l.l : l.s)} · ${esc(l.o)}→${esc(l.d)}</small></td>
+    return `<tr class="st-${x.s}${x.tag ? ' kx' : ''}"><td class="kn">${esc(x.n)}${rolTag((DATA.find(r => r.n === x.n) || {}).rol || (stTag(x.n) ? 'STAFF' : ''))}${x.tag ? `<small class="ktag">${esc(x.tag)}</small>` : ''}${esCancel(x.n) ? '<small class="ktag">❌ Cancelado en el Excel (no show)</small>' : ''}</td>${l ? `<td class="kf">${esc(fmtDate(l.f))}<small>${esc(lle ? l.l : l.s)} · ${esc(l.o)}→${esc(l.d)}</small></td>
       <td class="kv">${esc(l.v)}</td>` : `<td class="kf">${esc(x.lab)}<small>${x.v === 'Por su cuenta' ? '🚗' : '🚐'} ${esc(x.det)}</small></td><td class="kv">${esc(x.v)}</td>`}<td><div class="kb">${true ? `<span class="kauto ${x.s}">${x.s === 'ns' ? '✗ No show' : x.s === 'ok' ? '✓ Check-in' : x.fase === 'ruta' ? '✈️ En camino' : lle ? '🕒 Por llegar' : '🕒 Por salir'}</span>
       <button class="bns" data-n="${esc(x.k || x.n)}" data-s="ns" aria-pressed="${x.s==='ns'}">${x.s === 'ns' ? '↺ Quitar no show' : '✗ No show'}</button>` : `<button class="bok" data-n="${esc(x.k || x.n)}" data-s="ok" aria-pressed="${x.s==='ok'}">✓ Check-in</button>
       <button class="bns" data-n="${esc(x.k || x.n)}" data-s="ns" aria-pressed="${x.s==='ns'}">✗ No show</button>
@@ -3108,7 +3110,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 503;
+const APP_V = 504;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

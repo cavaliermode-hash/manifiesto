@@ -2753,7 +2753,7 @@ function kRows(){
      · vuelo por ruta un día antes para pernoctar en México (llegadas) y conexión a su ciudad (salidas). */
   const lle = KON.m === 'lle', t0 = CTL.tab; CTL.tab = KON.m; const extra = [];
   try{ rows.forEach(x => { const r = x.r;
-    trLegs(r).forEach((l, i) => { const y = {r, l:null, n:r.n, k:r.n + '#tr' + i, f:l.f + ' ' + (l.l === '—' ? '99:99' : l.l), v:'Traslado terrestre', lab:fmtDate(l.f), det:(l.l === '—' ? '' : l.l + ' h · ') + l.route, tag:'🚐 Traslado terrestre', tl:l};
+    (r.loc ? [] : trLegs(r)).forEach((l, i) => { const y = {r, l:null, n:r.n, k:r.n + '#tr' + i, f:l.f + ' ' + (l.l === '—' ? '99:99' : l.l), v:'Traslado terrestre', lab:fmtDate(l.f), det:(l.l === '—' ? '' : l.l + ' h · ') + l.route, tag:'🚐 Traslado terrestre', tl:l};
       if(!x.l && !x.k && x.v === 'Terrestre' && !x.rep){ Object.assign(x, y, {k:r.n, tag:''}); x.rep = 1; } else extra.push(y); });
     const c = lle ? r.c1 : r.c2, base = lle ? r.ida : r.reg;
     if(c && c.f && base && (lle ? c.f !== base.f : true)) extra.push({r, l:c, n:r.n, k:r.n + (lle ? '#pe' : '#cx'), f:c.f + ' ' + kHora(c), v:c.v,
@@ -3110,7 +3110,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 504;
+const APP_V = 505;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

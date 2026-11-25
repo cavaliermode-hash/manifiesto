@@ -1554,7 +1554,7 @@ function invPartes(r){
     L.push(`<b>Traslado terrestre</b> desde ${esc(tcase(r.tc))} a la sede del evento (punto de encuentro y horario por confirmar).`);
   } else {
     L.push(`<b>Vuelo redondo</b>${org ? ' desde ' + esc(org) : ' desde su ciudad de origen'} a la Ciudad de México.` + (ida.length || reg.length ? ' Propuesta de vuelos:<br>&nbsp;<br>&nbsp;' : ' Su vuelo se encuentra en proceso de emisión.'));
-    L.push('<b>Boleto de avión</b> en clase turista.', '<b>Equipaje de mano</b> en cabina, máximo 15 kg.', (r.nd ? '<b>Equipaje documentado</b>: no requerido, de acuerdo con su registro.' : '<b>Equipaje documentado</b>, máximo 25 kg.'), '<b>Asientos asignados</b>.');
+    L.push('<b>Boleto de avión</b> en clase turista.', '<b>Equipaje de mano</b> en cabina, máximo 15 kg.', (r.nd ? '<b>Equipaje documentado</b>: N/A.' : '<b>Equipaje documentado</b>, máximo 25 kg.'), '<b>Asientos asignados</b>.');
     L.push('<b>Recepción</b> a su llegada al Aeropuerto de la Ciudad de México y <b>traslados</b> al evento.');
   }
   if(tieneHotel(r)) L.push(`<b>Hospedaje</b> 1 noche en el ${esc(HOTEL.n)} (check in 3 de diciembre · check out 4 de diciembre).`);
@@ -1598,7 +1598,7 @@ function invHTML(r, vImg){
     b += blk('🚐', 'Traslado terrestre de llegada', [['Fecha', '<b>Jueves 3 de diciembre</b>'], ['Punto de encuentro y horario', 'Por confirmar. Se lo compartiremos al cierre del registro del evento.'], ['Desde', '<b>' + tc + '</b>'], ['Hacia', '<b>Hotel NH T2 Aeropuerto</b>, donde para su mayor comodidad su equipaje será <b>resguardado</b> y se le entregará a su regreso al final del día.'], ['Después', 'Del Hotel NH T2 Aeropuerto continuará el desplazamiento a la sede del evento: <b>MetLife Torre Manacar, piso 7</b>.']]);
   } else {
     b += vImg ? p(`<img src="${vImg}" width="640" alt="Propuesta de vuelos" style="width:640px;max-width:100%;height:auto;display:block;border:0">`) : ida.length || r.reg ? p('&nbsp;') + p('&nbsp;') : p(T('Su vuelo se encuentra en proceso de emisión.'));
-    b += blk('🧳', 'Su vuelo incluye', [['Boleto de avión', 'Clase <b>turista</b>'], ['Equipaje de mano', 'En cabina, máximo <b>15 kg</b>'], ['Equipaje documentado', r.nd ? '<b>No requerido</b>, de acuerdo con su registro' : 'Máximo <b>25 kg</b>'], ['Asientos', '<b>Asignados</b>']]);
+    b += blk('🧳', 'Su vuelo incluye', [['Boleto de avión', 'Clase <b>turista</b>'], ['Equipaje de mano', 'En cabina, máximo <b>15 kg</b>'], ['Equipaje documentado', r.nd ? '<b>N/A</b>' : 'Máximo <b>25 kg</b>'], ['Asientos', '<b>Asignados</b>']]);
     if(r.pe2){
       b += verde('📍 ' + LLEGA2_T, esc(LLEGA2_TXT).replace(B_HL, x => `<b>${x}</b>`));
       b += blk('🏨', 'Hospedaje', [['NH T2 Aeropuerto', '<b>Check in 2 dic</b> (a su llegada) · <b>Check out 4 dic</b> · 2 noches']]);
@@ -1645,7 +1645,7 @@ function invWa(r){
     else {
       const leg = [r.c1, r.ida].filter(Boolean).map(l => fl('IDA', l)).concat([r.reg, r.c2].filter(Boolean).map(l => fl('REGRESO', l)));
       L.push(''); if(leg.length) leg.forEach(x => L.push(...x)); else L.push('Su vuelo se encuentra en proceso de emisión.');
-      sec('🧳', 'Su vuelo incluye', [['Boleto de avión', 'Clase *turista*'], ['Equipaje de mano', 'En cabina, máximo *15 kg*'], ['Equipaje documentado', r.nd ? '*No requerido*, de acuerdo con su registro' : 'Máximo *25 kg*'], ['Asientos', '*Asignados*']]);
+      sec('🧳', 'Su vuelo incluye', [['Boleto de avión', 'Clase *turista*'], ['Equipaje de mano', 'En cabina, máximo *15 kg*'], ['Equipaje documentado', r.nd ? '*N/A*' : 'Máximo *25 kg*'], ['Asientos', '*Asignados*']]);
       if(r.pe2){ sec('📍', LLEGA2_T, [['', LLEGA2_TXT.replace(B_HL, x => `*${x}*`)]]);
         sec('🏨', 'Hospedaje', [['NH T2 Aeropuerto', '*Check in 2 dic* (a su llegada) · *Check out 4 dic* · 2 noches']]);
         sec('🚐', 'Traslado a la sede del evento', [['', SEDE2_TXT.replace(B_HL, x => `*${x}*`)]]); }
@@ -3115,7 +3115,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 511;
+const APP_V = 512;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

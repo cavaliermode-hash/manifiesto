@@ -2768,7 +2768,7 @@ function kRows(){
   rows.forEach(x => { if(!x.k){ x.k = x.n; } if(x.k === x.n) x.s = kSt(x.n); });
   /* Llegadas: el check-in es automático al aterrizar el vuelo o llegar el traslado (según horario); solo el No show se marca a mano */
   { CTL.tab = KON.m; // llegadas y regresos: check-in automático al aterrizar o llegar
-    try{ rows.forEach(x => { const l = x.l || x.tl || tierraLeg(x.r, lle); x.fase = l && l.f ? faseVuelo(l) : 'prog';
+    try{ rows.forEach(x => { const l = (x.r.loc && !x.l) ? {terr:true, f:HOTEL.ci, l:'12:00', s:'23:00'} : (x.l || x.tl || tierraLeg(x.r, lle)); x.fase = l && l.f ? faseVuelo(l) : 'prog';
       x.s = esCancel(x.n) || (CTL.marks[KON.m] || {})[x.k] === 'ns' ? 'ns' : x.fase === 'ater' ? 'ok' : 'pe'; }); }
     finally{ CTL.tab = t0; } }
   const k = KON.sort;
@@ -3115,7 +3115,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 515;
+const APP_V = 516;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

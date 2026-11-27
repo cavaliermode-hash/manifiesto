@@ -658,7 +658,7 @@ button.ptile{font:inherit;cursor:pointer;width:100%;transition:transform .08s,bo
 .zprog{display:block;width:100%;max-width:360px;height:10px;margin-top:6px;accent-color:var(--green-dark)}
 .zipbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:8px 0 2px}.zipbar button{font:700 13px var(--body);padding:8px 12px;border-radius:8px;border:1.5px solid var(--green);background:var(--green);color:#fff;cursor:pointer}.zipbar button+button{background:#fff;color:var(--green)}.zipbar button:disabled{opacity:.55;cursor:wait}#zipmsg{font-size:12.5px;color:var(--muted)}
 .rolbar{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 2px}.rolbar button{font:600 12px var(--body);padding:5px 10px;border-radius:999px;border:1px solid var(--line);background:#fff;color:var(--ink,#16301F);cursor:pointer}.rolbar button b{font-weight:800;margin-left:2px}.rolbar button.st{border-color:#9DB8DA;color:#1E5BA8}.rolbar button.on{background:var(--green);border-color:var(--green);color:#fff}.rolbar button.st.on{background:#1E5BA8;border-color:#1E5BA8;color:#fff}
-.ziproles{margin-top:18px}.ziproles h3{margin:0 0 2px;font:700 16px/1.2 var(--display);color:var(--green-dark);text-transform:uppercase;letter-spacing:.04em}.ziproles .ktable{border:1px solid var(--line);border-radius:10px;overflow:hidden;width:100%}.ziproles td{padding:6px 8px!important}.zrb{text-align:right;white-space:nowrap}.zrb button{font:700 12px var(--body);padding:6px 10px;margin-left:6px;border-radius:7px;border:1.5px solid var(--green);background:#fff;color:var(--green);cursor:pointer}.zrb button:first-child{background:var(--green);color:#fff}.zrb button:disabled{opacity:.45;cursor:not-allowed}
+.ziproles{margin-top:18px}.ziproles h3{margin:0 0 2px;font:700 16px/1.2 var(--display);color:var(--green-dark);text-transform:uppercase;letter-spacing:.04em}.ziproles .ktable{border:1px solid var(--line);border-radius:10px;overflow:hidden;width:100%}.ziproles td{padding:6px 8px!important}.zrb{text-align:right;white-space:nowrap}.zrb button{font:700 12px var(--body);padding:6px 10px;margin-left:6px;border-radius:7px;border:1.5px solid var(--green);background:#fff;color:var(--green);cursor:pointer}.zrb button[data-zr]{background:var(--green);color:#fff}.zrb button:disabled{opacity:.45;cursor:not-allowed}
 @media (max-width:560px){.zrb{white-space:normal}.zrb button{margin:2px 0 2px 4px;padding:5px 7px;font-size:11px}}
 .ziproles tr.zall td{background:#F0F8F2;font-weight:800}
 .dcierre{margin:18px 0 6px}.dcierre .dimp{margin:0;background:#FFF7E6;border-left:4px solid #E0A100;padding:10px 14px;color:var(--ink);line-height:1.45}.dcierre .dbye{margin:12px 2px 0;color:var(--ink)}.dcierre .dbye i{color:#1C6B2E}
@@ -771,6 +771,7 @@ main a:not([class]):hover,.foot a:hover{color:var(--acc)!important;text-decorati
 .disc{margin:2px 0 0;font:500 11.5px/1.3 var(--body);color:var(--muted)}
 @media (max-width:560px){.disc{font-size:10px}}
 .h3txt p.h3n{margin-top:10px}
+.cvchip.on{background:#136c34;color:#fff;border-color:#136c34} #ziproles .zver{background:#fff;color:#136c34;border:1px solid #136c34;margin-right:6px}
 </style>
 </head>
 <body>
@@ -1979,14 +1980,14 @@ let ZIPPING = false;
 async function zipTodos(tipo, rol){
   if(ZIPPING) return; ZIPPING = true;
   const msg = rol != null ? $('#ziprmsg') : $('#zipmsg'), bs = [...document.querySelectorAll('#zipv, #zipi, #ziproles button')]; bs.forEach(b => b.disabled = true);
-  const enRol = r => rol === 'NOSTAFF*' ? !/^staff/i.test(r.rol || '') : rol === 'STAFF*' ? /^staff/i.test(r.rol || '') : (r.rol || 'SIN ROL').toUpperCase() === rol;
+  const enRol = r => rol === 'VUELO*' ? conVue(r) : rol === 'NOSTAFF*' ? !/^staff/i.test(r.rol || '') : rol === 'STAFF*' ? /^staff/i.test(r.rol || '') : (r.rol || 'SIN ROL').toUpperCase() === rol;
   const base = rol != null ? DATA.map((r, i) => ({...llegaDe(r), i, r})).filter(x => enRol(x.r)).sort((a, b) => a.ll.localeCompare(b.ll) || a.r.n.localeCompare(b.r.n, 'es')).map(x => x.r) : claRows().map(x => DATA[x.i]);
   const L = base.filter(r => tipo === 'i' || [r.c1, r.ida, r.reg, r.c2].some(Boolean));
   if(!L.length){ msg.textContent = 'No hay PDF para ese grupo.'; ZIPPING = false; bs.forEach(b => b.disabled = false); return; }
   DLG = true;
   try{
     const JSZip = await loadZip(), LOTE = 100, partes = Math.ceil(L.length / LOTE), usados = {};
-    const nomZip = (tipo === 'v' ? 'PDF vuelos' : 'Itinerarios') + (rol != null ? ' - ' + (rol === 'STAFF*' ? 'STAFF' : rol === 'NOSTAFF*' ? 'TODOS SIN STAFF' : rol) : '');
+    const nomZip = (tipo === 'v' ? 'PDF vuelos' : 'Itinerarios') + (rol != null ? ' - ' + (rol === 'STAFF*' ? 'STAFF' : rol === 'NOSTAFF*' ? 'TODOS SIN STAFF' : rol === 'VUELO*' ? 'SOLO CON VUELO O CLAVE' : rol) : '');
     for(let p = 0; p < partes; p++){ const zip = new JSZip(), ini = p * LOTE, fin = Math.min(L.length, ini + LOTE);
       for(let k = ini; k < fin; k++){ const r = L[k];
         msg.innerHTML = `Generando ${k + 1} de ${L.length}${partes > 1 ? ` (parte ${p + 1} de ${partes})` : ''}: ${esc(tcase(r.n))}… <progress class="zprog" max="${L.length}" value="${k + 1}"></progress>`;
@@ -2008,9 +2009,9 @@ document.addEventListener('click', e => { if(e.target.id === 'zipv') zipTodos('v
 function zipRoles(){ const el = document.getElementById('ziproles'); if(!el) return;
   const c = {}; DATA.forEach(r => { const k = /^staff/i.test(r.rol || '') ? 'STAFF*' : (r.rol || 'SIN ROL').toUpperCase(); (c[k] = c[k] || []).push(r); });
   const ks = Object.keys(c).sort((a, b) => (a === 'STAFF*') - (b === 'STAFF*') || c[b].length - c[a].length);
-  c['NOSTAFF*'] = DATA.filter(r => !/^staff/i.test(r.rol || '')); ks.unshift('NOSTAFF*');
-  el.innerHTML = `<h3>⬇️ Descargar PDF de vuelos por rol</h3><p class="cs">Cada botón baja un ZIP con los PDF de vuelos de ese rol, uno por persona, ordenados por llegada.</p><table class="ktable"><tbody>${ks.map(k => { const n = c[k].length, nv = c[k].filter(r => [r.c1, r.ida, r.reg, r.c2].some(Boolean)).length, t = k === 'STAFF*' ? 'STAFF' : k === 'NOSTAFF*' ? 'TODOS (SIN STAFF)' : k;
-    return `<tr${k === 'NOSTAFF*' ? ' class="zall"' : ''}><td class="kn">${esc(t)} <small style="font-weight:500;color:var(--muted)">(${n})</small></td><td class="zrb"><button type="button" data-zr="${esc(k)}" data-zt="v"${nv ? '' : ' disabled'}>🎫 Vuelos (${nv})</button></td></tr>`; }).join('')}</tbody></table><p id="ziprmsg" class="kmsg" role="status"></p>`; }
+  c['NOSTAFF*'] = DATA.filter(r => !/^staff/i.test(r.rol || '')); c['VUELO*'] = DATA.filter(conVue); ks.unshift('NOSTAFF*', 'VUELO*');
+  el.innerHTML = `<h3>⬇️ Descargar PDF de vuelos por rol</h3><p class="cs">Cada botón baja un ZIP con los PDF de vuelos de ese rol, uno por persona, ordenados por llegada.</p><table class="ktable"><tbody>${ks.map(k => { const n = c[k].length, nv = c[k].filter(r => [r.c1, r.ida, r.reg, r.c2].some(Boolean)).length, t = k === 'STAFF*' ? 'STAFF' : k === 'NOSTAFF*' ? 'TODOS (SIN STAFF)' : k === 'VUELO*' ? '✈️ SOLO CON VUELO O CLAVE' : k;
+    return `<tr${k === 'NOSTAFF*' ? ' class="zall"' : ''}><td class="kn">${esc(t)} <small style="font-weight:500;color:var(--muted)">(${n})</small></td><td class="zrb">${k === 'VUELO*' ? '<button type="button" class="zver" data-zver="1" title="Ver la lista en Claves">👁 Ver lista</button> ' : ''}<button type="button" data-zr="${esc(k)}" data-zt="v"${nv ? '' : ' disabled'}>🎫 Vuelos (${nv})</button></td></tr>`; }).join('')}</tbody></table><p id="ziprmsg" class="kmsg" role="status"></p>`; }
 function pdfDirecto(){
   const sp = new URLSearchParams(location.search), solo = !!sp.get('vpdf'), n = sp.get('pdf') || sp.get('vpdf'); if(!n) return false;
   pdfDirecto2(sp, solo, n.trim().toUpperCase()); return true;
@@ -2525,11 +2526,13 @@ function llegaDe(r){
 }
 const rolVer = rol => /^staff/i.test(rol || '') ? 'STAFF' + (/INSPECCI/i.test(rol) ? ' · VISITA DE INSPECCIÓN' : '') : String(rol || ''); // staff sin distinguir agencia o MetLife
 const rolTag = rol => rol ? `<span class="rtag">${esc(rolVer(rol).toUpperCase())}</span>` : '';
+const conVue = r => [r.c1, r.ida, r.reg, r.c2].some(Boolean) || !!(r.ci || r.cr || r.cl); // con vuelo o clave de reserva
 function claRows(){
   const rows = DATA.map((r, i) => ({i, n:r.n, ci:r.ci || (!r.cr ? r.cl || '' : ''), cr:r.cr || '', ...llegaDe(r), rol:r.rol || ''}));
   const k = CLA.sort;
   rows.sort((a,b) => { const v = x => k==='ci' ? (x.ci || x.cr) : x[k]; let c = (k==='n' ? 0 : (!v(a)) - (!v(b))) || String(v(a)).localeCompare(String(v(b)),'es'); if(!c) c = a.n.localeCompare(b.n,'es'); return c * CLA.dir; });
   if(CLA.rol){ const f = CLA.rol === 'STAFF*' ? (x => /^staff/i.test(x.rol)) : (x => x.rol.toUpperCase() === CLA.rol); for(let k = rows.length - 1; k >= 0; k--) if(!f(rows[k])) rows.splice(k, 1); }
+  if(CLA.vue) for(let k = rows.length - 1; k >= 0; k--) if(!conVue(DATA[rows[k].i])) rows.splice(k, 1);
   const q = norm($('#cq') ? $('#cq').value : '').split(/\s+/).filter(Boolean); // buscador: todas las palabras escritas deben aparecer en el nombre o la clave
   return q.length ? rows.filter(x => { const t = norm(x.n + ' ' + x.ci + ' ' + x.cr); return q.every(w => t.includes(w)); }) : rows;
 }
@@ -2562,7 +2565,11 @@ function rolBar(){ const el = document.getElementById('rolbar'); if(!el) return;
   const orden = Object.keys(c).sort((a, b) => (/^STAFF/.test(a) - /^STAFF/.test(b)) || c[b] - c[a] || a.localeCompare(b, 'es'));
   const nSt = DATA.filter(r => /^staff/i.test(r.rol || '')).length;
   const chip = (k, t, n) => `<button type="button" data-rol="${esc(k)}" class="${CLA.rol === k ? 'on' : ''}${/^STAFF/.test(k) ? ' st' : ''}" aria-pressed="${CLA.rol === k}">${esc(t)} <b>${n}</b></button>`;
-  el.innerHTML = chip('', 'Todos', DATA.length) + orden.filter(k => !/^STAFF/.test(k)).map(k => chip(k, k, c[k])).join('') + (nSt ? chip('STAFF*', 'STAFF', nSt) : ''); }
+  const nV = DATA.filter(conVue).length;
+  el.innerHTML = chip('', 'Todos', DATA.length) + orden.filter(k => !/^STAFF/.test(k)).map(k => chip(k, k, c[k])).join('') + (nSt ? chip('STAFF*', 'STAFF', nSt) : '')
+    + `<button type="button" data-cvue="1" class="cvchip${CLA.vue ? ' on' : ''}" aria-pressed="${!!CLA.vue}" title="Mostrar solo quienes tienen vuelo o clave de reserva">✈️ Con vuelo o clave <b>${nV}</b></button>`; }
+document.addEventListener('click', e => { const b = e.target.closest('#rolbar [data-cvue], #ziproles [data-zver]'); if(!b) return; CLA.vue = b.dataset.zver ? true : !CLA.vue; claRender();
+  if(b.dataset.zver){ const t = document.getElementById('rolbar'); if(t) t.scrollIntoView({behavior:'smooth', block:'start'}); } });
 document.addEventListener('click', e => { const b = e.target.closest('#rolbar [data-rol]'); if(!b) return; CLA.rol = CLA.rol === b.dataset.rol ? '' : b.dataset.rol; claRender(); });
 function claRender(){ rolBar(); zipRoles();
   document.querySelectorAll('#cla .ktable th button').forEach(b => { if(b.dataset.sort === CLA.sort){ b.setAttribute('aria-sort', CLA.dir>0?'ascending':'descending'); b.querySelector('span').dataset.a = CLA.dir>0?'▲':'▼'; } else b.removeAttribute('aria-sort'); });
@@ -3115,7 +3122,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 516;
+const APP_V = 517;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

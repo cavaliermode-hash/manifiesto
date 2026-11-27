@@ -2638,7 +2638,7 @@ const INV = () => DATA.filter(r => !r.staff); // invitados sin staff (Traslados 
 function pytData(){
   const by = (a, b) => a.n.localeCompare(b.n, 'es');
   const pern = INV().filter(pernoc).sort(by), grupos = new Map();
-  const locales = INV().filter(r => esPorCuenta(r) || (!tieneVuelo(r) && !conTraslado(r))).sort(by);
+  const locales = INV().filter(r => !ctaNoLocal(r) && (esPorCuenta(r) || (!tieneVuelo(r) && !conTraslado(r)))).sort(by);
   INV().filter(conTraslado).sort(by).forEach(r => {
     const t = notaDe(r, 'tr'), m = t.match(/punto de encuentro (.+?)(?:, para llevarte|\. A tu regreso)/i), cd = ciudadTr(r, t);
     const cuando = (t.match(/el (\S+ \d+ de \S+) a las ([\d:]+ h)/) || []).slice(1).join(' · ') || (t.match(/a las ([\d:]+ h)/) || [])[1] || '';
@@ -2683,15 +2683,17 @@ const rutaHTML = r => { const L = rutaDe(r); return L.length ? `<ol class="pruta
 const svcTags = r => (conTraslado(r) ? '<span class="ptag">🚗 Traslado</span>' : '') + (pernoc(r) ? '<span class="ptag">🏨 Hotel NH</span>' : '') + (tieneVuelo(r) ? '<span class="ptag">✈️ Vuelo</span>' : '') + (esPorCuenta(r) || (!tieneVuelo(r) && !conTraslado(r)) ? '<span class="ptag" style="background:#FFF7E6">🚙 Llega por su cuenta</span>' : '');
 /* Filtros de los cuadritos y del desglose: al tocar uno se muestra solo la lista de esas personas; al tocarlo otra vez vuelve a todo. */
 let PYT_F = '';
+const ctaNoLocal = r => !r.loc && porCuentaR(r) && !tieneVuelo(r) && !conTraslado(r); // foráneos que llegan por su cuenta (p. ej. «NO REQUIERE TRASLADO»)
 const PYT_FIL = {
   all:  ['👥 Todos los invitados', r => true],
   tr:   ['🚗 Con traslado terrestre', r => conTraslado(r)],
   pe:   ['🏨 Con pernocta en el Hotel NH', r => pernoc(r)],
   tres: ['🚗+🏨+✈️ Traslado + pernocta + vuelo', r => conTraslado(r) && pernoc(r) && tieneVuelo(r)],
-  pev:  ['🏨+✈️ Pernocta + vuelo, sin traslado', r => pernoc(r) && !conTraslado(r)],
+  pev:  ['🏨+✈️ Pernocta + vuelo, sin traslado', r => pernoc(r) && !conTraslado(r) && tieneVuelo(r)],
+  pcu:  ['🚙 Por su cuenta, no locales (sin traslado ni vuelo)', r => ctaNoLocal(r)],
   trv:  ['🚗+✈️ Traslado + vuelo, sin pernocta', r => conTraslado(r) && !pernoc(r) && tieneVuelo(r)],
   trs:  ['🚗 Solo traslado terrestre (sin vuelo)', r => conTraslado(r) && !pernoc(r) && !tieneVuelo(r)],
-  loc:  ['🅿️ Locales (cita 12:00 h · estacionamiento)', r => esPorCuenta(r) || (!tieneVuelo(r) && !conTraslado(r))],
+  loc:  ['🅿️ Locales (cita 12:00 h · estacionamiento)', r => !ctaNoLocal(r) && (esPorCuenta(r) || (!tieneVuelo(r) && !conTraslado(r)))],
   sv:   ['✈️ Solo vuelo (sin traslado ni pernocta)', r => tieneVuelo(r) && !conTraslado(r) && !pernoc(r) && !esPorCuenta(r)]
 };
 document.addEventListener('click', e => { const b = e.target.closest('#pout [data-pf]'); if(!b) return; PYT_F = PYT_F === b.dataset.pf ? '' : b.dataset.pf; pytRender(); const t = document.querySelector('#pout .pres') || document.getElementById('pout'); t.scrollIntoView({block:'start', behavior:'smooth'}); });
@@ -2704,7 +2706,7 @@ function pytRender(){
   const porCd = new Map(); grupos.forEach(g => porCd.set(g.cd, (porCd.get(g.cd) || 0) + g.pax.length));
   const tile = (k, t, sub, cls = '') => `<button type="button" class="ptile ${cls}${on(k)}" data-pf="${k}" aria-pressed="${PYT_F === k}"><b>${N(k)}</b><span>${t}</span>${sub ? `<small>${sub}</small>` : ''}</button>`;
   const chip = (k, t) => `<button type="button" class="pchip${on(k)}" data-pf="${k}" aria-pressed="${PYT_F === k}">${t} <b>${N(k)}</b></button>`;
-  const ex = ['tres','pev','trv','trs','loc','sv'], suma = ex.reduce((a, k) => a + N(k), 0);
+  const ex = ['tres','pev','pcu','trv','trs','loc','sv'], suma = ex.reduce((a, k) => a + N(k), 0);
   let h = `<div class="pdesg"><b>Desglose exacto (cada persona una sola vez) · toca para ver la lista:</b>
     ${ex.map(k => chip(k, PYT_FIL[k][0])).join('')}
     <span class="tot">Total <b>${suma}</b>${suma === INV().length ? ' ✔' : ' ⚠ no cuadra con ' + INV().length}</span></div>
@@ -2717,9 +2719,11 @@ function pytRender(){
   }
   h += `<div class="pgrp"><h3>🚗+🏨+✈️ Traslado + pernocta + vuelo</h3><p class="pw"><span class="pc">${tres.length} ${tres.length===1?'persona':'personas'}</span></p>`
     + tabla(tres.map(r => `<tr><td class="kn">${esc(r.n)}${rolTag(r.rol)}</td></tr>`)) + '</div>';
-  const peSolo = pern.filter(r => !conTraslado(r));
+  const peSolo = pern.filter(r => !conTraslado(r) && tieneVuelo(r)), peCta = INV().filter(ctaNoLocal).sort((a, b) => a.n.localeCompare(b.n, 'es'));
   h += `<div class="pgrp"><h3>🏨+✈️ Pernocta + vuelo (sin traslado)</h3><p class="pw"><span class="pc">${peSolo.length} ${peSolo.length===1?'persona':'personas'}</span> · llegan en vuelo a CDMX el miércoles 2 de diciembre y se hospedan en el Hotel NH T2 del 2 al 4 de diciembre</p>`
     + tabla(peSolo.map(r => `<tr><td class="kn">${esc(r.n)}${rolTag(r.rol)}</td></tr>`)) + '</div>';
+  if(peCta.length) h += `<div class="pgrp"><h3>🚙 Por su cuenta, no locales (sin traslado ni vuelo)</h3><p class="pw"><span class="pc">${peCta.length} ${peCta.length===1?'persona':'personas'}</span> · llegan y regresan por su cuenta (no aplica traslado terrestre)${peCta.some(tieneHotel) ? '; hospedaje en el Hotel NH T2 la noche del evento (check-in 3 dic · check-out 4 dic)' : ''}</p>`
+    + tabla(peCta.map(r => `<tr><td class="kn">${esc(r.n)}${rolTag(r.rol)}</td></tr>`)) + '</div>';
   h += `<div class="pgrp"><h3>🏨 Pernoctan en el Hotel NH Collection Mexico City Airport T2</h3><p class="pw"><span class="pc">${pern.length} ${pern.length===1?'persona':'personas'}</span> · por ruta a su llegada · check-in miércoles 2 dic · check-out viernes 4 dic (incluye la noche del evento)</p>`
     + tabla(pern.map(r => { return `<tr><td class="kn">${esc(r.n)}${rolTag(r.rol)}</td></tr>`; })) + '</div>';
   h += `<div class="pgrp"><h3>🚗 Traslados terrestres por ciudad</h3><p class="pw"><span class="pc">${tras} ${tras===1?'persona':'personas'}</span></p></div>`;
@@ -3131,7 +3135,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 526;
+const APP_V = 527;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

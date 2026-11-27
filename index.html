@@ -1478,6 +1478,7 @@ function mailHTML(r, enPDF){
     return (clave ? key(title === 'Ida' ? 'Clave de reserva de ida' : 'Clave de reserva de regreso', clave) : '') + `<tr><td style="padding:1px 0 3px"><table width="100%" cellpadding="0" cellspacing="0" style="border:1.5px solid #CDE8D5;border-collapse:separate">${rows}</table></td></tr>`; };
   let b = !C ? '' : `<tr><td bgcolor="${HB}" style="background:${HB};padding:${C ? '6px 12px' : '14px 18px'}">${C ? W('CONOCEMET BY METLIFE', 15, 'bold') + '&nbsp;&nbsp;' + W('· MANIFIESTO DE ITINERARIO', 10, 'bold', 'letter-spacing:1px') : W('MANIFIESTO DE ITINERARIO', 11, 'bold', 'letter-spacing:1.5px') + '<br>' + W('CONOCEMET BY METLIFE', 20, 'bold')}</td></tr>`;
   b += p(`${T('Estimado(a)', C ? 13 : 15, MUT)} ${T(esc(r.n.toUpperCase()), C ? 15 : 17, INK, 'bold')}`, C ? 'padding-top:6px' : 'padding-top:12px');
+  if(MAIL11) b += p(T('&nbsp;', fs, INK)); // renglón en blanco entre el saludo y la introducción (correo)
   b += p(T(esc(INTRO_TXT).replace('ConoceMet by MetLife', `<b style="color:${INK}">ConoceMet by MetLife</b>`), C ? 12 : fs, INK), C ? 'padding-top:2px;padding-bottom:2px' : 'padding-top:4px;padding-bottom:4px');
   /* Itinerario en orden cronológico, agrupado por día */
   const b0 = b.length;
@@ -3125,7 +3126,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 522;
+const APP_V = 523;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

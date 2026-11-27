@@ -2579,7 +2579,7 @@ function rolBar(){ const el = document.getElementById('rolbar'); if(!el) return;
   const chip = (k, t, n) => `<button type="button" data-rol="${esc(k)}" class="${CLA.rol === k ? 'on' : ''}${/^STAFF/.test(k) ? ' st' : ''}" aria-pressed="${CLA.rol === k}">${esc(t)} <b>${n}</b></button>`;
   const nV = DATA.filter(conVue).length;
   el.innerHTML = chip('', 'Todos', DATA.length) + orden.filter(k => !/^STAFF/.test(k)).map(k => chip(k, k, c[k])).join('') + (nSt ? chip('STAFF*', 'STAFF', nSt) : '')
-    + `<button type="button" data-cvue="1" class="cvchip${CLA.vue ? ' on' : ''}" aria-pressed="${!!CLA.vue}" title="Mostrar solo quienes tienen vuelo o clave de reserva">✈️ Con vuelo o clave <b>${nV}</b></button>`; }
+    + `<button type="button" data-cvue="1" class="cvchip${CLA.vue ? ' on' : ''}" aria-pressed="${!!CLA.vue}" title="Mostrar solo quienes tienen vuelo o clave de reserva">✈️ CON VUELO O CLAVE <b>${nV}</b></button>`; }
 document.addEventListener('click', e => { const b = e.target.closest('#rolbar [data-cvue], #ziproles [data-zver]'); if(!b) return; CLA.vue = b.dataset.zver ? true : !CLA.vue; claRender();
   if(b.dataset.zver){ const t = document.getElementById('rolbar'); if(t) t.scrollIntoView({behavior:'smooth', block:'start'}); } });
 document.addEventListener('click', e => { const b = e.target.closest('#rolbar [data-rol]'); if(!b) return; CLA.rol = CLA.rol === b.dataset.rol ? '' : b.dataset.rol; claRender(); });
@@ -3138,7 +3138,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 528;
+const APP_V = 529;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

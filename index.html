@@ -1186,7 +1186,7 @@ function lineaTiempo(r){
   notaBloques(r).forEach(b => {
     const R = b.rows || [], sinP = R.filter(x => x[0] !== 'Periodo');
     if(/por su cuenta$/.test(b.t) && val(R, 'Fecha')){ const f = isoDe(val(R, 'Fecha')), lr = legsR.find(x => x.f === f && x.d === 'MEX');
-      add(f, b.t.startsWith('Llegada') ? '22:00' : (lr ? minDe(lr.l) + 1 : '17:00'), {tipo: 'blk', i: b.i, t: b.t, rows: R}); return; }
+      add(f, b.t.startsWith('Llegada') ? (/al evento/i.test(val(R, 'Llegada')) ? 0 : '22:00') : (lr ? minDe(lr.l) + 1 : '17:00'), {tipo: 'blk', i: b.i, t: b.t, rows: R}); return; }
     if(b.t === 'Traslado terrestre'){ add(HOTEL.ci, '08:00', {tipo: 'blk', i: b.i, t: b.t, rows: R}); return; }
     if(b.t === 'Asistencia al evento' && r.loc){ /* Locales: como en la invitación, en orden cronológico */
       add(HOTEL.ci, '11:58', {tipo: 'blk', i: '🅿️', t: 'MetLife estará cubriendo', rows: [['Estacionamiento', r.est ? 'Los días del evento · Torre Manacar' : 'No aplica'], ['Hospedaje', 'No aplica']]});
@@ -1595,9 +1595,11 @@ function invHTML(r, vImg){
   }
   b += h2(vuelo ? 'Para su participación le estamos considerando - Propuesta de vuelos' : 'Para su participación le estamos considerando');
   // Orden cronológico: llegada → vuelo/traslado → recepción → resguardo de equipaje → evento → traslado al hotel → hospedaje → regreso
-  const tc = !vuelo && r.tc ? esc(tcase(r.tc)) : '';
+  const tc = !vuelo && r.tc ? esc(tcase(r.tc)) : '', cta = !vuelo && porCuentaR(r); // cta: llega y regresa por su cuenta (sin traslado terrestre)
   const reg = [r.reg, r.c2].filter(Boolean), regF = reg[0] ? fDia(reg[0].f).replace(/^(\w+) (\d+) (\w+)$/, '$1 $2 $3') : 'Viernes 4 dic';
-  if(tc){
+  if(cta){
+    b += blk('🚙', 'Llegada por su cuenta', [['Fecha', '<b>Jueves 3 de diciembre</b>'], ['Llegada', 'Por su cuenta, directo a la sede del evento (<b>MetLife Torre Manacar, piso 7</b>). <b>No aplica traslado terrestre.</b>']]);
+  } else if(tc){
     b += blk('🚐', 'Traslado terrestre de llegada', [['Fecha', '<b>Jueves 3 de diciembre</b>'], ['Punto de encuentro y horario', 'Por confirmar. Se lo compartiremos al cierre del registro del evento.'], ['Desde', '<b>' + tc + '</b>'], ['Hacia', '<b>Hotel NH T2 Aeropuerto</b>, donde para su mayor comodidad su equipaje será <b>resguardado</b> y se le entregará a su regreso al final del día.'], ['Después', 'Del Hotel NH T2 Aeropuerto continuará el desplazamiento a la sede del evento: <b>MetLife Torre Manacar, piso 7</b>.']]);
   } else {
     b += vImg ? p(`<img src="${vImg}" width="640" alt="Propuesta de vuelos" style="width:640px;max-width:100%;height:auto;display:block;border:0">`) : ida.length || r.reg ? p('&nbsp;') + p('&nbsp;') : p(T('Su vuelo se encuentra en proceso de emisión.'));
@@ -1608,17 +1610,18 @@ function invHTML(r, vImg){
       b += verde('🚐 Traslado a la sede del evento', esc(SEDE2_TXT).replace(B_HL, x => `<b>${x}</b>`));
     } else b += `<tr><td style="padding:5px 0"><table width="100%" cellpadding="0" cellspacing="0"><tr><td bgcolor="#E3F1E7" style="background:#E3F1E7;border:2px solid ${G};border-radius:8px;padding:8px 12px;line-height:1.4">${T('📍 Recepción en el Aeropuerto de la Ciudad de México y traslado a la sede del evento (MetLife Torre Manacar, piso 7).', INK, 'bold')}</td></tr></table></td></tr>`;
   }
-  if(hotel && !r.pe2 && !tc) b += blk('🧳', 'Resguardo de equipaje', [['A su llegada', `Su equipaje será <b>resguardado en el ${esc(HOTEL.n)}</b>, donde se hospedará, para su mayor comodidad en el desplazamiento a la sede del evento; <b>se le entregará a su regreso al hotel</b>.`]]);
+  if(hotel && !r.pe2 && !tc && !cta) b += blk('🧳', 'Resguardo de equipaje', [['A su llegada', `Su equipaje será <b>resguardado en el ${esc(HOTEL.n)}</b>, donde se hospedará, para su mayor comodidad en el desplazamiento a la sede del evento; <b>se le entregará a su regreso al hotel</b>.`]]);
   if(hotel && !r.pe2) b += blk('🏨', 'Hospedaje', [['NH T2 Aeropuerto', '<b>Check in 3 dic</b> · <b>Check out 4 dic</b> · 1 noche']]);
   b += blk('🍽️', 'Durante el evento · jueves 3 de diciembre', [['Incluye', '<b>Alimentos programados</b> de acuerdo con la agenda del evento.']]);
   if(hotel) b += verde('🚐 Traslado al hotel', 'Al terminar la cena, a las <b>23:00 h</b>, traslado al <b>Hotel NH T2 Aeropuerto</b>.');
-  if(tc) b += blk('🚐', 'Traslado terrestre de regreso', [['Desde', '<b>' + (hotel ? esc(HOTEL.n) : 'Sede del evento') + '</b>'], ['Hacia', '<b>' + tc + '</b>'], ['Horario', 'Se le compartirá <b>al finalizar el evento</b>']]);
+  if(cta) b += blk('🚙', 'Regreso por su cuenta', [['Fecha', hotel ? '<b>Viernes 4 de diciembre</b>' : '<b>Jueves 3 de diciembre</b>, al terminar el evento'], ['Desde', '<b>' + (hotel ? esc(HOTEL.n) : 'Sede del evento') + '</b>'], ['Regreso', 'Por su cuenta. <b>No aplica traslado terrestre.</b>']]);
+  else if(tc) b += blk('🚐', 'Traslado terrestre de regreso', [['Desde', '<b>' + (hotel ? esc(HOTEL.n) : 'Sede del evento') + '</b>'], ['Hacia', '<b>' + tc + '</b>'], ['Horario', 'Se le compartirá <b>al finalizar el evento</b>']]);
   else b += verde('✈️ Vuelo de regreso', 'El <b>Hotel NH T2 Aeropuerto</b> está dentro de la <b>Terminal 2</b> del aeropuerto; si su vuelo sale de la <b>Terminal 1</b>, puede cambiar de terminal en el <b>Aerotrén</b>.');
   if(vuelo){
     b += imp(T('Importante.- ', INK, 'bold') + T('Si desea realizar algún cambio de fecha u horario posterior a su confirmación, esto generará un <b>cargo por cambio</b> y posiblemente <b>diferencia de tarifa</b>, los cuales tendrán que ser cubiertos por su parte.') + '<br><br>' + T('Le recordamos que <b>MetLife</b> cubre las pernoctas y/o traslados terrestres necesarios, siempre que este aplique, dentro de las fechas del evento.'));
     b += p(T('Esperamos su validación respondiendo con la siguiente leyenda: <b>“Estoy de acuerdo con el itinerario de vuelo, proceder con la compra”</b>.'), 'padding-top:12px');
   }
-  if(tc) b += imp(T('Le agradecería una confirmación de recepción de este mensaje.', INK, 'bold'));
+  if(tc || cta) b += imp(T('Le agradecería una confirmación de recepción de este mensaje.', INK, 'bold'));
   b += p(T('Si necesita más información o tiene preguntas específicas, no dude en ponerse en contacto.'), 'padding-top:12px');
   b += p(T('Continúo a sus órdenes.'), 'padding-top:8px') + p(T('Saludos cordiales,'), 'padding-top:8px');
   return `<table width="100%" cellpadding="4" cellspacing="0" style="width:100%;max-width:1000px;font-family:Calibri,Arial,sans-serif;font-size:11pt;background:#ffffff">${b}</table>`;
@@ -1632,7 +1635,7 @@ const invTxt = r => invHTML(r).replace(/<br>/g, '\n').replace(/<table/g, '\n<tab
 function invWa(r){
   const base = location.origin + location.pathname.replace(/[^\/]*$/, ''), SEP = '━━━━━━━━━━━━━━', L = [];
   const sec = (ic, t, rows) => { L.push('', `${ic} *${t.toUpperCase()}*`); rows.forEach(([k, v]) => L.push(k ? `• *${k}:* ${v}` : `• ${v}`)); };
-  const vuelo = conVueloInv(r), hotel = tieneHotel(r), tc = !vuelo && r.tc ? tcase(r.tc) : '';
+  const vuelo = conVueloInv(r), hotel = tieneHotel(r), tc = !vuelo && r.tc ? tcase(r.tc) : '', cta = !vuelo && porCuentaR(r);
   const fl = (lab, l) => [`${lab === 'IDA' ? '🛫' : '🛬'} *${lab} · ${l.v}*`, `• ${fmtDate(l.f)} · ${cityOf(l.o)} ${l.s} h → ${cityOf(l.d)} ${l.l} h`];
   L.push(`👋 Estimado(a) *${r.n.toUpperCase()}*`, '', 'Esperando se encuentre bien, reciba un cordial saludo' + (CFG.yo ? `, mi nombre es *${CFG.yo}*.` : '.'), '',
     (CFG.ag ? `Le escribo de *${CFG.ag}* en representación de *MetLife*` : 'Le escribimos en representación de *MetLife*') + ' para dar seguimiento a su participación al evento *ConoceMet by MetLife*, que se llevará a cabo el *jueves 3 de diciembre de 2026* en *MetLife Torre Manacar, piso 7* (Av. Insurgentes Sur 1457, esquina Río Mixcoac, Ciudad de México).');
@@ -1644,7 +1647,8 @@ function invWa(r){
     L.push('', '*Le agradecería una confirmación de recepción de este mensaje.*');
   } else {
     L.push('', SEP, '📋 *PARA SU PARTICIPACIÓN LE ESTAMOS CONSIDERANDO' + (vuelo ? ' - PROPUESTA DE VUELOS' : '') + '*', SEP);
-    if(tc) sec('🚐', 'Traslado terrestre de llegada', [['Fecha', '*Jueves 3 de diciembre*'], ['Punto de encuentro y horario', 'Por confirmar. Se lo compartiremos al cierre del registro del evento.'], ['Desde', `*${tc}*`], ['Hacia', '*Hotel NH T2 Aeropuerto*, donde para su mayor comodidad su equipaje será *resguardado* y se le entregará a su regreso al final del día.'], ['Después', 'Del Hotel NH T2 Aeropuerto continuará el desplazamiento a la sede del evento: *MetLife Torre Manacar, piso 7*.']]);
+    if(cta) sec('🚙', 'Llegada por su cuenta', [['Fecha', '*Jueves 3 de diciembre*'], ['Llegada', 'Por su cuenta, directo a la sede del evento (*MetLife Torre Manacar, piso 7*). *No aplica traslado terrestre.*']]);
+    else if(tc) sec('🚐', 'Traslado terrestre de llegada', [['Fecha', '*Jueves 3 de diciembre*'], ['Punto de encuentro y horario', 'Por confirmar. Se lo compartiremos al cierre del registro del evento.'], ['Desde', `*${tc}*`], ['Hacia', '*Hotel NH T2 Aeropuerto*, donde para su mayor comodidad su equipaje será *resguardado* y se le entregará a su regreso al final del día.'], ['Después', 'Del Hotel NH T2 Aeropuerto continuará el desplazamiento a la sede del evento: *MetLife Torre Manacar, piso 7*.']]);
     else {
       const leg = [r.c1, r.ida].filter(Boolean).map(l => fl('IDA', l)).concat([r.reg, r.c2].filter(Boolean).map(l => fl('REGRESO', l)));
       L.push(''); if(leg.length) leg.forEach(x => L.push(...x)); else L.push('Su vuelo se encuentra en proceso de emisión.');
@@ -1654,15 +1658,16 @@ function invWa(r){
         sec('🚐', 'Traslado a la sede del evento', [['', SEDE2_TXT.replace(B_HL, x => `*${x}*`)]]); }
       else L.push('', '📍 *Recepción en el Aeropuerto de la Ciudad de México y traslado a la sede del evento (MetLife Torre Manacar, piso 7).*');
     }
-    if(hotel && !r.pe2){ if(!tc) sec('🧳', 'Resguardo de equipaje', [['A su llegada', `Su equipaje será *resguardado en el ${HOTEL.n}*, donde se hospedará, para su mayor comodidad en el desplazamiento a la sede del evento; *se le entregará a su regreso al hotel*.`]]);
+    if(hotel && !r.pe2){ if(!tc && !cta) sec('🧳', 'Resguardo de equipaje', [['A su llegada', `Su equipaje será *resguardado en el ${HOTEL.n}*, donde se hospedará, para su mayor comodidad en el desplazamiento a la sede del evento; *se le entregará a su regreso al hotel*.`]]);
       sec('🏨', 'Hospedaje', [['NH T2 Aeropuerto', '*Check in 3 dic* · *Check out 4 dic* · 1 noche']]); }
     sec('🍽️', 'Durante el evento · jueves 3 de diciembre', [['Incluye', '*Alimentos programados* de acuerdo con la agenda del evento.']]);
     if(hotel) sec('🚐', 'Traslado al hotel', [['', 'Al terminar la cena, a las *23:00 h*, traslado al *Hotel NH T2 Aeropuerto*.']]);
-    if(tc) sec('🚐', 'Traslado terrestre de regreso', [['Desde', `*${hotel ? HOTEL.n : 'Sede del evento'}*`], ['Hacia', `*${tc}*`], ['Horario', 'Se le compartirá *al finalizar el evento*']]);
+    if(cta) sec('🚙', 'Regreso por su cuenta', [['Fecha', hotel ? '*Viernes 4 de diciembre*' : '*Jueves 3 de diciembre*, al terminar el evento'], ['Desde', `*${hotel ? HOTEL.n : 'Sede del evento'}*`], ['Regreso', 'Por su cuenta. *No aplica traslado terrestre.*']]);
+    else if(tc) sec('🚐', 'Traslado terrestre de regreso', [['Desde', `*${hotel ? HOTEL.n : 'Sede del evento'}*`], ['Hacia', `*${tc}*`], ['Horario', 'Se le compartirá *al finalizar el evento*']]);
     else sec('✈️', 'Vuelo de regreso', [['', 'El *Hotel NH T2 Aeropuerto* está dentro de la *Terminal 2* del aeropuerto; si su vuelo sale de la *Terminal 1*, puede cambiar de terminal en el *Aerotrén*.']]);
     if(vuelo) L.push('', SEP, '', '*Importante.-* Si desea realizar algún cambio de fecha u horario posterior a su confirmación, esto generará un *cargo por cambio* y posiblemente *diferencia de tarifa*, los cuales tendrán que ser cubiertos por su parte.', '',
       'Le recordamos que *MetLife* cubre las pernoctas y/o traslados terrestres necesarios, siempre que este aplique, dentro de las fechas del evento.', '',
-      'Esperamos su validación respondiendo con la siguiente leyenda: *“Estoy de acuerdo con el itinerario de vuelo, proceder con la compra”*.');    if(tc) L.push('', '*Le agradecería una confirmación de recepción de este mensaje.*');
+      'Esperamos su validación respondiendo con la siguiente leyenda: *“Estoy de acuerdo con el itinerario de vuelo, proceder con la compra”*.');    if(tc || cta) L.push('', '*Le agradecería una confirmación de recepción de este mensaje.*');
   }
   L.push('', '🗓️ *Agenda del evento:*', base + 'agenda-conocemet-invitacion.jpg', '',
     'Si necesita más información o tiene preguntas específicas, no dude en ponerse en contacto.', '', 'Continúo a sus órdenes.', '', 'Saludos cordiales,');
@@ -3126,7 +3131,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 525;
+const APP_V = 526;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

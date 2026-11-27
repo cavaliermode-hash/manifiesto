@@ -771,6 +771,7 @@ main a:not([class]):hover,.foot a:hover{color:var(--acc)!important;text-decorati
 .disc{margin:2px 0 0;font:500 11.5px/1.3 var(--body);color:var(--muted)}
 @media (max-width:560px){.disc{font-size:10px}}
 .h3txt p.h3n{margin-top:10px}
+.ncp{border:0;background:none;cursor:pointer;font-size:12px;padding:0 3px;margin-left:4px;opacity:.65;vertical-align:middle;line-height:1} .ncp:hover{opacity:1}
 .cvchip.on{background:#136c34;color:#fff;border-color:#136c34} #ziproles .zver{background:#fff;color:#136c34;border:1px solid #136c34;margin-right:6px}
 </style>
 </head>
@@ -2526,6 +2527,8 @@ function llegaDe(r){
 }
 const rolVer = rol => /^staff/i.test(rol || '') ? 'STAFF' + (/INSPECCI/i.test(rol) ? ' · VISITA DE INSPECCIÓN' : '') : String(rol || ''); // staff sin distinguir agencia o MetLife
 const rolTag = rol => rol ? `<span class="rtag">${esc(rolVer(rol).toUpperCase())}</span>` : '';
+document.addEventListener('click', e => { const b = e.target.closest('[data-ncp]'); if(!b) return; e.stopPropagation(); const n = b.dataset.ncp, ok = () => { b.textContent = '✓'; setTimeout(() => b.textContent = '📋', 1400); };
+  Promise.resolve().then(() => navigator.clipboard.writeText(n)).then(ok).catch(() => { const ta = document.createElement('textarea'); ta.value = n; document.body.appendChild(ta); ta.select(); try{ document.execCommand('copy'); ok(); }catch(err){} ta.remove(); }); });
 const conVue = r => !/CANCEL/i.test(r.st || '') && ([r.c1, r.ida, r.reg, r.c2].some(Boolean) || !!(r.ci || r.cr || r.cl)); // activos con vuelo o clave (sin cancelados / no show)
 function claRows(){
   const rows = DATA.map((r, i) => ({i, n:r.n, ci:r.ci || (!r.cr ? r.cl || '' : ''), cr:r.cr || '', ...llegaDe(r), rol:r.rol || ''}));
@@ -2577,7 +2580,7 @@ function claRender(){ rolBar(); zipRoles();
   const cell = x => !x.ci && !x.cr ? '—' : (!x.cr || x.cr === x.ci) ? btn(x.ci) : !x.ci ? `<span class="cl">Regreso</span>${btn(x.cr)}`
     : `<span class="cl">Ida</span>${btn(x.ci)}<br><span class="cl">Regreso</span>${btn(x.cr)}`;
   const L = claRows(), qn = $('#cqn'); if(qn) qn.textContent = $('#cq').value.trim() ? `${L.length} de ${DATA.length}` : '';
-  $('#cbody').innerHTML = (L.length ? '' : '<tr><td colspan="4" class="cnone">Sin resultados para esa búsqueda.</td></tr>') + L.map(x => `<tr data-ci="${x.i}"><td class="kn">${esc(x.n)}${rolTag(x.rol)}<small class="kll2">${esc(x.llt)}</small></td><td class="kll">${esc(x.llt)}</td><td class="cc">${cell(x)}</td>
+  $('#cbody').innerHTML = (L.length ? '' : '<tr><td colspan="4" class="cnone">Sin resultados para esa búsqueda.</td></tr>') + L.map(x => `<tr data-ci="${x.i}"><td class="kn">${esc(x.n)}<button type="button" class="ncp" data-ncp="${esc(x.n)}" title="Copiar nombre" aria-label="Copiar nombre de ${esc(tcase(x.n))}">📋</button>${rolTag(x.rol)}<small class="kll2">${esc(x.llt)}</small></td><td class="kll">${esc(x.llt)}</td><td class="cc">${cell(x)}</td>
     ${accBtns(x.i, true)}</tr>${CLA_VF.has(x.i) ? `<tr class="cvfrow"><td colspan="4"><div class="cvfbox">${vueloPropHTML(DATA[x.i])}<button type="button" class="cvfx" data-cvf="${x.i}">▲ Ocultar vuelos</button></div></td></tr>` : ''}`).join('');
   paginar($('#cbody'), 'cla');
 }
@@ -3122,7 +3125,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 521;
+const APP_V = 522;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

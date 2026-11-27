@@ -2526,7 +2526,7 @@ function llegaDe(r){
 }
 const rolVer = rol => /^staff/i.test(rol || '') ? 'STAFF' + (/INSPECCI/i.test(rol) ? ' · VISITA DE INSPECCIÓN' : '') : String(rol || ''); // staff sin distinguir agencia o MetLife
 const rolTag = rol => rol ? `<span class="rtag">${esc(rolVer(rol).toUpperCase())}</span>` : '';
-const conVue = r => [r.c1, r.ida, r.reg, r.c2].some(Boolean) || !!(r.ci || r.cr || r.cl); // con vuelo o clave de reserva
+const conVue = r => !/CANCEL/i.test(r.st || '') && ([r.c1, r.ida, r.reg, r.c2].some(Boolean) || !!(r.ci || r.cr || r.cl)); // activos con vuelo o clave (sin cancelados / no show)
 function claRows(){
   const rows = DATA.map((r, i) => ({i, n:r.n, ci:r.ci || (!r.cr ? r.cl || '' : ''), cr:r.cr || '', ...llegaDe(r), rol:r.rol || ''}));
   const k = CLA.sort;
@@ -3122,7 +3122,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 517;
+const APP_V = 518;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

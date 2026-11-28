@@ -1631,7 +1631,7 @@ function invHTML(r, vImg){
   b += blk('🍽️', 'Durante el evento · jueves 3 de diciembre', [['Incluye', '<b>Alimentos programados</b> de acuerdo con la agenda del evento.']]);
   if(hotel) b += verde('🚐 Traslado al hotel', 'Al terminar la cena, a las <b>23:00 h</b>, traslado al <b>Hotel NH T2 Aeropuerto</b>.');
   if(cta) b += blk('🚙', 'Regreso por su cuenta', [['Fecha', hotel ? '<b>Viernes 4 de diciembre</b>' : '<b>Jueves 3 de diciembre</b>, al terminar el evento'], ['Desde', '<b>' + (hotel ? esc(HOTEL.n) : 'Sede del evento') + '</b>'], ['Regreso', 'Por su cuenta. <b>No aplica traslado terrestre.</b>']]);
-  else if(tc) b += blk('🚐', 'Traslado terrestre de regreso', [['Desde', '<b>' + (hotel ? esc(HOTEL.n) : 'Sede del evento') + '</b>'], ['Hacia', '<b>' + tc + '</b>'], ['Horario', 'Se le compartirá <b>al finalizar el evento</b>']]);
+  else if(tc) b += blk('🚐', 'Traslado terrestre de regreso', [['Fecha', hotel ? '<b>Viernes 4 de diciembre</b>' : '<b>Jueves 3 de diciembre</b>'], ['Desde', '<b>' + (hotel ? esc(HOTEL.n) : 'Sede del evento') + '</b>'], ['Hacia', '<b>' + tc + '</b>'], ['Horario', 'Se le compartirá <b>al finalizar el evento</b>']]);
   else if(!r.reg && !r.c2 && /^Solo regreso por tu cuenta/.test(notaDe(r, 'tr'))) b += blk('🚙', 'Regreso por su cuenta', [['Fecha', '<b>Viernes 4 de diciembre</b>'], ['Desde', '<b>' + esc(HOTEL.n) + '</b>'], ['Regreso', 'Por su cuenta. <b>No requiere vuelo de regreso.</b>']]);
   else b += verde('✈️ Vuelo de regreso', 'El <b>Hotel NH T2 Aeropuerto</b> está dentro de la <b>Terminal 2</b> del aeropuerto; si su vuelo sale de la <b>Terminal 1</b>, puede cambiar de terminal en el <b>Aerotrén</b>.');
   if(vuelo){
@@ -1680,7 +1680,7 @@ function invWa(r){
     sec('🍽️', 'Durante el evento · jueves 3 de diciembre', [['Incluye', '*Alimentos programados* de acuerdo con la agenda del evento.']]);
     if(hotel) sec('🚐', 'Traslado al hotel', [['', 'Al terminar la cena, a las *23:00 h*, traslado al *Hotel NH T2 Aeropuerto*.']]);
     if(cta) sec('🚙', 'Regreso por su cuenta', [['Fecha', hotel ? '*Viernes 4 de diciembre*' : '*Jueves 3 de diciembre*, al terminar el evento'], ['Desde', `*${hotel ? HOTEL.n : 'Sede del evento'}*`], ['Regreso', 'Por su cuenta. *No aplica traslado terrestre.*']]);
-    else if(tc) sec('🚐', 'Traslado terrestre de regreso', [['Desde', `*${hotel ? HOTEL.n : 'Sede del evento'}*`], ['Hacia', `*${tc}*`], ['Horario', 'Se le compartirá *al finalizar el evento*']]);
+    else if(tc) sec('🚐', 'Traslado terrestre de regreso', [['Fecha', hotel ? '*Viernes 4 de diciembre*' : '*Jueves 3 de diciembre*'], ['Desde', `*${hotel ? HOTEL.n : 'Sede del evento'}*`], ['Hacia', `*${tc}*`], ['Horario', 'Se le compartirá *al finalizar el evento*']]);
     else if(!r.reg && !r.c2 && /^Solo regreso por tu cuenta/.test(notaDe(r, 'tr'))) sec('🚙', 'Regreso por su cuenta', [['Fecha', '*Viernes 4 de diciembre*'], ['Desde', `*${HOTEL.n}*`], ['Regreso', 'Por su cuenta. *No requiere vuelo de regreso.*']]);
     else sec('✈️', 'Vuelo de regreso', [['', 'El *Hotel NH T2 Aeropuerto* está dentro de la *Terminal 2* del aeropuerto; si su vuelo sale de la *Terminal 1*, puede cambiar de terminal en el *Aerotrén*.']]);
     if(vuelo) L.push('', SEP, '', '*Importante.-* Si desea realizar algún cambio de fecha u horario posterior a su confirmación, esto generará un *cargo por cambio* y posiblemente *diferencia de tarifa*, los cuales tendrán que ser cubiertos por su parte.', '',
@@ -3160,7 +3160,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 540;
+const APP_V = 541;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

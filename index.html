@@ -1603,7 +1603,20 @@ function invHTML(r, vImg){
   } else if(tc){
     b += blk('🚐', 'Traslado terrestre de llegada', [['Fecha', '<b>Jueves 3 de diciembre</b>'], ['Punto de encuentro y horario', 'Por confirmar. Se lo compartiremos al cierre del registro del evento.'], ['Desde', '<b>' + tc + '</b>'], ['Hacia', '<b>Hotel NH T2 Aeropuerto</b>, donde para su mayor comodidad su equipaje será <b>resguardado</b> y se le entregará a su regreso al final del día.'], ['Después', 'Del Hotel NH T2 Aeropuerto continuará el desplazamiento a la sede del evento: <b>MetLife Torre Manacar, piso 7</b>.']]);
   } else {
-    b += vImg ? p(`<img src="${vImg}" width="640" alt="Propuesta de vuelos" style="width:640px;max-width:100%;height:auto;display:block;border:0">`) : ida.length || r.reg ? p('&nbsp;') + p('&nbsp;') : p(T('Su vuelo se encuentra en proceso de emisión.'));
+    const legsP = [[r.c1, 'Ida'], [r.ida, 'Ida'], [r.reg, 'Regreso'], [r.c2, 'Regreso']].filter(x => x[0]);
+    const imgB = location.href.replace(/[?#].*$/, '').replace(/[^\/]*$/, ''), Tb = (t, w = 'normal') => T(t, '#222222', w);
+    const cardI = (dir, l) => { const lg = LOGO_AL(l.v), m = legMin(l), du = m > 0 ? `${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')} (Sin paradas)` : '';
+      const td = (t, st = '') => `<td style="padding:2px 6px 2px 0;${st}">${t}</td>`;
+      return `<tr><td style="padding:10px 0 2px">${T(dir.toUpperCase(), G, 'bold')} ${Tb('· ' + esc(fV(l.f, true)))}</td></tr>
+      <tr><td style="padding:0 0 4px"><table width="100%" cellpadding="0" cellspacing="0"><tr><td bgcolor="#EFEFEF" style="background:#EFEFEF;padding:10px 12px"><table width="100%" cellpadding="0" cellspacing="0"><tr>
+        <td width="100" valign="top" style="width:100px;padding:4px 10px 0 0">${lg ? `<img src="${imgB + lg}" width="78" alt="${esc(String(l.v).replace(/\s*\d+$/, ''))}" style="width:78px;max-height:24px;height:auto;display:block;border:0">` : ''}</td>
+        <td valign="top"><table width="100%" cellpadding="0" cellspacing="0">
+          <tr><td colspan="3" style="padding:0 0 6px">${Tb(esc(lg ? LINEA(l.v).replace(/^(Aeromexico|Volaris|Viva Aerobus) /, 'Vuelo ') : LINEA(l.v)), 'bold')}</td></tr>
+          <tr>${td(Tb('Salida', 'bold'), 'width:90px')}${td(Tb(esc(fV(l.f) + ' ' + (l.s || '')), 'bold'), 'width:190px')}${td(Tb(AERO_B(l.o)))}</tr>
+          <tr>${td(Tb('Llegada', 'bold'))}${td(Tb(esc(fV(l.f) + ' ' + (l.l || '')), 'bold'))}${td(Tb(AERO_B(l.d)))}</tr>
+          <tr>${td(Tb('Duración'))}${td('')}${td(Tb(du))}</tr>
+        </table></td></tr></table></td></tr></table></td></tr>`; };
+    b += legsP.length ? legsP.map(([l, d]) => cardI(d, l)).join('') + p(T('Horarios en hora local de cada aeropuerto.', MUT), 'font-size:9pt;padding-bottom:4px') : ida.length || r.reg ? p('&nbsp;') + p('&nbsp;') : p(T('Su vuelo se encuentra en proceso de emisión.'));
     b += blk('🧳', 'Su vuelo incluye', [['Boleto de avión', 'Clase <b>turista</b>'], ['Equipaje de mano', 'En cabina, máximo <b>15 kg</b>'], ['Equipaje documentado', r.nd ? '<b>N/A</b>' : 'Máximo <b>25 kg</b>'], ['Asientos', '<b>Asignados</b>']]);
     if(r.pe2){
       b += verde('📍 ' + LLEGA2_T, esc(LLEGA2_TXT).replace(B_HL, x => `<b>${x}</b>`));
@@ -3143,7 +3156,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 538;
+const APP_V = 539;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

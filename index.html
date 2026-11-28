@@ -1938,7 +1938,7 @@ function vueloPropHTML(r){
           <tr><td style="font-weight:bold;padding:2px 0">Llegada</td><td style="font-weight:bold">${fV(l.f)} ${esc(l.l || '')}</td><td style="font-weight:bold">${AERO_PDF(l.d, 13)}</td></tr>
           <tr><td style="padding:2px 0">Duración</td><td></td><td>${dur(l)}</td></tr>
         </table></td></tr></table>`;
-  return `<div style="width:820px;background:#fff;padding:18px 22px 22px;box-sizing:border-box;font-family:Arial,sans-serif">
+  return `<div style="width:1000px;background:#fff;padding:18px 22px 22px;box-sizing:border-box;font-family:Arial,sans-serif">
     ${ida.map(l => leg(l, 'IDA')).join('')}${reg.map(l => leg(l, 'REGRESO')).join('')}
     <div style="margin-top:10px;font:13px Arial,sans-serif;color:#666">Horarios en hora local de cada aeropuerto.</div>
   </div>`;
@@ -3142,7 +3142,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 535;
+const APP_V = 536;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}

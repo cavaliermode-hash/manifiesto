@@ -1023,6 +1023,8 @@ const porCuentaR = r => !!r.loc || (r.notas || []).some(n => n.k === 'tr' && /po
 const viajeTxt = r => porCuentaR(r) ? 'Llega por su cuenta a la sede del evento.' : 'Viaje por traslado terrestre.';
 const soloTierra = r => !r.ida && !r.reg && !r.c1 && !r.c2 && !r.vu && (r.loc || r.tc || /TERRESTRE/.test(r.st || '') || (r.notas || []).some(n => n.k === 'tr'));
 /* Hotel del evento: solo foráneos (con vuelo o con pernocta indicada en el Excel); los locales no llevan hospedaje */
+/* Llegan antes del día del evento (vuelo de ida que aterriza antes del check in, p. ej. 2 dic): pernocta por ruta desde su llegada */
+function llegadaPrevia(L){ (L || []).forEach(r => { const leg = r.ida || r.c1; if(!r.loc && leg && leg.f && leg.f < HOTEL.ci && !/CANCEL/i.test(r.st || '')){ r.pe = 1; r.pe2 = 1; } }); }
 const tieneHotel = r => !r.loc && !!(r.pe || r.vu || r.ida || r.reg || r.c1 || r.c2 || (r.notas || []).some(n => n.k === 'pe'));
 function tierraBlock(r){
   const det = r.loc ? 'Participante local: tu cita es a las 12:00 h en MetLife Torre Manacar, piso 7. Aplica estacionamiento en Torre Manacar.' : porCuentaR(r) ? 'Llegas por tu cuenta a la sede del evento; revisa tus indicaciones especiales.' : (r.notas || []).some(n => n.k === 'tr') ? 'Revisa los detalles en tus indicaciones especiales.' : 'Tu viaje al evento es por traslado terrestre.';
@@ -3160,7 +3162,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 541;
+const APP_V = 542;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}
@@ -3179,7 +3181,7 @@ window.addEventListener('pagehide', e => { if(e.persisted) lockNow(); });
 async function unlock(pin, fromSaved){
   try{ const d = await Cifra.descifrar(PACK.enc, pin);
     if(UNLOCKED){ document.body.classList.remove('locked'); return; } // re-entrada tras salir de la app
-    UNLOCKED = true; DATA = d.filas; $('#upd').textContent = 'Actualizado: ' + PACK.actualizado + ' · v' + APP_V; { const vv = document.getElementById('verv'); if(vv) vv.textContent = 'Versión ' + APP_V + ' · datos actualizados ' + PACK.actualizado; } init(); syncStart(pin); if(!pdfDirecto()) restoreView(); }
+    UNLOCKED = true; DATA = d.filas; llegadaPrevia(DATA); $('#upd').textContent = 'Actualizado: ' + PACK.actualizado + ' · v' + APP_V; { const vv = document.getElementById('verv'); if(vv) vv.textContent = 'Versión ' + APP_V + ' · datos actualizados ' + PACK.actualizado; } init(); syncStart(pin); if(!pdfDirecto()) restoreView(); }
   catch(e){ showGate('No se pudo cargar la información. Recarga la página.'); }
 }
 

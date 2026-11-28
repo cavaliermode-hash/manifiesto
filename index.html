@@ -1511,8 +1511,9 @@ function mailHTML(r, enPDF){
     b += `<tr><td bgcolor="#F0F8F2" style="background:#F0F8F2;border-left:4px solid ${G};padding:${C ? '5px 12px' : '10px 14px'}"><table cellpadding="0" cellspacing="0">${pts}</table></td></tr>`; }
   b += `<tr><td style="padding-top:${C ? 6 : 12}px"><table width="100%" cellpadding="0" cellspacing="0"><tr><td bgcolor="#FFF7E6" style="background:#FFF7E6;border-left:4px solid #E0A100;padding:${C ? '5px 12px;line-height:1.25' : '10px 14px'}">${T('Importante.- ' + impTxt(r), C ? 11 : fs, INK, 'bold')}</td></tr></table></td></tr>`;
   // (sin botón de PDF en el correo)
-  if(C) b += p(T(despedida(r), 11), 'padding-top:4px');
-  else b += p(T(despedida(r))) + (!WEB && CFG.firma ? p(T(esc(CFG.firma), fs, G, 'bold', 'Arial,sans-serif', 'font-style:italic'), 'padding-top:6px;padding-bottom:10px') : '');
+  const byeB = esc(despedida(r)).replace('ConoceMet by MetLife', '<b>ConoceMet by MetLife</b>');
+  if(C) b += p(T(byeB, 11), 'padding-top:4px');
+  else b += p(T(byeB)) + (!WEB && CFG.firma ? p(T(esc(CFG.firma), fs, G, 'bold', 'Arial,sans-serif', 'font-style:italic'), 'padding-top:6px;padding-bottom:10px') : '');
   // PDF: 640 px fijos (cabe en una hoja). Correo: a lo ancho de la ventana del correo, hasta 1000 px, para leerse mejor.
   return C ? `<table width="100%" cellpadding="4" cellspacing="0" style="width:100%;font-family:Arial,sans-serif;background:#ffffff">${b}</table>`
     : `<table width="100%" cellpadding="4" cellspacing="0" style="width:100%;max-width:1000px;font-family:Calibri,Arial,sans-serif;font-size:11pt;background:#ffffff">${b}</table>`;
@@ -1732,7 +1733,7 @@ function waTxt(r){
     '👕 *Información general y dress code:*', base + 'dresscode-conocemet.jpg?v=410', '',
     '🔎 *Consulta tu reserva cuando quieras:*', base, '',
     '*Importante.-* ' + impTxt(r).replace('MetLife', '*MetLife*'), '',
-    despedida(r));
+    despedida(r).replace('ConoceMet by MetLife', '*ConoceMet by MetLife*'));
   return L.join('\n');
 }
 /* ---------- Itinerario personal en PDF ---------- */
@@ -1917,7 +1918,7 @@ function vueloHTML(r, pie){ /* despedida siempre al final (búsqueda, Staff y ZI
     <div style="margin-top:16px;border-left:4px solid ${G};padding-left:9px;font:bold 15px Arial,sans-serif;color:${G};letter-spacing:.4px">PUNTOS IMPORTANTES DE SU VUELO</div>
     <div style="margin-top:6px;background:#F0F8F2;border-left:4px solid ${G};padding:8px 14px">${[...document.querySelectorAll('section.important li')].map(li => `<div style="display:flex;gap:8px;font:13px/1.55 Arial,sans-serif;color:#16301F;padding:2px 0"><span style="color:${G};font-weight:bold">•</span><span>${li.innerHTML.replace(/<b>/g, '<b style="color:#16301F">')}</span></div>`).join('')}</div>
     ${appBoxPDF(r)}
-    ${true ? `<div style="margin-top:16px;font:13px Arial,sans-serif;color:#222">${despedida(r)}</div>` : ''}
+    ${true ? `<div style="margin-top:16px;font:13px Arial,sans-serif;color:#222">${esc(despedida(r)).replace('ConoceMet by MetLife', '<b>ConoceMet by MetLife</b>')}</div>` : ''}
   </div>`;
 }
 /* Propuesta de vuelos para la invitación: mismo formato que "Su viaje", sin claves (aún no se compra) */
@@ -2103,7 +2104,7 @@ function agMover(dentro){ const ag = document.getElementById('agenda'), inf = do
     tabs.querySelectorAll('[data-day]').forEach(b => b.hidden = !vis.includes(+b.dataset.day)); tabs.style.gridTemplateColumns = `repeat(${Math.max(1, vis.length)},1fr)`;
     if(!fin && !vis.includes(+AG_DAY)) renderAgenda(vis[0]);
     ag.hidden = fin; inf.hidden = fin; if(imp && r) imp.hidden = viajeHecho(r);
-    { const db = document.getElementById('dbye'); if(db && r) db.textContent = despedida(r); }
+    { const db = document.getElementById('dbye'); if(db && r) db.innerHTML = esc(despedida(r)).replace('ConoceMet by MetLife', '<b>ConoceMet by MetLife</b>'); }
     const vh = !!r && viajeHecho(r), ci = document.getElementById('cierre'), fq = document.querySelector('section.faq'); // viaje concluido: sin Importante, despedida ni preguntas
     if(ci) ci.hidden = vh; if(fq) fq.hidden = vh; }
   else { ag.hidden = false; tabs.querySelectorAll('[data-day]').forEach(b => b.hidden = false); tabs.style.gridTemplateColumns = ''; { const fq = document.querySelector('section.faq'); if(fq) fq.hidden = false; }
@@ -3138,7 +3139,7 @@ $('#creset').addEventListener('click', async () => {
   window.addEventListener('resize', setH);
   if(window.ResizeObserver) new ResizeObserver(setH).observe(h); setH(); requestAnimationFrame(setH);
 })();
-const APP_V = 529;
+const APP_V = 530;
 const PIN_KEY = 'manifiesto-pin';
 const OPEN_PIN = 'hermosillo'; // acceso abierto: la página ya no pide PIN. Para volver a pedirlo, dejar vacío ('').
 try{ localStorage.removeItem(PIN_KEY); }catch(e){}
